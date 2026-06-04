@@ -36,10 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **docs/PLAN-v2.md**: Implementation plan for Blitztext v2 with phased feature roadmap (stable signing, accessibility grants, local LLM, Prompts tab)
 - **docs/PLAN-modi-und-features.md**: Detailed planning document for the mode system infrastructure and feature implementation
 - **LLMError**: New error cases `modelUnavailable` and `localModelUnavailable` for better error handling and user feedback
+- **Recording Pill Overlay**: Floating top-center UI pill for visual recording feedback
+  - **RecordingPillController**: Manages pill window lifecycle and positioning
+  - **audioLevel** property added to **WorkflowProtocol**: Exposes live microphone level (0...1) for waveform visualization
+  - Integrates with **MenuBarStatusController** for dual visual feedback (menu-bar waveform + floating pill)
 
 ### Changed
 
-- **WorkflowProtocol.swift**: Extended with AppSettings support and mode management (`modes` property, `updateMode` handling); added `onRun` callback for archive ingestion
+- **WorkflowProtocol.swift**: Extended with AppSettings support and mode management (`modes` property, `updateMode` handling); added `onRun` callback for archive ingestion; added `audioLevel` property for microphone level feedback
+- **AppDelegate**: Integrated RecordingPillController for floating recording UI; wired status change callbacks to update pill visibility and state
 - **AppState.swift**: Major refactoring to support mode infrastructure and Phase 4 Memory/Archive
   - Added mode state management and migrations
   - Integrated provider factory with backend gating

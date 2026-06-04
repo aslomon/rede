@@ -634,21 +634,61 @@ struct AccessibilityPermissionSection: View {
 struct CustomizeSettingsView: View {
   @Bindable var appState: AppState
   @State private var newTerm = ""
+  /// Bumped by the "Prüfen" button to force a fresh disk read of the installed WhisperKit models.
+  /// The disk scan is synchronous, so re-reading inside a recomputed `body` reflects reality.
+  @State private var transcriptionRecheckToken = 0
 
   private var installedLocalModels: [LocalTranscriptionModel] {
-    LocalTranscriptionService.installedModels()
+    _ = transcriptionRecheckToken
+    return LocalTranscriptionService.installedModels()
   }
 
   private var localModelOptions: [LocalTranscriptionModel] {
-    LocalTranscriptionService.modelOptions()
+    _ = transcriptionRecheckToken
+    return LocalTranscriptionService.modelOptions()
+  }
+
+  /// Honest one-liner about the selected Whisper model: confirms it is on disk and how many models
+  /// total are installed, or states the exact download size still pending for the selection.
+  private var transcriptionStateText: String {
+    if appState.selectedLocalModelIsInstalled {
+      let count = installedLocalModels.count
+      return count == 1
+        ? "„\(appState.selectedLocalModelDisplayName)“ ist geladen (1 Whisper-Modell auf diesem Mac)."
+        : "„\(appState.selectedLocalModelDisplayName)“ ist geladen (\(count) Whisper-Modelle auf diesem Mac)."
+    }
+    if let size = LocalTranscriptionModel.sizeLabel(for: appState.selectedLocalModelName) {
+      return
+        "„\(appState.selectedLocalModelDisplayName)“ ist nicht geladen — \(size). Wird beim Installieren lokal gespeichert."
+    }
+    return
+      "„\(appState.selectedLocalModelDisplayName)“ ist nicht geladen. Wird beim Installieren lokal gespeichert."
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
 
-      // MARK: Lokaler Modus
+      // MARK: Lokale Transkription (Whisper) — speech -> text engine
       VStack(alignment: .leading, spacing: 10) {
-        SectionLabel(text: "Sicherer Lokaler Modus")
+        HStack(spacing: 6) {
+          SectionLabel(text: "Lokale Transkription (Whisper)")
+          Spacer()
+          Button("Prüfen") {
+            transcriptionRecheckToken += 1
+          }
+          .font(.system(size: 10, weight: .medium))
+          .buttonStyle(SubtleButtonStyle())
+          .foregroundStyle(.blue)
+          .disabled(appState.isDownloadingLocalModel)
+        }
+
+        Text(
+          "Die Transkriptions-Engine (Sprache → Text) läuft über WhisperKit lokal auf diesem Mac. "
+            + "Das Modell wird beim ersten Einsatz automatisch geladen und auf dem Gerät gespeichert."
+        )
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
 
         Toggle("Sicherer Lokaler Modus", isOn: $appState.appSettings.secureLocalModeEnabled)
           .toggleStyle(.switch)
@@ -665,18 +705,15 @@ struct CustomizeSettingsView: View {
           )
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(appState.selectedLocalModelIsInstalled ? .green : .blue)
-          Text(
-            appState.selectedLocalModelIsInstalled
-              ? "\(installedLocalModels.count) lokales WhisperKit-Modell installiert."
-              : "Das ausgewählte Modell wird beim Installieren lokal gespeichert."
-          )
-          .font(.system(size: 10.5))
-          .foregroundStyle(.secondary)
+          Text(transcriptionStateText)
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
           Spacer()
         }
 
         HStack(spacing: 8) {
-          Text("Lokales Modell")
+          Text("Whisper-Modell")
             .font(.system(size: 11))
             .foregroundStyle(.secondary)
 
@@ -728,12 +765,13 @@ struct CustomizeSettingsView: View {
         }
       }
 
-      // MARK: Lokales Sprachmodell (Ollama)
+      // MARK: Lokales Sprachmodell (Ollama) — rewrite/LLM, NOT transcription
       VStack(alignment: .leading, spacing: 10) {
-        SectionLabel(text: "Lokales Sprachmodell")
+        SectionLabel(text: "Lokales Sprachmodell (Ollama)")
 
         Text(
-          "Für lokale Umformulierung (E-Mail, Prompt, Social) läuft das Sprachmodell über Ollama auf diesem Mac. Kein Server, keine Cloud."
+          "Etwas anderes als die Transkription oben: Dieses Sprachmodell formuliert Texte um "
+            + "(E-Mail, Prompt, Social) und läuft über Ollama lokal auf diesem Mac. Kein Server, keine Cloud."
         )
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)

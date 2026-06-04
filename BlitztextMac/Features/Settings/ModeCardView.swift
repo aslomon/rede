@@ -314,33 +314,50 @@ struct ModeCardView: View {
 // MARK: - Local LLM model picker (Ollama)
 
 /// Shared control for picking the local rewrite model served by Ollama, with a live reachability
-/// status line and a one-line install hint. The selected model is global (like the WhisperKit
-/// transcription model), so this binds straight to `appSettings.selectedLocalLLMModelName`.
+/// status line. Honest about reality: only models that are actually pulled (present in
+/// `GET /api/tags`) are marked "geladen". Curated suggestions that are not pulled are listed as
+/// "nicht geladen" together with the exact `ollama pull <name>` command. "Kein Modell" is a valid
+/// selection — the app never claims a model is ready when none is on disk. The selected model is
+/// global (like the WhisperKit transcription model), bound to `appSettings.selectedLocalLLMModelName`.
 struct LocalLLMModelPicker: View {
   @Bindable var appState: AppState
+
+  /// Sentinel tag for the explicit "no local model" selection. Empty string keeps the persisted
+  /// value falsy and is treated as "not configured" everywhere downstream.
+  private static let noSelectionTag = ""
 
   @State private var isReachable: Bool?
   @State private var installedModels: [String] = []
 
-  private var pickerModels: [String] {
-    var names = OllamaService.pickerModelNames(installed: installedModels)
+  private var selectedName: String {
+    appState.appSettings.selectedLocalLLMModelName.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private var pickerModels: [OllamaService.PickerModel] {
+    var models = OllamaService.pickerModels(installed: installedModels)
     // Keep a persisted-but-unlisted choice selectable so the picker never loses the selection.
-    let selected = appState.appSettings.selectedLocalLLMModelName
-    if !names.contains(selected), !selected.isEmpty {
-      names.append(selected)
+    if !selectedName.isEmpty, !models.contains(where: { $0.name == selectedName }) {
+      let installed = OllamaService.isInstalled(selectedName, in: installedModels)
+      models.append(OllamaService.PickerModel(name: selectedName, isInstalled: installed))
     }
-    return names
+    return models
+  }
+
+  /// Whether the currently selected model is actually pulled (and a model is selected at all).
+  private var selectedIsInstalled: Bool {
+    !selectedName.isEmpty && OllamaService.isInstalled(selectedName, in: installedModels)
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Lokales Modell (Ollama)")
+      Text("Lokales Sprachmodell (Ollama)")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
 
       Picker("", selection: $appState.appSettings.selectedLocalLLMModelName) {
-        ForEach(pickerModels, id: \.self) { name in
-          Text(name).tag(name)
+        Text("Kein lokales Modell").tag(Self.noSelectionTag)
+        ForEach(pickerModels) { model in
+          Text(model.menuLabel).tag(model.name)
         }
       }
       .labelsHidden()
@@ -349,10 +366,7 @@ struct LocalLLMModelPicker: View {
 
       statusLine
 
-      Text("Ollama installieren (ollama.com), starten und ein Modell laden: `ollama pull gemma3`.")
-        .font(.system(size: 10))
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
+      selectionHint
     }
     .task {
       await refreshStatus()
@@ -385,10 +399,47 @@ struct LocalLLMModelPicker: View {
 
   private var statusText: String {
     switch isReachable {
-    case .some(true): return "Ollama läuft"
-    case .some(false): return "Ollama nicht erreichbar"
-    case .none: return "Ollama wird geprüft …"
+    case .some(true):
+      return installedModels.isEmpty
+        ? "Ollama läuft · kein Modell geladen"
+        : "Ollama läuft · \(installedModels.count) Modell(e) geladen"
+    case .some(false):
+      return "Ollama nicht erreichbar"
+    case .none:
+      return "Ollama wird geprüft …"
     }
+  }
+
+  /// Honest, context-aware hint. Distinguishes: nothing selected, a selected-but-not-pulled model,
+  /// a server with zero models, and the ready case — each with the exact command to fix it.
+  @ViewBuilder
+  private var selectionHint: some View {
+    if selectedName.isEmpty {
+      hintText(
+        "Noch kein lokales Modell ausgewählt. Lade z. B. `ollama pull gemma3` und wähle es dann hier aus.",
+        color: .secondary
+      )
+    } else if isReachable == false {
+      hintText(
+        "Ollama installieren (ollama.com), starten und ein Modell laden: `ollama pull \(selectedName)`.",
+        color: .orange
+      )
+    } else if !selectedIsInstalled {
+      hintText(
+        "„\(selectedName)“ ist nicht geladen. Im Terminal holen: `ollama pull \(selectedName)`.",
+        color: .orange
+      )
+    } else {
+      hintText("„\(selectedName)“ ist lokal geladen und einsatzbereit.", color: .secondary)
+    }
+  }
+
+  private func hintText(_ text: String, color: Color) -> some View {
+    Text(text)
+      .font(.system(size: 10))
+      .foregroundStyle(color)
+      .textSelection(.enabled)
+      .fixedSize(horizontal: false, vertical: true)
   }
 
   private func refreshStatus() async {

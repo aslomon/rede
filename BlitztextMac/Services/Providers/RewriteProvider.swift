@@ -211,8 +211,16 @@ struct OllamaRewriteProvider: RewriteProvider {
   }
 
   func rewrite(systemPrompt: String, userText: String, temperature: Double) async throws -> String {
+    let trimmedModelID = modelID.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedModelID.isEmpty else {
+      throw LLMError.localModelUnavailable(
+        "Kein lokales Sprachmodell ausgewählt. Lade eines mit `ollama pull gemma3` und wähle es in "
+          + "den Einstellungen unter „Lokales Sprachmodell (Ollama)“ aus."
+      )
+    }
+
     let payload = ChatRequest(
-      model: modelID,
+      model: trimmedModelID,
       messages: [
         .init(role: "system", content: systemPrompt),
         .init(role: "user", content: userText),
@@ -249,7 +257,7 @@ struct OllamaRewriteProvider: RewriteProvider {
       // A 404 here usually means the chosen model is not pulled yet.
       if httpResponse.statusCode == 404 {
         throw LLMError.localModelUnavailable(
-          "Das lokale Modell „\(modelID)“ ist nicht installiert. Lade es mit `ollama pull \(modelID)`."
+          "Das lokale Modell „\(trimmedModelID)“ ist nicht installiert. Lade es mit `ollama pull \(trimmedModelID)`."
         )
       }
       let body = String(data: data, encoding: .utf8) ?? "Status \(httpResponse.statusCode)"

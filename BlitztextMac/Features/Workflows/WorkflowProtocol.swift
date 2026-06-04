@@ -138,6 +138,9 @@ protocol Workflow: AnyObject, Observable {
   var type: WorkflowType { get }
   var phase: WorkflowPhase { get set }
   var isRecording: Bool { get }
+  /// Live microphone level (0...1) while recording. Drives the menu-bar waveform and the
+  /// floating recording pill. All concrete workflows already expose this via their recorder.
+  var audioLevel: Float { get }
   var onOutput: WorkflowOutputHandler? { get set }
   var onPhaseChange: WorkflowPhaseChangeHandler? { get set }
   /// Emitted with raw+final+mode right before `onOutput`. Wired ONLY when archiving is enabled.

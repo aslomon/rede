@@ -336,7 +336,11 @@ final class AppState {
     case .textImprover, .dampfAblassen, .emojiText:
       switch resolvedRewriteBackend(for: type) {
       case .local:
-        return "Lokal über Ollama (Gemma/Qwen)"
+        let model = appSettings.selectedLocalLLMModelName.trimmingCharacters(
+          in: .whitespacesAndNewlines)
+        return model.isEmpty
+          ? "Lokal über Ollama — noch kein Modell gewählt"
+          : "Lokal über Ollama (\(model))"
       case .openai:
         return type.subtitle
       }

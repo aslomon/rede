@@ -11,11 +11,18 @@ enum OllamaService {
   /// User-facing label for the local backend.
   static let backendLabel = "Lokal (Ollama)"
 
-  /// Default model id pre-selected for new installs (friendly, broadly available).
-  static let defaultModelName = "gemma3"
+  /// No model is pre-selected for new installs. Pre-selecting a curated name (e.g. "gemma3")
+  /// would falsely imply readiness before the user has actually pulled anything, so a fresh
+  /// install starts in the honest "Kein lokales Modell" state. An empty string is the sentinel
+  /// for "nothing selected" and is treated as not-configured everywhere downstream.
+  static let defaultModelName = ""
 
-  /// Curated picker defaults. `gemma3:12b` maps to the 8-bit Gemma quality target;
-  /// `gemma3` stays the friendly default for smaller machines.
+  /// Friendly suggestion surfaced in copy/hints (`ollama pull <name>`). NOT auto-selected.
+  static let suggestedModelName = "gemma3"
+
+  /// Curated picker suggestions. These are real Ollama tags (verified against the Ollama library):
+  /// `gemma3`/`gemma3:12b` (Gemma 3), `qwen3`/`qwen3:8b` (Qwen 3), `llama3.2` (Llama 3.2). They are
+  /// only shown as "nicht geladen" suggestions — never as installed unless `/api/tags` confirms it.
   static let curatedModelNames = [
     "gemma3",
     "gemma3:12b",
@@ -75,6 +82,54 @@ enum OllamaService {
       guard !trimmed.isEmpty, !seen.contains(trimmed) else { continue }
       seen.insert(trimmed)
       result.append(trimmed)
+    }
+    return result
+  }
+
+  /// One selectable picker entry plus its honest pulled/not-pulled state. Installed models are
+  /// listed first (so the user's real models are most prominent), curated suggestions follow.
+  struct PickerModel: Identifiable, Hashable {
+    let name: String
+    let isInstalled: Bool
+
+    var id: String { name }
+
+    /// Picker-ready label. Installed reads "name · geladen"; a curated-but-missing model reads
+    /// "name · nicht geladen" so it can never be mistaken for something ready to run.
+    var menuLabel: String {
+      isInstalled ? "\(name) · geladen" : "\(name) · nicht geladen"
+    }
+  }
+
+  /// True when `candidate` matches one of the actually-pulled `installed` tags. Ollama reports
+  /// fully-qualified tags (e.g. "gemma3:latest"); a curated bare name like "gemma3" must match
+  /// "gemma3:latest", while an explicit tag like "gemma3:12b" must match exactly.
+  static func isInstalled(_ candidate: String, in installed: [String]) -> Bool {
+    let target = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !target.isEmpty else { return false }
+    let normalizedTarget = target.contains(":") ? target : "\(target):latest"
+    return installed.contains { rawInstalled in
+      let name = rawInstalled.trimmingCharacters(in: .whitespacesAndNewlines)
+      let normalizedInstalled = name.contains(":") ? name : "\(name):latest"
+      return normalizedInstalled == normalizedTarget || name == target
+    }
+  }
+
+  /// Ordered picker rows: actually-installed models first (each flagged installed), then curated
+  /// suggestions that are NOT yet pulled (flagged not-installed). De-duplicated across both.
+  static func pickerModels(installed: [String]) -> [PickerModel] {
+    var seen = Set<String>()
+    var result: [PickerModel] = []
+
+    func add(_ name: String, isInstalled: Bool) {
+      let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmed.isEmpty, seen.insert(trimmed).inserted else { return }
+      result.append(PickerModel(name: trimmed, isInstalled: isInstalled))
+    }
+
+    for name in installed { add(name, isInstalled: true) }
+    for name in curatedModelNames where !isInstalled(name, in: installed) {
+      add(name, isInstalled: false)
     }
     return result
   }
