@@ -157,6 +157,9 @@ struct AppSettings: Codable {
   var selectedLocalTranscriptionModelName: String = LocalTranscriptionService
     .recommendedFastModelName
   var hasAutoSelectedFastLocalModel: Bool = false
+  /// Phase 3: the local rewrite model served by Ollama (e.g. "gemma3"). Used by the `.local`
+  /// rewrite backend. Global (like the WhisperKit transcription model), not per-mode.
+  var selectedLocalLLMModelName: String = OllamaService.defaultModelName
   /// Per-slot configurable mode settings, keyed by `WorkflowType.rawValue`.
   /// Stored as a String-keyed dictionary so JSONEncoder writes a keyed object (not an array).
   var modes: [String: ModeConfig] = [:]
@@ -180,6 +183,7 @@ struct AppSettings: Codable {
     selectedLocalTranscriptionModelName: String = LocalTranscriptionService
       .recommendedFastModelName,
     hasAutoSelectedFastLocalModel: Bool = false,
+    selectedLocalLLMModelName: String = OllamaService.defaultModelName,
     archiveEnabled: Bool = false,
     memoryContextEnabled: Bool = false,
     hadAccessibilityGrant: Bool = false
@@ -189,6 +193,7 @@ struct AppSettings: Codable {
     self.secureLocalModeEnabled = secureLocalModeEnabled
     self.selectedLocalTranscriptionModelName = selectedLocalTranscriptionModelName
     self.hasAutoSelectedFastLocalModel = hasAutoSelectedFastLocalModel
+    self.selectedLocalLLMModelName = selectedLocalLLMModelName
     self.archiveEnabled = archiveEnabled
     self.memoryContextEnabled = memoryContextEnabled
     self.hadAccessibilityGrant = hadAccessibilityGrant
@@ -200,6 +205,7 @@ struct AppSettings: Codable {
     case secureLocalModeEnabled
     case selectedLocalTranscriptionModelName
     case hasAutoSelectedFastLocalModel
+    case selectedLocalLLMModelName
     case modes
     case didMigrateToModeConfigs
     case modesSchemaVersion
@@ -225,6 +231,11 @@ struct AppSettings: Codable {
         Bool.self,
         forKey: .hasAutoSelectedFastLocalModel
       ) ?? false
+    selectedLocalLLMModelName =
+      try container.decodeIfPresent(
+        String.self,
+        forKey: .selectedLocalLLMModelName
+      ) ?? OllamaService.defaultModelName
     modes = try container.decodeIfPresent([String: ModeConfig].self, forKey: .modes) ?? [:]
     didMigrateToModeConfigs =
       try container.decodeIfPresent(Bool.self, forKey: .didMigrateToModeConfigs) ?? false

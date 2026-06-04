@@ -43,6 +43,8 @@ struct ModeCardView: View {
 
       if effectiveBackend == .openai {
         modelPicker
+      } else if effectiveBackend == .local {
+        LocalLLMModelPicker(appState: appState)
       }
 
       if type == .emojiText {
@@ -132,9 +134,11 @@ struct ModeCardView: View {
           .font(.system(size: 10))
           .foregroundStyle(.secondary)
       } else if effectiveBackend == .local {
-        Text("Lokal auf dem Gerät, ohne Internet. Ein lokales Modell muss verfügbar sein.")
-          .font(.system(size: 10))
-          .foregroundStyle(.secondary)
+        Text(
+          "Lokal auf diesem Mac über Ollama, ohne Cloud. Ollama muss laufen (Modell unten wählen)."
+        )
+        .font(.system(size: 10))
+        .foregroundStyle(.secondary)
       } else {
         Text("Text wird zur Formulierung an die OpenAI-API gesendet.")
           .font(.system(size: 10))
@@ -304,5 +308,93 @@ struct ModeCardView: View {
       .buttonStyle(SubtleButtonStyle())
       .foregroundStyle(.secondary)
     }
+  }
+}
+
+// MARK: - Local LLM model picker (Ollama)
+
+/// Shared control for picking the local rewrite model served by Ollama, with a live reachability
+/// status line and a one-line install hint. The selected model is global (like the WhisperKit
+/// transcription model), so this binds straight to `appSettings.selectedLocalLLMModelName`.
+struct LocalLLMModelPicker: View {
+  @Bindable var appState: AppState
+
+  @State private var isReachable: Bool?
+  @State private var installedModels: [String] = []
+
+  private var pickerModels: [String] {
+    var names = OllamaService.pickerModelNames(installed: installedModels)
+    // Keep a persisted-but-unlisted choice selectable so the picker never loses the selection.
+    let selected = appState.appSettings.selectedLocalLLMModelName
+    if !names.contains(selected), !selected.isEmpty {
+      names.append(selected)
+    }
+    return names
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text("Lokales Modell (Ollama)")
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+
+      Picker("", selection: $appState.appSettings.selectedLocalLLMModelName) {
+        ForEach(pickerModels, id: \.self) { name in
+          Text(name).tag(name)
+        }
+      }
+      .labelsHidden()
+      .controlSize(.small)
+      .pickerStyle(.menu)
+
+      statusLine
+
+      Text("Ollama installieren (ollama.com), starten und ein Modell laden: `ollama pull gemma3`.")
+        .font(.system(size: 10))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .task {
+      await refreshStatus()
+    }
+  }
+
+  private var statusLine: some View {
+    HStack(spacing: 6) {
+      Image(
+        systemName: (isReachable ?? false)
+          ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+      )
+      .font(.system(size: 10, weight: .semibold))
+      .foregroundStyle((isReachable ?? false) ? .green : .orange)
+
+      Text(statusText)
+        .font(.system(size: 10))
+        .foregroundStyle((isReachable ?? false) ? .green : .orange)
+
+      Spacer()
+
+      Button("Prüfen") {
+        Task { await refreshStatus() }
+      }
+      .font(.system(size: 10, weight: .medium))
+      .buttonStyle(SubtleButtonStyle())
+      .foregroundStyle(.blue)
+    }
+  }
+
+  private var statusText: String {
+    switch isReachable {
+    case .some(true): return "Ollama läuft"
+    case .some(false): return "Ollama nicht erreichbar"
+    case .none: return "Ollama wird geprüft …"
+    }
+  }
+
+  private func refreshStatus() async {
+    let reachable = await OllamaService.statusCheck()
+    let models = reachable ? await OllamaService.installedModels() : []
+    isReachable = reachable
+    installedModels = models
   }
 }

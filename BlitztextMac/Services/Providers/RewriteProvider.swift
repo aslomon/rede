@@ -166,6 +166,108 @@ struct OpenAIRewriteProvider: RewriteProvider {
   }
 }
 
+// MARK: - Ollama provider (local, offline via a local HTTP server)
+
+/// Local rewrite transport backed by Ollama (https://ollama.com), a local model server.
+/// Talks to its OpenAI-compatible endpoint over `URLSession` — no SPM dependency, no streaming.
+/// The text never leaves the machine: the request targets `localhost` only.
+struct OllamaRewriteProvider: RewriteProvider {
+  let modelID: String
+
+  private static let chatCompletionsURL = URL(
+    string: "\(OllamaService.baseURLString)/v1/chat/completions")!
+
+  private static let unreachableHint =
+    "Ollama ist nicht erreichbar. Installiere Ollama (ollama.com), starte es und lade ein Modell, "
+    + "z. B. `ollama pull gemma3`."
+
+  private static let session: URLSession = {
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.waitsForConnectivity = false
+    configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+    // Local generation can take a while on a cold model load — keep a generous budget.
+    configuration.timeoutIntervalForRequest = 120
+    configuration.timeoutIntervalForResource = 120
+    return URLSession(configuration: configuration)
+  }()
+
+  private struct ChatRequest: Encodable {
+    struct Message: Encodable {
+      let role: String
+      let content: String
+    }
+    let model: String
+    let messages: [Message]
+    let stream: Bool
+    let temperature: Double
+  }
+
+  private struct ChatResponse: Decodable {
+    struct Choice: Decodable {
+      struct Message: Decodable { let content: String? }
+      let message: Message?
+    }
+    let choices: [Choice]?
+  }
+
+  func rewrite(systemPrompt: String, userText: String, temperature: Double) async throws -> String {
+    let payload = ChatRequest(
+      model: modelID,
+      messages: [
+        .init(role: "system", content: systemPrompt),
+        .init(role: "user", content: userText),
+      ],
+      stream: false,
+      temperature: temperature
+    )
+
+    var request = URLRequest(url: Self.chatCompletionsURL)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.timeoutInterval = 120
+    request.httpBody = try JSONEncoder().encode(payload)
+
+    let data: Data
+    let response: URLResponse
+    do {
+      (data, response) = try await Self.session.data(for: request)
+    } catch let urlError as URLError {
+      switch urlError.code {
+      case .cannotConnectToHost, .cannotFindHost, .notConnectedToInternet, .timedOut,
+        .networkConnectionLost, .dnsLookupFailed:
+        throw LLMError.localModelUnavailable(Self.unreachableHint)
+      default:
+        throw LLMError.networkError(urlError.localizedDescription)
+      }
+    }
+
+    guard let httpResponse = response as? HTTPURLResponse else {
+      throw LLMError.networkError("Keine gültige Antwort")
+    }
+
+    guard httpResponse.statusCode == 200 else {
+      // A 404 here usually means the chosen model is not pulled yet.
+      if httpResponse.statusCode == 404 {
+        throw LLMError.localModelUnavailable(
+          "Das lokale Modell „\(modelID)“ ist nicht installiert. Lade es mit `ollama pull \(modelID)`."
+        )
+      }
+      let body = String(data: data, encoding: .utf8) ?? "Status \(httpResponse.statusCode)"
+      throw LLMError.apiError(body)
+    }
+
+    let result = try JSONDecoder().decode(ChatResponse.self, from: data)
+    guard
+      let content = result.choices?.first?.message?.content?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !content.isEmpty
+    else {
+      throw LLMError.noContent
+    }
+    return content
+  }
+}
+
 // MARK: - Apple Foundation Models provider (on-device, offline)
 
 @available(macOS 26.0, *)

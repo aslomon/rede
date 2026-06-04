@@ -241,12 +241,9 @@ final class AppState {
   func rewriteProvider(for type: WorkflowType) -> any RewriteProvider {
     switch resolvedRewriteBackend(for: type) {
     case .local:
-      if #available(macOS 26.0, *) {
-        return FoundationModelsRewriteProvider()
-      }
-      // Fail closed: never fall back to OpenAI for an offline-required mode.
-      return UnavailableRewriteProvider(
-        message: "Lokale Verarbeitung benötigt macOS 26 oder neuer.")
+      // Local rewriting runs through Ollama (a local HTTP server). If Ollama is down or the
+      // model is missing, the provider throws a guiding error at runtime instead of failing here.
+      return OllamaRewriteProvider(modelID: appSettings.selectedLocalLLMModelName)
     case .openai:
       return OpenAIRewriteProvider(modelID: modeConfig(for: type).rewrite.modelID)
     }
@@ -255,10 +252,9 @@ final class AppState {
   func rewriteBackendReady(for type: WorkflowType) -> Bool {
     switch resolvedRewriteBackend(for: type) {
     case .local:
-      if #available(macOS 26.0, *) {
-        return FoundationModelsRewriteProvider.isReady
-      }
-      return false
+      // Configured by definition — Ollama needs no API key. A down server surfaces as a clear
+      // runtime error that guides the user to install/start Ollama and pull a model.
+      return true
     case .openai:
       return KeychainService.isConfigured
     }
@@ -340,9 +336,7 @@ final class AppState {
     case .textImprover, .dampfAblassen, .emojiText:
       switch resolvedRewriteBackend(for: type) {
       case .local:
-        return rewriteBackendReady(for: type)
-          ? "Lokal auf dem Gerät."
-          : "Lokales Modell nicht verfügbar."
+        return "Lokal über Ollama (Gemma/Qwen)"
       case .openai:
         return type.subtitle
       }

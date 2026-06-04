@@ -728,6 +728,20 @@ struct CustomizeSettingsView: View {
         }
       }
 
+      // MARK: Lokales Sprachmodell (Ollama)
+      VStack(alignment: .leading, spacing: 10) {
+        SectionLabel(text: "Lokales Sprachmodell")
+
+        Text(
+          "Für lokale Umformulierung (E-Mail, Prompt, Social) läuft das Sprachmodell über Ollama auf diesem Mac. Kein Server, keine Cloud."
+        )
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+        LocalLLMModelPicker(appState: appState)
+      }
+
       // MARK: Tastenkuerzel
       VStack(alignment: .leading, spacing: 10) {
         SectionLabel(text: "Tastenk\u{00FC}rzel")
