@@ -16,7 +16,8 @@ struct MenuBarView: View {
         WorkflowPageView(appState: appState)
       }
     }
-    .frame(width: 340)
+    // The SwiftUI root width IS the popover width (it overrides NSPopover.contentSize). 410 to match.
+    .frame(width: 410)
     // Opaque backstop: fixes dark-mode transparency wash-out (macOS 26 glass / <26 material).
     .blitztextSurface()
     .animation(.easeInOut(duration: 0.2), value: appState.page)
