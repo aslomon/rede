@@ -640,22 +640,27 @@ final class AppState {
   /// the current one. A mode whose stored prompt differs from the old default (i.e. the user
   /// customized it) is left untouched. Versioned via `modesSchemaVersion` so it runs exactly once.
   private func refreshDefaultPromptsIfNeeded() {
-    let targetVersion = 2
+    let targetVersion = 3
     guard appSettings.modesSchemaVersion < targetVersion else { return }
 
-    func refresh(_ slot: WorkflowType, oldDefault: String, newDefault: String) {
+    /// Bumps a mode whose stored prompt still equals ANY previous curated default to the current one.
+    /// A genuinely customized prompt (not in `oldDefaults`) is left untouched.
+    func refresh(_ slot: WorkflowType, oldDefaults: [String], newDefault: String) {
       guard var cfg = appSettings.modes[slot.rawValue] else { return }
-      if cfg.rewrite.systemPrompt == oldDefault {
+      if oldDefaults.contains(cfg.rewrite.systemPrompt), cfg.rewrite.systemPrompt != newDefault {
         cfg.rewrite.systemPrompt = newDefault
         appSettings.modes[slot.rawValue] = cfg
       }
     }
 
     refresh(
-      .textImprover, oldDefault: ModeDefaults.legacyEmailSystemPrompt,
+      .textImprover, oldDefaults: [ModeDefaults.legacyEmailSystemPrompt],
       newDefault: ModeDefaults.emailSystemPrompt)
     refresh(
-      .dampfAblassen, oldDefault: ModeDefaults.legacyPromptCraftSystemPrompt,
+      .dampfAblassen,
+      oldDefaults: [
+        ModeDefaults.legacyPromptCraftSystemPrompt, ModeDefaults.legacyPromptCraftSystemPromptV2,
+      ],
       newDefault: ModeDefaults.promptCraftSystemPrompt)
 
     appSettings.modesSchemaVersion = targetVersion
