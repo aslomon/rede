@@ -34,6 +34,7 @@ final class HotkeyService {
   private var globalMonitor: Any?
   private var localMonitor: Any?
   private var keyMonitor: Any?
+  private var localKeyMonitor: Any?
   private var activeCombo: WorkflowType?  // Which combo is currently held
 
   var onHotkeyEvent: ((HotkeyEvent) -> Void)?
@@ -51,7 +52,9 @@ final class HotkeyService {
       }
       return event
     }
-    // Escape key monitor for toggle mode
+    // Escape aborts the current run. GLOBAL monitor: fires while another app is frontmost (the
+    // background-hotkey case) — but it requires Accessibility/Input-Monitoring trust, so it's dead
+    // when that grant is stale/missing (same root as paste).
     keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
       Task { @MainActor in
         if event.keyCode == 53 {  // Escape
@@ -59,15 +62,25 @@ final class HotkeyService {
         }
       }
     }
+    // LOCAL monitor: covers the case where a Blitztext window (popover) is key — no Accessibility
+    // needed. `handleEscape` no-ops when nothing is recording, so we always let the event propagate.
+    localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      if event.keyCode == 53 {  // Escape
+        Task { @MainActor in self?.handleEscape() }
+      }
+      return event
+    }
   }
 
   func stop() {
     if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
     if let localMonitor { NSEvent.removeMonitor(localMonitor) }
     if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+    if let localKeyMonitor { NSEvent.removeMonitor(localKeyMonitor) }
     globalMonitor = nil
     localMonitor = nil
     keyMonitor = nil
+    localKeyMonitor = nil
   }
 
   private func handleFlags(_ event: NSEvent) {
