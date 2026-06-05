@@ -44,6 +44,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     appState.hotkeyService.onHotkeyEvent = { [weak self] event in
       self?.handleHotkeyEvent(event)
     }
+    // Escape only aborts (and is consumed) while a run is actually active.
+    appState.hotkeyService.isAbortable = { [weak appState] in
+      appState?.activeWorkflow?.phase.isActive ?? false
+    }
     recordingPillController = RecordingPillController(appState: appState)
     localModelsWindowController = LocalModelsWindowController(manager: appState.localModelManager)
     archiveWindowController = ArchiveWindowController(appState: appState)

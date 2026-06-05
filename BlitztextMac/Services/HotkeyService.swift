@@ -1,4 +1,5 @@
 import Cocoa
+import CoreGraphics
 import Observation
 
 enum HotkeyMode: String, Codable, Sendable, CaseIterable, Identifiable {
@@ -33,11 +34,15 @@ enum HotkeyEvent {
 final class HotkeyService {
   private var globalMonitor: Any?
   private var localMonitor: Any?
-  private var keyMonitor: Any?
-  private var localKeyMonitor: Any?
+  private var escTap: CFMachPort?
+  private var escTapSource: CFRunLoopSource?
+  private var escFallbackMonitor: Any?
   private var activeCombo: WorkflowType?  // Which combo is currently held
 
   var onHotkeyEvent: ((HotkeyEvent) -> Void)?
+  /// Set by the app: true while a run is active (so Escape should abort + be consumed). When false,
+  /// Escape passes through untouched so it keeps working everywhere else.
+  var isAbortable: (() -> Bool)?
 
   func start() {
     globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) {
@@ -52,35 +57,82 @@ final class HotkeyService {
       }
       return event
     }
-    // Escape aborts the current run. GLOBAL monitor: fires while another app is frontmost (the
-    // background-hotkey case) — but it requires Accessibility/Input-Monitoring trust, so it's dead
-    // when that grant is stale/missing (same root as paste).
-    keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-      Task { @MainActor in
-        if event.keyCode == 53 {  // Escape
-          self?.handleEscape()
-        }
-      }
+    startEscTap()
+  }
+
+  /// Escape-to-abort via a `CGEventTap`. Unlike `NSEvent.addGlobalMonitorForEvents(.keyDown)` (which
+  /// needs the separate "Input Monitoring" right), a session event tap keys off the SAME Accessibility
+  /// trust that paste already uses — so it works as soon as Accessibility is granted, no extra grant.
+  /// It also CONSUMES Escape while a run is abortable, so the frontmost app doesn't act on it too.
+  private func startEscTap() {
+    let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
+    let callback: CGEventTapCallBack = { _, type, event, refcon in
+      guard let refcon else { return Unmanaged.passUnretained(event) }
+      let service = Unmanaged<HotkeyService>.fromOpaque(refcon).takeUnretainedValue()
+      return service.handleEscTap(type: type, event: event)
     }
-    // LOCAL monitor: covers the case where a Blitztext window (popover) is key — no Accessibility
-    // needed. `handleEscape` no-ops when nothing is recording, so we always let the event propagate.
-    localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-      if event.keyCode == 53 {  // Escape
-        Task { @MainActor in self?.handleEscape() }
+
+    guard
+      let tap = CGEvent.tapCreate(
+        tap: .cgSessionEventTap,
+        place: .headInsertEventTap,
+        options: .defaultTap,
+        eventsOfInterest: mask,
+        callback: callback,
+        userInfo: Unmanaged.passUnretained(self).toOpaque()
+      )
+    else {
+      // No Accessibility trust yet → fall back to a LOCAL keyDown monitor (covers only the case where
+      // a Blitztext window is key). Once Accessibility is granted + the app relaunched, the tap is used.
+      escFallbackMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) {
+        [weak self] event in
+        if event.keyCode == 53 { Task { @MainActor in self?.handleEscape() } }
+        return event
       }
-      return event
+      return
+    }
+
+    escTap = tap
+    let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+    escTapSource = source
+    CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+    CGEvent.tapEnable(tap: tap, enable: true)
+  }
+
+  /// Tap callback body. Runs on the MAIN run loop (the source is added there), so MainActor state is
+  /// reachable via `assumeIsolated`. Returns nil to CONSUME the event, or the event to pass it on.
+  nonisolated private func handleEscTap(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+      MainActor.assumeIsolated {
+        if let tap = self.escTap { CGEvent.tapEnable(tap: tap, enable: true) }
+      }
+      return Unmanaged.passUnretained(event)
+    }
+    guard type == .keyDown, event.getIntegerValueField(.keyboardEventKeycode) == 53 else {
+      return Unmanaged.passUnretained(event)
+    }
+    return MainActor.assumeIsolated {
+      guard self.isAbortable?() ?? false else {
+        return Unmanaged.passUnretained(event)  // nothing to abort → let Escape work normally
+      }
+      self.handleEscape()
+      return nil  // consume — the frontmost app does not also receive this Escape
     }
   }
 
   func stop() {
     if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
     if let localMonitor { NSEvent.removeMonitor(localMonitor) }
-    if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
-    if let localKeyMonitor { NSEvent.removeMonitor(localKeyMonitor) }
+    if let escFallbackMonitor { NSEvent.removeMonitor(escFallbackMonitor) }
+    if let escTap, let escTapSource {
+      CGEvent.tapEnable(tap: escTap, enable: false)
+      CFRunLoopRemoveSource(CFRunLoopGetMain(), escTapSource, .commonModes)
+    }
     globalMonitor = nil
     localMonitor = nil
-    keyMonitor = nil
-    localKeyMonitor = nil
+    escFallbackMonitor = nil
+    escTap = nil
+    escTapSource = nil
   }
 
   private func handleFlags(_ event: NSEvent) {
