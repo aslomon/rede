@@ -54,8 +54,8 @@ final class ArchiveReuseTests: XCTestCase {
     XCTAssertEqual(
       prompt,
       LLMService.rewriteSystemPrompt(rewrite, customTerms: [], selection: nil, memory: nil))
-    // The curated E-Mail prompt carries through.
-    XCTAssertTrue(prompt.contains("E-Mail"))
+    // The curated email prompt carries through.
+    XCTAssertTrue(prompt.contains("email"))
   }
 
   func testCustomTermsFlowIntoTheRerunPrompt() {

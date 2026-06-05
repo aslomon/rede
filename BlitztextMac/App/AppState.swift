@@ -145,6 +145,7 @@ final class AppState {
     self.memoryCoordinator = MemoryCoordinator(
       memory: memoryStore, archive: archiveStore)
     migrateToModeConfigsIfNeeded()
+    refreshDefaultPromptsIfNeeded()
     refreshAccessibilityPermission()
     autoSelectFastLocalModelIfNeeded()
     prewarmLocalTranscriptionIfNeeded()
@@ -632,6 +633,32 @@ final class AppState {
     // both transcription AND rewriting on-device (local model) instead of disabling rewrite.
     // We never silently flip it — fresh installs default to false via the AppSettings property default.
     // didSet does NOT fire during init mutations — persist explicitly.
+    saveSettings()
+  }
+
+  /// One-time prompt refresh: bumps the E-Mail and Prompt modes from the PREVIOUS curated default to
+  /// the current one. A mode whose stored prompt differs from the old default (i.e. the user
+  /// customized it) is left untouched. Versioned via `modesSchemaVersion` so it runs exactly once.
+  private func refreshDefaultPromptsIfNeeded() {
+    let targetVersion = 2
+    guard appSettings.modesSchemaVersion < targetVersion else { return }
+
+    func refresh(_ slot: WorkflowType, oldDefault: String, newDefault: String) {
+      guard var cfg = appSettings.modes[slot.rawValue] else { return }
+      if cfg.rewrite.systemPrompt == oldDefault {
+        cfg.rewrite.systemPrompt = newDefault
+        appSettings.modes[slot.rawValue] = cfg
+      }
+    }
+
+    refresh(
+      .textImprover, oldDefault: ModeDefaults.legacyEmailSystemPrompt,
+      newDefault: ModeDefaults.emailSystemPrompt)
+    refresh(
+      .dampfAblassen, oldDefault: ModeDefaults.legacyPromptCraftSystemPrompt,
+      newDefault: ModeDefaults.promptCraftSystemPrompt)
+
+    appSettings.modesSchemaVersion = targetVersion
     saveSettings()
   }
 

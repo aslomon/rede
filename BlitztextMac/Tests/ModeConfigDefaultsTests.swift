@@ -41,14 +41,14 @@ final class ModeConfigDefaultsTests: XCTestCase {
     let email = ModeConfig.default(for: .textImprover)
     XCTAssertEqual(email.rewrite.systemPrompt, ModeDefaults.emailSystemPrompt)
     XCTAssertEqual(email.rewrite.modelID, RewriteModelRegistry.strongModelID)
-    XCTAssertTrue(email.rewrite.systemPrompt.contains("E-Mail"))
+    XCTAssertTrue(email.rewrite.systemPrompt.contains("email"))
   }
 
   func testPromptSlotUsesCuratedPromptCraftPrompt() {
     let prompt = ModeConfig.default(for: .dampfAblassen)
     XCTAssertEqual(prompt.rewrite.systemPrompt, ModeDefaults.promptCraftSystemPrompt)
     XCTAssertEqual(prompt.rewrite.modelID, RewriteModelRegistry.strongModelID)
-    XCTAssertTrue(prompt.rewrite.systemPrompt.contains("KI-Coding-Agenten"))
+    XCTAssertTrue(prompt.rewrite.systemPrompt.contains("Claude Code"))
   }
 
   func testEmojiSlotUsesFastModelAndNoSystemPrompt() {
@@ -65,14 +65,22 @@ final class ModeConfigDefaultsTests: XCTestCase {
     XCTAssertEqual(plain.kind, .transcribeOnly)
   }
 
-  // MARK: - Curated prompt content integrity (no truncation across the \-continuations)
+  // MARK: - Curated prompt content integrity (structured multi-line markdown prompts)
 
-  func testCuratedPromptsAreNonEmptyAndSingleLineJoined() {
-    // The multiline string literals use trailing backslashes to join physical lines;
-    // assert the join produced one continuous paragraph (no stray double spaces / newlines mid-word).
-    XCTAssertFalse(ModeDefaults.emailSystemPrompt.contains("  "))
-    XCTAssertFalse(ModeDefaults.promptCraftSystemPrompt.contains("  "))
-    XCTAssertGreaterThan(ModeDefaults.emailSystemPrompt.count, 100)
-    XCTAssertGreaterThan(ModeDefaults.promptCraftSystemPrompt.count, 100)
+  func testCuratedPromptsAreSubstantialMarkdownAndClean() {
+    // The curated prompts are now structured markdown (headed sections), not single-line paragraphs.
+    // Assert they are substantial, use markdown headings, and carry no stray double spaces.
+    for prompt in [ModeDefaults.emailSystemPrompt, ModeDefaults.promptCraftSystemPrompt] {
+      XCTAssertGreaterThan(prompt.count, 400)
+      XCTAssertTrue(prompt.contains("# "))
+      XCTAssertFalse(prompt.contains("  "))  // no double spaces inside the lines
+    }
+  }
+
+  func testLegacyPromptsDifferFromCurrent() {
+    // The migration relies on the OLD defaults being distinct from the new ones.
+    XCTAssertNotEqual(ModeDefaults.legacyEmailSystemPrompt, ModeDefaults.emailSystemPrompt)
+    XCTAssertNotEqual(
+      ModeDefaults.legacyPromptCraftSystemPrompt, ModeDefaults.promptCraftSystemPrompt)
   }
 }
