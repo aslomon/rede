@@ -14,8 +14,11 @@ struct RecordingPillView: View {
   var audioLevel: Float
   /// Per-mode accent color. Defaults to transcription blue.
   var accentColor: Color
-  /// Recording (live waveform) / processing (working animation) / cancelled (brief red flash).
+  /// Recording (live waveform) / processing (working animation) / cancelled (brief red flash) /
+  /// failed (red + the error message).
   var phase: PillPhase
+  /// The run's error text, shown in the `.failed` state.
+  var errorMessage: String?
   /// Invoked when the user confirms (stop/checkmark).
   var onStop: () -> Void
   /// Invoked when the user cancels (X).
@@ -26,15 +29,40 @@ struct RecordingPillView: View {
   private let pillHeight: CGFloat = 32
 
   var body: some View {
-    pillContent
-      .onHover { hovering in
-        withAnimation(.easeInOut(duration: 0.18)) {
-          isHovering = hovering
-        }
+    Group {
+      if phase == .failed {
+        failedContent
+      } else {
+        pillContent
       }
-      .animation(.easeInOut(duration: 0.18), value: isHovering)
-      .accessibilityElement(children: .contain)
-      .accessibilityLabel(pillAccessibilityLabel)
+    }
+    .onHover { hovering in
+      withAnimation(.easeInOut(duration: 0.18)) {
+        isHovering = hovering
+      }
+    }
+    .animation(.easeInOut(duration: 0.18), value: isHovering)
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel(pillAccessibilityLabel)
+  }
+
+  /// Red error pill: a warning glyph + the actual message (up to 2 lines), so a failed run — most
+  /// importantly an eyes-off background-hotkey run — explains itself instead of flashing silently.
+  private var failedContent: some View {
+    HStack(spacing: 8) {
+      Image(systemName: "exclamationmark.triangle.fill")
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(.red)
+      Text(errorMessage ?? "Fehler")
+        .font(.system(size: 11, weight: .medium))
+        .foregroundStyle(.primary)
+        .lineLimit(2)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: 240, alignment: .leading)
+    }
+    .padding(.horizontal, 12)
+    .padding(.vertical, 7)
+    .modifier(PillGlassModifier())
   }
 
   // MARK: - Layout
@@ -43,7 +71,11 @@ struct RecordingPillView: View {
 
   /// Spoken summary of the pill's current state for VoiceOver.
   private var pillAccessibilityLabel: String {
-    phase == .processing ? "Wird transkribiert" : "Aufnahme läuft"
+    switch phase {
+    case .failed: return "Fehler: \(errorMessage ?? "")"
+    case .processing: return "Wird transkribiert"
+    default: return "Aufnahme läuft"
+    }
   }
 
   private var pillContent: some View {

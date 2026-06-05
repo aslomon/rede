@@ -36,6 +36,10 @@ final class AppState {
   /// e.g. chosen gpt-5.4 unavailable → gpt-4o-mini). One quiet German line, shown in the result
   /// area so the quality drop is visible. Cleared at the start of each new run. See B6.
   var lastRewriteFallbackNote: String?
+  /// The most recent run's error message. Set right before the `.error` status so the floating pill
+  /// can show WHY a run failed (esp. background-hotkey runs, which surface no popover). Cleared at
+  /// the next recording start.
+  private(set) var lastRunErrorMessage: String?
   var localModelDownloadProgress: Double?
   var localModelDownloadStatusText: String?
   var localModelDownloadErrorText: String?
@@ -1162,6 +1166,7 @@ final class AppState {
       }
 
     case .running:
+      if workflow.isRecording { lastRunErrorMessage = nil }  // clear stale error at run start
       menuBarStatus =
         workflow.isRecording
         ? .recording(workflow.type)
@@ -1177,6 +1182,9 @@ final class AppState {
       playEarcon(.done)
 
     case .error(let message):
+      // Stash the message BEFORE the status change so the pill (driven by the status) can show it —
+      // crucial for background-hotkey runs, which otherwise reset the page and swallow the text.
+      lastRunErrorMessage = message
       menuBarStatus = .error(workflow.type)
       // A no-speech take is benign — don't punish it with the harsh error earcon; stay silent.
       if message != TranscriptionQualityService.noSpeechMessage { playEarcon(.error) }

@@ -50,7 +50,9 @@ final class RecordingPillController {
       // Text was inserted → done.
       hide()
     case .error:
-      flashCancelAndHide()
+      // Surface the actual error message — crucial for background-hotkey runs, which otherwise
+      // show only a silent red status with no explanation of WHY the dictation failed.
+      flashErrorAndHide(message: appState?.lastRunErrorMessage)
     case .idle:
       // Ignore the .idle that arrives right after a cancel — the flash owns the hide.
       if !isFlashing { hide() }
@@ -66,7 +68,7 @@ final class RecordingPillController {
     appState?.resetCurrentWorkflow()
   }
 
-  /// Briefly tints the pill red (cancel/error) and then hides it. Only flashes when the pill is
+  /// Briefly tints the pill red (user cancel) and then hides it. Only flashes when the pill is
   /// already on screen — a pre-recording error (e.g. empty selection) just hides without a flash.
   private func flashCancelAndHide() {
     guard panel?.isVisible == true else {
@@ -82,6 +84,39 @@ final class RecordingPillController {
       guard let self else { return }
       self.isFlashing = false
       self.panel?.orderOut(nil)
+    }
+  }
+
+  /// Shows the failure as a red pill WITH the error message for a few seconds, then hides. Unlike
+  /// the cancel flash this creates the panel if needed (so even a pre-recording error is visible)
+  /// and stays long enough to read. Falls back to the brief cancel flash when there is no message.
+  private func flashErrorAndHide(message: String?) {
+    let text = message?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    guard !text.isEmpty else {
+      flashCancelAndHide()
+      return
+    }
+    if panel == nil { panel = makePanel() }
+    guard let panel else {
+      hide()
+      return
+    }
+    isFlashing = true
+    model.errorMessage = text
+    model.phase = .failed
+    stopLevelTimer()
+    flashTask?.cancel()
+    flashTask = Task { @MainActor [weak self] in
+      guard let self else { return }
+      // Let SwiftUI lay out the wider error content, then resize + recenter the panel to fit it.
+      try? await Task.sleep(for: .milliseconds(30))
+      self.positionPanel(panel)
+      panel.orderFrontRegardless()
+      try? await Task.sleep(for: .milliseconds(4200))
+      guard !Task.isCancelled else { return }
+      self.isFlashing = false
+      self.model.errorMessage = nil
+      panel.orderOut(nil)
     }
   }
 
@@ -223,11 +258,14 @@ final class RecordingPillController {
 
 // MARK: - Hosted SwiftUI bridge
 
-/// The pill's visual phase: live recording, working (transcribing/rewriting), or a cancel/error flash.
+/// The pill's visual phase: live recording, working (transcribing/rewriting), a brief cancel flash,
+/// or a `failed` state that shows the actual error MESSAGE (so a background-hotkey run that fails is
+/// no longer just a silent red — the user sees WHY).
 enum PillPhase {
   case recording
   case processing
   case cancelled
+  case failed
 }
 
 /// Observable bridge so the controller's timer-pushed `audioLevel`/`accentColor`/`phase` re-render.
@@ -236,6 +274,8 @@ final class RecordingPillModel: ObservableObject {
   @Published var audioLevel: Float = 0
   @Published var accentColor: Color = WorkflowType.transcription.accentColorValue
   @Published var phase: PillPhase = .recording
+  /// Shown in the `.failed` state — the run's error message.
+  @Published var errorMessage: String?
 }
 
 private struct RecordingPillHostView: View {
@@ -248,6 +288,7 @@ private struct RecordingPillHostView: View {
       audioLevel: model.audioLevel,
       accentColor: model.accentColor,
       phase: model.phase,
+      errorMessage: model.errorMessage,
       onStop: onStop,
       onCancel: onCancel
     )
