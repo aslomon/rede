@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Inline status for the local rewrite model served by Ollama.
+/// Inline status for the local rewrite model.
 ///
 /// Selection and downloads live in the standalone "Lokale Modelle" window so there is only one
 /// place where the active model can be chosen. This view only reports the current state and opens
@@ -10,8 +10,8 @@ struct LocalLLMModelPicker: View {
 
   private var manager: LocalModelManager { appState.localModelManager }
 
-  private var selectedName: String {
-    appState.appSettings.selectedLocalLLMModelName.trimmingCharacters(in: .whitespacesAndNewlines)
+  private var selection: LocalLLMSelection {
+    appState.appSettings.selectedLocalLLM
   }
 
   var body: some View {
@@ -38,7 +38,15 @@ struct LocalLLMModelPicker: View {
 
   @ViewBuilder
   private var statusPill: some View {
-    if !manager.serverReachable {
+    if selection.runtime == .llamaCpp {
+      if selectedLlamaCppModel != nil {
+        BlitzStatusPill(state: .ready, label: "Gewählt")
+      } else if manager.llamaCppInstalled.isEmpty {
+        BlitzStatusPill(state: .download, label: "Laden")
+      } else {
+        BlitzStatusPill(state: .warning, label: "Auswählen")
+      }
+    } else if !manager.serverReachable {
       BlitzStatusPill(state: .warning, label: manager.ollamaAppInstalled ? "Starten" : "Setup")
     } else if selectedInstalledRecord != nil {
       BlitzStatusPill(state: .ready, label: "Gewählt")
@@ -50,6 +58,15 @@ struct LocalLLMModelPicker: View {
   }
 
   private var statusLine: String {
+    if selection.runtime == .llamaCpp {
+      if let selectedLlamaCppModel {
+        return "Aktiv: \(selectedLlamaCppModel.displayName)"
+      }
+      if manager.llamaCppInstalled.isEmpty {
+        return "Noch kein GGUF-Modell für llama.cpp installiert."
+      }
+      return "\(manager.llamaCppInstalled.count) GGUF-Modell(e) installiert. Wähle das aktive Modell in der Modellseite."
+    }
     if !manager.serverReachable {
       return manager.ollamaAppInstalled
         ? "Ollama ist installiert, läuft aber noch nicht. Öffne die Modellseite zum Starten."
@@ -65,8 +82,13 @@ struct LocalLLMModelPicker: View {
   }
 
   private var selectedInstalledRecord: OllamaService.InstalledModel? {
-    guard !selectedName.isEmpty else { return nil }
-    return manager.installed.first { OllamaService.isInstalled(selectedName, in: [$0.name]) }
+    guard selection.runtime == .ollama, selection.isConfigured else { return nil }
+    return manager.installed.first { OllamaService.isInstalled(selection.modelID, in: [$0.name]) }
+  }
+
+  private var selectedLlamaCppModel: LlamaCppModelCatalog.Model? {
+    guard selection.runtime == .llamaCpp, selection.isConfigured else { return nil }
+    return manager.installedLlamaCppModel(for: selection.modelID)
   }
 
   // MARK: - Actions

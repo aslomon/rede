@@ -8,6 +8,10 @@ RUN_AFTER=false
 INSTALL_APP=false
 BUILD_CONFIGURATION="Release"
 UNIVERSAL_ARCHS="arm64 x86_64"
+LLAMACPP_HELPER_PATH="${LLAMACPP_HELPER_PATH:-}"
+LLAMACPP_HELPER_SHA256="${LLAMACPP_HELPER_SHA256:-}"
+REQUIRE_LLAMA_CPP_HELPER=false
+ALLOW_MISSING_LLAMA_CPP_HELPER=false
 
 for arg in "$@"; do
     case "$arg" in
@@ -23,9 +27,21 @@ for arg in "$@"; do
         --release)
             BUILD_CONFIGURATION="Release"
             ;;
+        --llamacpp-helper=*)
+            LLAMACPP_HELPER_PATH="${arg#*=}"
+            ;;
+        --llamacpp-helper-sha256=*)
+            LLAMACPP_HELPER_SHA256="${arg#*=}"
+            ;;
+        --require-llamacpp-helper)
+            REQUIRE_LLAMA_CPP_HELPER=true
+            ;;
+        --allow-missing-llamacpp-helper)
+            ALLOW_MISSING_LLAMA_CPP_HELPER=true
+            ;;
         *)
             echo "Unbekannte Option: $arg"
-            echo "Verwendung: ./build.sh [--install] [--run] [--release] [--debug]"
+            echo "Verwendung: ./build.sh [--install] [--run] [--release] [--debug] [--llamacpp-helper=/path/to/llama-server] [--llamacpp-helper-sha256=<sha256>] [--require-llamacpp-helper] [--allow-missing-llamacpp-helper]"
             exit 1
             ;;
     esac
@@ -67,6 +83,7 @@ resolve_codesign_identity() {
 # identity is installed — the build still succeeds.
 sign_app_bundle() {
     local target="$1"
+    sign_nested_code "$target"
 
     if [ "$CODESIGN_MODE" = "stable" ]; then
         echo "🔏 Signiere mit stabiler lokaler Identitaet (\"$CODESIGN_IDENTITY_NAME\"). Bedienungshilfen-Freigaben ueberleben Rebuilds."
@@ -78,6 +95,25 @@ sign_app_bundle() {
         echo "   Tipp: Fuehre einmalig scripts/create-dev-cert.sh aus, damit Bedienungshilfen-Freigaben Rebuilds ueberleben."
         codesign --force --sign - "$target" 2>&1
     fi
+
+    codesign --verify --deep --strict --verbose=2 "$target" >/dev/null 2>&1
+}
+
+sign_nested_code() {
+    local target="$1"
+    local helper="$target/Contents/Helpers/llama-server"
+
+    if [ ! -f "$helper" ]; then
+        return
+    fi
+
+    if [ "$CODESIGN_MODE" = "stable" ]; then
+        codesign --force --options runtime --sign "$CODESIGN_IDENTITY_NAME" "$helper" 2>&1
+    else
+        codesign --force --sign - "$helper" 2>&1
+    fi
+
+    codesign --verify --strict --verbose=2 "$helper" >/dev/null 2>&1
 }
 
 verify_universal_app() {
@@ -112,6 +148,92 @@ verify_universal_app() {
     echo "✅ Universal Binary verifiziert: $archs"
 }
 
+verify_llamacpp_helper() {
+    local helper_path="$1"
+    local expected_sha="$2"
+    local archs
+    local actual_sha
+
+    if [ ! -f "$helper_path" ]; then
+        echo "❌ llama.cpp Helper nicht gefunden: $helper_path"
+        exit 1
+    fi
+
+    if [[ "$helper_path" != /* ]]; then
+        echo "❌ llama.cpp Helper-Pfad muss absolut sein: $helper_path"
+        exit 1
+    fi
+
+    if [ -L "$helper_path" ]; then
+        echo "❌ llama.cpp Helper darf kein Symlink sein: $helper_path"
+        exit 1
+    fi
+
+    if [ ! -x "$helper_path" ]; then
+        echo "❌ llama.cpp Helper ist nicht ausfuehrbar: $helper_path"
+        exit 1
+    fi
+
+    if [ -z "$expected_sha" ]; then
+        echo "❌ llama.cpp Helper braucht eine erwartete SHA-256."
+        echo "   Nutze: --llamacpp-helper-sha256=<sha256>"
+        exit 1
+    fi
+
+    actual_sha="$(shasum -a 256 "$helper_path" | awk '{print $1}')"
+    if [ "$actual_sha" != "$expected_sha" ]; then
+        echo "❌ llama.cpp Helper Checksum passt nicht."
+        echo "   Erwartet: $expected_sha"
+        echo "   Gefunden: $actual_sha"
+        exit 1
+    fi
+
+    archs="$(lipo -archs "$helper_path" 2>/dev/null || true)"
+    if [[ -z "$archs" ]]; then
+        echo "❌ Konnte Helper-Architekturen nicht lesen: $helper_path"
+        file "$helper_path" 2>/dev/null || true
+        exit 1
+    fi
+
+    if [[ " $archs " != *" arm64 "* || " $archs " != *" x86_64 "* ]]; then
+        echo "❌ llama.cpp Helper ist nicht universal. Erwartet: arm64 + x86_64"
+        echo "   Gefunden: $archs"
+        file "$helper_path" 2>/dev/null || true
+        exit 1
+    fi
+
+    echo "✅ llama.cpp Helper verifiziert: $archs"
+}
+
+stage_llamacpp_helper() {
+    local app_path="$1"
+
+    if [ -z "$LLAMACPP_HELPER_PATH" ]; then
+        echo "⚠️  Kein llama.cpp Helper angegeben – App baut ohne gebuendelten lokalen LLM-Helper."
+        return
+    fi
+
+    verify_llamacpp_helper "$LLAMACPP_HELPER_PATH" "$LLAMACPP_HELPER_SHA256"
+    local helpers_dir="$app_path/Contents/Helpers"
+    mkdir -p "$helpers_dir"
+    cp -f "$LLAMACPP_HELPER_PATH" "$helpers_dir/llama-server"
+    chmod 755 "$helpers_dir/llama-server"
+    verify_llamacpp_helper "$helpers_dir/llama-server" "$LLAMACPP_HELPER_SHA256"
+}
+
+preflight_llamacpp_helper_requirement() {
+    if [ -n "$LLAMACPP_HELPER_PATH" ]; then
+        return
+    fi
+
+    if [ "$REQUIRE_LLAMA_CPP_HELPER" = true ] || { [ "$BUILD_CONFIGURATION" = "Release" ] && [ "$ALLOW_MISSING_LLAMA_CPP_HELPER" != true ]; } || { [ "$INSTALL_APP" = true ] && [ "$ALLOW_MISSING_LLAMA_CPP_HELPER" != true ]; }; then
+        echo "❌ llama.cpp Helper ist fuer diesen Build erforderlich."
+        echo "   Nutze: ./build.sh --llamacpp-helper=/absolute/path/to/llama-server --llamacpp-helper-sha256=<sha256>"
+        echo "   Nur fuer lokale Zwischenbuilds: --allow-missing-llamacpp-helper"
+        exit 1
+    fi
+}
+
 ensure_xcodebuild_available() {
     if xcodebuild -version >/dev/null 2>&1; then
         return
@@ -139,6 +261,7 @@ DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-blitztextmac-build"
 ENTITLEMENTS_PATH="$PROJECT_DIR/Resources/BlitztextMac.entitlements"
 cd "$PROJECT_DIR"
 
+preflight_llamacpp_helper_requirement
 ensure_xcodebuild_available
 
 if command -v xcodegen &> /dev/null; then
@@ -183,6 +306,7 @@ mkdir -p "$RESOURCES_DIR"
 cp -f "$PROJECT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/" 2>/dev/null || true
 cp -f "$PROJECT_DIR/Resources/menubar_icon.png" "$RESOURCES_DIR/" 2>/dev/null || true
 cp -f "$PROJECT_DIR/Resources/menubar_icon@2x.png" "$RESOURCES_DIR/" 2>/dev/null || true
+stage_llamacpp_helper "$APP_PATH"
 
 # In Projektordner kopieren
 DEST="$SCRIPT_DIR/Blitztext.app"

@@ -46,6 +46,10 @@ enum AppSupportPaths {
     localModelsDirectoryURL.appendingPathComponent("whisperkit", isDirectory: true)
   }
 
+  static var llamaCppModelsDirectoryURL: URL {
+    localModelsDirectoryURL.appendingPathComponent("llamacpp", isDirectory: true)
+  }
+
   static var defaultWhisperKitModelURL: URL {
     whisperKitModelsDirectoryURL.appendingPathComponent(
       "openai_whisper-large-v3-v20240930_626MB",

@@ -172,8 +172,12 @@ struct AppSettings: Codable, Sendable {
   var selectedLocalTranscriptionModelName: String = LocalTranscriptionService
     .recommendedFastModelName
   var hasAutoSelectedFastLocalModel: Bool = false
-  /// Phase 3: the local rewrite model served by Ollama (e.g. "gemma3"). Used by the `.local`
-  /// rewrite backend. Global (like the WhisperKit transcription model), not per-mode.
+  /// The selected local rewrite runtime and model. `.local` workflow backends route through this
+  /// runtime-neutral selection. New installs prefer the bundled llama.cpp path, with no model
+  /// pre-selected until a GGUF is installed.
+  var selectedLocalLLM: LocalLLMSelection = LocalLLMSelection()
+  /// Legacy Ollama model tag. Kept for settings migration and older UI state; new local runtime
+  /// routing uses `selectedLocalLLM`.
   var selectedLocalLLMModelName: String = OllamaService.defaultModelName
   /// Per-slot configurable mode settings, keyed by `WorkflowType.rawValue`.
   /// Stored as a String-keyed dictionary so JSONEncoder writes a keyed object (not an array).
@@ -217,6 +221,7 @@ struct AppSettings: Codable, Sendable {
     selectedLocalTranscriptionModelName: String = LocalTranscriptionService
       .recommendedFastModelName,
     hasAutoSelectedFastLocalModel: Bool = false,
+    selectedLocalLLM: LocalLLMSelection = LocalLLMSelection(),
     selectedLocalLLMModelName: String = OllamaService.defaultModelName,
     archiveEnabled: Bool = false,
     memoryContextEnabled: Bool = false,
@@ -233,6 +238,7 @@ struct AppSettings: Codable, Sendable {
     self.secureLocalModeEnabled = secureLocalModeEnabled
     self.selectedLocalTranscriptionModelName = selectedLocalTranscriptionModelName
     self.hasAutoSelectedFastLocalModel = hasAutoSelectedFastLocalModel
+    self.selectedLocalLLM = selectedLocalLLM
     self.selectedLocalLLMModelName = selectedLocalLLMModelName
     self.archiveEnabled = archiveEnabled
     self.memoryContextEnabled = memoryContextEnabled
@@ -251,6 +257,7 @@ struct AppSettings: Codable, Sendable {
     case secureLocalModeEnabled
     case selectedLocalTranscriptionModelName
     case hasAutoSelectedFastLocalModel
+    case selectedLocalLLM
     case selectedLocalLLMModelName
     case modes
     case didMigrateToModeConfigs
@@ -289,6 +296,17 @@ struct AppSettings: Codable, Sendable {
         String.self,
         forKey: .selectedLocalLLMModelName
       ) ?? OllamaService.defaultModelName
+    if let decodedSelection = try container.decodeIfPresent(
+      LocalLLMSelection.self,
+      forKey: .selectedLocalLLM
+    ) {
+      selectedLocalLLM = decodedSelection
+    } else {
+      let legacyModel = selectedLocalLLMModelName.trimmingCharacters(in: .whitespacesAndNewlines)
+      selectedLocalLLM = legacyModel.isEmpty
+        ? LocalLLMSelection()
+        : LocalLLMSelection(runtime: .ollama, modelID: legacyModel)
+    }
     modes = try container.decodeIfPresent([String: ModeConfig].self, forKey: .modes) ?? [:]
     didMigrateToModeConfigs =
       try container.decodeIfPresent(Bool.self, forKey: .didMigrateToModeConfigs) ?? false

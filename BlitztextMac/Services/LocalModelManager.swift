@@ -26,8 +26,12 @@ final class LocalModelManager {
   private(set) var ollamaAppURL: URL?
   /// Models actually pulled into Ollama, with real on-disk sizes (largest first).
   private(set) var installed: [OllamaService.InstalledModel] = []
+  /// GGUF models installed for the bundled llama.cpp runtime.
+  private(set) var llamaCppInstalled: [LlamaCppModelCatalog.Model] = []
   /// In-flight downloads keyed by tag.
   private(set) var pulls: [String: PullUIState] = [:]
+  /// In-flight GGUF downloads keyed by llama.cpp catalog id.
+  private(set) var llamaCppDownloads: [String: PullUIState] = [:]
   /// In-flight Ollama app install/start state.
   private(set) var ollamaInstallState: PullUIState?
   /// Last error to surface (download/delete failure), cleared on the next successful action.
@@ -37,6 +41,8 @@ final class LocalModelManager {
 
   /// Live `Task`s for each running pull, so they can be cancelled. Not observed.
   @ObservationIgnored private var pullTasks: [String: Task<Void, Never>] = [:]
+  /// Live GGUF download tasks keyed by catalog id. Not observed.
+  @ObservationIgnored private var llamaCppDownloadTasks: [String: Task<Void, Never>] = [:]
   /// Identity token per running pull. A cancel→restart for the same tag mints a new token so a
   /// late-unwinding old Task can't wipe the new pull's bookkeeping. Not observed.
   @ObservationIgnored private var pullTokens: [String: UUID] = [:]
@@ -44,6 +50,7 @@ final class LocalModelManager {
   @ObservationIgnored private var ollamaInstallTask: Task<Void, Never>?
   /// Tags with an in-flight delete, to de-dupe double taps on "Entfernen". Not observed.
   @ObservationIgnored private var deletingTags: Set<String> = []
+  @ObservationIgnored private let llamaCppStore = LlamaCppModelStore.default
 
   // MARK: - Refresh
 
@@ -59,6 +66,7 @@ final class LocalModelManager {
     ollamaAppInstalled = ollamaAppURL != nil
     serverReachable = await OllamaService.statusCheck()
     installed = serverReachable ? await OllamaService.installedModelsDetailed() : []
+    llamaCppInstalled = llamaCppStore.installedModels()
   }
 
   // MARK: - Queries
@@ -82,6 +90,18 @@ final class LocalModelManager {
   /// Whether a download is currently running for `tag`.
   func isPulling(_ tag: String) -> Bool {
     pulls[tag] != nil
+  }
+
+  func isLlamaCppInstalled(_ modelID: String) -> Bool {
+    llamaCppInstalled.contains { $0.id == modelID }
+  }
+
+  func isDownloadingLlamaCpp(_ modelID: String) -> Bool {
+    llamaCppDownloads[modelID] != nil
+  }
+
+  func installedLlamaCppModel(for modelID: String) -> LlamaCppModelCatalog.Model? {
+    llamaCppInstalled.first { $0.id == modelID }
   }
 
   /// Whether the Ollama app is currently being installed or started.
@@ -168,6 +188,59 @@ final class LocalModelManager {
     pullTasks[tag] = nil
     pullTokens[tag] = nil
     pulls[tag] = nil
+  }
+
+  func downloadLlamaCpp(_ model: LlamaCppModelCatalog.Model) {
+    guard llamaCppDownloadTasks[model.id] == nil else { return }
+    lastError = nil
+    llamaCppDownloads[model.id] = PullUIState(
+      fraction: nil,
+      statusText: "Download wird vorbereitet …"
+    )
+
+    let service = LlamaCppDownloadService(store: llamaCppStore)
+    let worker = LlamaCppDownloadWorker()
+    let task = Task { [weak self] in
+      do {
+        try await worker.download(model, using: service) { progress in
+          Task { @MainActor [weak self] in
+            self?.llamaCppDownloads[model.id] = PullUIState(
+              fraction: progress.fraction,
+              statusText: progress.statusText
+            )
+          }
+        }
+        await self?.finishLlamaCppDownload(model.id, error: nil)
+      } catch is CancellationError {
+        await self?.finishLlamaCppDownload(model.id, error: nil)
+      } catch {
+        await self?.finishLlamaCppDownload(model.id, error: error.localizedDescription)
+      }
+    }
+    llamaCppDownloadTasks[model.id] = task
+  }
+
+  func cancelLlamaCppDownload(_ modelID: String) {
+    llamaCppDownloadTasks[modelID]?.cancel()
+    llamaCppDownloadTasks[modelID] = nil
+    llamaCppDownloads[modelID] = nil
+  }
+
+  func deleteLlamaCpp(_ model: LlamaCppModelCatalog.Model) {
+    lastError = nil
+    do {
+      try llamaCppStore.delete(model)
+      llamaCppInstalled = llamaCppStore.installedModels()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  private func finishLlamaCppDownload(_ modelID: String, error: String?) async {
+    llamaCppDownloadTasks[modelID] = nil
+    llamaCppDownloads[modelID] = nil
+    if let error { lastError = error }
+    await refresh()
   }
 
   private func applyProgress(

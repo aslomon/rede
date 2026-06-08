@@ -484,9 +484,13 @@ final class AppState {
   func rewriteProvider(for type: WorkflowType) -> any RewriteProvider {
     switch resolvedRewriteBackend(for: type) {
     case .local:
-      // Local rewriting runs through Ollama (a local HTTP server). If Ollama is down or the
-      // model is missing, the provider throws a guiding error at runtime instead of failing here.
-      return OllamaRewriteProvider(modelID: appSettings.selectedLocalLLMModelName)
+      let selection = appSettings.selectedLocalLLM
+      switch selection.runtime {
+      case .llamaCpp:
+        return LlamaCppRewriteProvider(modelID: selection.modelID)
+      case .ollama:
+        return OllamaRewriteProvider(modelID: selection.modelID)
+      }
     case .openai:
       return OpenAIRewriteProvider(modelID: modeConfig(for: type).rewrite.modelID)
     }
@@ -495,11 +499,7 @@ final class AppState {
   func rewriteBackendReady(for type: WorkflowType) -> Bool {
     switch resolvedRewriteBackend(for: type) {
     case .local:
-      // Ready only when a local model is actually selected. Otherwise the mode would accept a full
-      // dictation and then discard it into a runtime error (data loss). Gating here routes the user
-      // to settings BEFORE recording. A down Ollama server still surfaces as a clear runtime error.
-      return !appSettings.selectedLocalLLMModelName
-        .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      return appSettings.selectedLocalLLM.isConfigured
     case .openai:
       return KeychainService.isConfigured
     }
@@ -692,11 +692,10 @@ final class AppState {
     case .textImprover, .dampfAblassen, .emojiText:
       switch resolvedRewriteBackend(for: type) {
       case .local:
-        let model = appSettings.selectedLocalLLMModelName.trimmingCharacters(
-          in: .whitespacesAndNewlines)
-        return model.isEmpty
-          ? "Lokal über Ollama — noch kein Modell gewählt"
-          : "Lokal über Ollama (\(model))"
+        let selection = appSettings.selectedLocalLLM
+        return selection.isConfigured
+          ? "\(selection.runtime.backendLabel) (\(selection.modelID))"
+          : "\(selection.runtime.backendLabel) — noch kein Modell gewählt"
       case .openai:
         return type.subtitle
       }
