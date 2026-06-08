@@ -20,6 +20,8 @@ struct SystemSettingsView: View {
 
       hotkeysSection
 
+      dictationSection
+
       feedbackSection
 
       installationAndStartSection
@@ -140,6 +142,55 @@ struct SystemSettingsView: View {
     }
   }
 
+  // MARK: - Diktat (Länge + Pausen)
+
+  /// Selectable dictation length caps (minutes). The cap is only a runaway guard — these are all
+  /// comfortably under whisper-1's 25 MB online limit at 16 kHz mono.
+  private static let dictationLengthOptions = [3, 10, 30, 60]
+
+  private var dictationSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      SectionLabel(text: "Diktat")
+
+      Text("Maximale Aufnahmelänge")
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+
+      Picker("", selection: $appState.appSettings.maxDictationMinutes) {
+        ForEach(Self.dictationLengthOptions, id: \.self) { minutes in
+          Text("\(minutes) Min").tag(minutes)
+        }
+      }
+      .pickerStyle(.segmented)
+      .labelsHidden()
+
+      Text(
+        "Schützt nur vor vergessenen Aufnahmen — du kannst problemlos mehrere Minuten am Stück "
+          + "diktieren. Bei der Online-Transkription bleibt das 25-MB-Limit von OpenAI bestehen."
+      )
+      .font(.system(size: 10.5))
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
+
+      Toggle(
+        "Sprechpausen automatisch kürzen",
+        isOn: $appState.appSettings.silenceTrimmingEnabled
+      )
+      .toggleStyle(.switch)
+      .controlSize(.small)
+      .padding(.top, 4)
+
+      Text(
+        "Schneidet längere Gesprächspausen vor der Transkription heraus — kürzeres Audio, schnellere "
+          + "und günstigere Online-Verarbeitung. Läuft komplett auf deinem Mac; es wird nichts "
+          + "zusätzlich verschickt."
+      )
+      .font(.system(size: 10.5))
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
+    }
+  }
+
   // MARK: - Akustisches Feedback
 
   private var feedbackSection: some View {
@@ -250,7 +301,7 @@ struct SystemSettingsView: View {
   private var hotkeyWarningRows: [String] {
     appState.hotkeyValidationIssues.map { issue in
       switch issue {
-      case let .duplicate(label, modeIDs):
+      case .duplicate(let label, let modeIDs):
         let names = modeIDs.map(modeDisplayName).joined(separator: ", ")
         return "\(label): \(names)"
       }

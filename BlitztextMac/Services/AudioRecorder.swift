@@ -23,7 +23,24 @@ final class AudioRecorder: NSObject, AVAudioRecorderDelegate {
 
   /// Safety cap: a forgotten/runaway recording is auto-stopped after this many seconds so it
   /// can still be transcribed instead of growing unbounded (and blowing the upload limit).
-  static let maxRecordingDuration: TimeInterval = 180
+  /// Configurable global (synced from `AppSettings.maxDictationMinutes` by `AppState`) so long
+  /// dictations work — the cap only exists as a runaway guard, not a feature limit. Read when the
+  /// timer is armed (at `startRecording`), so settings changes take effect on the next recording.
+  static var maxRecordingDuration: TimeInterval = TimeInterval(
+    AppSettings.defaultMaxDictationMinutes * 60)
+
+  /// Opt-in global (synced from `AppSettings.silenceTrimmingEnabled`): when true, workflows run the
+  /// finished recording through `SilenceTrimmer` before transcription to cut long speech pauses.
+  static var silenceTrimmingEnabled: Bool = false
+
+  /// Returns the file a workflow should transcribe: a pause-trimmed copy when silence trimming is
+  /// enabled AND it actually shortened the audio, otherwise the untouched `original`. Callers MUST
+  /// delete a returned URL that differs from `original` (it's a separate temp file). On any trimming
+  /// failure this falls back to the original — trimming never costs the user their audio.
+  static func audioForTranscription(original: URL) async -> URL {
+    guard silenceTrimmingEnabled else { return original }
+    return await SilenceTrimmer.trimmedAudio(at: original) ?? original
+  }
 
   var isRecording = false
   var recordingURL: URL?

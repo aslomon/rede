@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Silence Trimming & Long Dictations**: New opt-in feature to cut long speech pauses from recordings before transcription
+  - `SilenceTrimmer`: On-device pause detection and removal (audio never leaves the device)
+  - `AppSettings.silenceTrimmingEnabled`: New toggle; default OFF (conservative, avoids clipping quiet word edges)
+  - Dramatically shortens audio files (faster/cheaper online uploads) while preserving content fidelity
+  - Configured via `AudioRecorder.audioForTranscription()` static method; seamless fallback to original if trimming fails
+- **Configurable Dictation Duration Cap**: Replaces hard-coded 180-second limit with user-configurable `AppSettings.maxDictationMinutes`
+  - Default 30 minutes (generous, covers typical long-form dictation); synced to `AudioRecorder.maxRecordingDuration` at startup and on settings changes
+  - Cap guards against runaway/forgotten recordings, not a feature limit — users can record for hours if needed
+  - Existing installs immediately gain long-dictation support without re-configuration
+- **Improved Transcription Timeout Handling**: Separate inactivity vs. hard timeout for OpenAI uploads
+  - `TranscriptionService.requestTimeout` (120s): Per-request inactivity window; resets while data flows
+  - `TranscriptionService.resourceTimeout` (600s): Hard cap on entire transfer (upload + server-side transcription)
+  - Enables multi-minute dictations to complete on slower connections without premature truncation at 60s
+
+### Changed
+
+- **AppState Recording Settings Sync**: New `applyRecordingSettings()` method syncs `AudioRecorder` globals from persisted settings
+  - Called at launch and on every settings change; recorder reads these values when arming the next recording
+  - Ensures duration cap and silence-trimming preferences take effect immediately
+- **TranscriptionWorkflow Silence Trimming Integration**: Workflows now run finished audio through `SilenceTrimmer` when enabled
+  - `AudioRecorder.audioForTranscription(original:)` returns trimmed or original URL; caller cleans up temp files if different
+  - Graceful fallback: trimming failure returns original audio, never costing the user their recording
 - **User Identity for Email Context**: New onboarding step (IdentityStepView) to collect user's display name
   - Used in email rewrite prompts to generate responses from the correct perspective
   - Injected as stable vocabulary term to help Whisper recognition
@@ -50,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **MenuBarStyle Glass Modifiers**: Consolidated duplicate `BlitztextSurface`, `PillGlassModifier`, and `CardGlassModifier` definitions into unified LiquidGlass.swift module to eliminate code duplication and simplify macOS version targeting
+- **AppState Code Formatting**: Improved indentation consistency and multi-line parameter alignment across workflow instantiation and helper methods
 - **Accessibility Fallback Flow**: No longer just flashes red when accessibility permission is missing; now gracefully transitions to copy-only pill with guiding text
 - **Recording Pill Visibility**: Resolved NSHostingView sizing collapse where pill was invisible due to missing constraints
 - **Memory Term Deduplication**: Fixed handling of lemma-based deduplication to prevent already-learned terms from reappearing in suggestions

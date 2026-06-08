@@ -88,6 +88,7 @@ final class AppState {
       saveSettings()
       prewarmLocalTranscriptionIfNeeded()
       reloadHotkeys()
+      applyRecordingSettings()
     }
   }
   var transcriptionSettings: TranscriptionSettings {
@@ -160,6 +161,7 @@ final class AppState {
     refreshAccessibilityPermission()
     autoSelectFastLocalModelIfNeeded()
     prewarmLocalTranscriptionIfNeeded()
+    applyRecordingSettings()
     reloadHotkeys()
     runMemoryLaunchMaintenanceIfNeeded()
     startAccessibilityMonitoring()
@@ -198,6 +200,15 @@ final class AppState {
         MainActor.assumeIsolated { self?.flushSettings() }
       }
     }
+  }
+
+  /// Syncs the recording-related globals on `AudioRecorder` from the persisted settings. The cap is
+  /// clamped to a sane floor so a corrupt/zero value can never disable recording. Called at launch
+  /// and on every settings change; the recorder reads these when it arms the next recording.
+  private func applyRecordingSettings() {
+    let minutes = max(1, appSettings.maxDictationMinutes)
+    AudioRecorder.maxRecordingDuration = TimeInterval(minutes * 60)
+    AudioRecorder.silenceTrimmingEnabled = appSettings.silenceTrimmingEnabled
   }
 
   // MARK: - Memory maintenance (Phase 4)
@@ -403,7 +414,8 @@ final class AppState {
   }
 
   var semanticEmailMemoryIsReady: Bool {
-    appSettings.archiveEnabled && appSettings.semanticEmailMemoryEnabled && semanticEmailEmbeddingIsReady
+    appSettings.archiveEnabled && appSettings.semanticEmailMemoryEnabled
+      && semanticEmailEmbeddingIsReady
   }
 
   func prepareSemanticEmailMemory() {
@@ -413,7 +425,9 @@ final class AppState {
     }
     let modelID = selectedEmbeddingModelName
     guard !modelID.isEmpty else { return }
-    guard !localModelManager.isInstalled(modelID), !localModelManager.isPulling(modelID) else { return }
+    guard !localModelManager.isInstalled(modelID), !localModelManager.isPulling(modelID) else {
+      return
+    }
     Task { [weak self] in
       guard let self else { return }
       await self.localModelManager.refresh()
@@ -643,7 +657,7 @@ final class AppState {
   func hotkeyConflictLabel(for modeID: ModeConfig.ID) -> String? {
     for issue in hotkeyValidationIssues {
       switch issue {
-      case let .duplicate(label, modeIDs) where modeIDs.contains(modeID):
+      case .duplicate(let label, let modeIDs) where modeIDs.contains(modeID):
         return "Konflikt: \(label) wird mehrfach verwendet."
       default:
         continue
@@ -652,7 +666,8 @@ final class AppState {
     return nil
   }
 
-  func hotkeyConflictLabel(for candidate: HotkeyConfig, excluding modeID: ModeConfig.ID) -> String? {
+  func hotkeyConflictLabel(for candidate: HotkeyConfig, excluding modeID: ModeConfig.ID) -> String?
+  {
     HotkeyRegistry.conflictLabel(
       for: candidate,
       excluding: modeID,
@@ -848,7 +863,8 @@ final class AppState {
     as mode: WorkflowType,
     archiveResult: Bool = true
   ) async -> Result<String, Error> {
-    await rerunRewrite(rawTranscript: rawTranscript, as: mode.rawValue, archiveResult: archiveResult)
+    await rerunRewrite(
+      rawTranscript: rawTranscript, as: mode.rawValue, archiveResult: archiveResult)
   }
 
   func rerunRewrite(
@@ -1226,11 +1242,11 @@ final class AppState {
         language: transcriptionSettings.language,
         backend: rewriteTranscriptionBackend,
         localModelName: selectedLocalModelName,
-          selection: selection,
-          automaticContext: automaticContext,
-          memoryContext: memoryContext(for: config),
-          userIdentity: userIdentityContext,
-          emailMemoryLevel: config.rewrite.semanticEmailEnrichmentLevel,
+        selection: selection,
+        automaticContext: automaticContext,
+        memoryContext: memoryContext(for: config),
+        userIdentity: userIdentityContext,
+        emailMemoryLevel: config.rewrite.semanticEmailEnrichmentLevel,
         emailMemoryLoader: emailMemoryLoader(for: config)
       )
       configureWorkflowHandlers(workflow)
@@ -1251,9 +1267,9 @@ final class AppState {
         language: transcriptionSettings.language,
         backend: rewriteTranscriptionBackend,
         localModelName: selectedLocalModelName,
-          automaticContext: automaticContext,
-          memoryContext: memoryContext(for: config),
-          userIdentity: userIdentityContext
+        automaticContext: automaticContext,
+        memoryContext: memoryContext(for: config),
+        userIdentity: userIdentityContext
       )
       configureWorkflowHandlers(workflow)
       workflow.onVariants = { [weak self] variants in
@@ -1361,12 +1377,13 @@ final class AppState {
       appName: target.appName,
       windowTitle: target.windowTitle,
       isSecureField: target.isSecureField
-    ) ?? SelectionContextService.captureAutomaticFieldContext(
-      appBundleID: target.bundleIdentifier,
-      appName: target.appName,
-      windowTitle: target.windowTitle,
-      isSecureField: target.isSecureField
     )
+      ?? SelectionContextService.captureAutomaticFieldContext(
+        appBundleID: target.bundleIdentifier,
+        appName: target.appName,
+        windowTitle: target.windowTitle,
+        isSecureField: target.isSecureField
+      )
   }
 
   private func logRewriteContextCapture(
@@ -1750,7 +1767,8 @@ final class AppState {
     archiveStore.append(enrichedRecord)
     logPasteContext(for: enrichedRecord)
     if appSettings.memoryContextEnabled {
-      memoryCoordinator.ingest(rawTranscript: enrichedRecord.rawTranscript, date: enrichedRecord.date)
+      memoryCoordinator.ingest(
+        rawTranscript: enrichedRecord.rawTranscript, date: enrichedRecord.date)
     }
     ingestEmailSemanticMemoryIfNeeded(enrichedRecord)
   }

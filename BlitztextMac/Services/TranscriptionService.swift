@@ -45,12 +45,20 @@ enum TranscriptionService {
     byteCount > remoteUploadByteLimit
   }
 
+  /// Per-request inactivity timeout (resets while data flows). 120 s is ample headroom for a long
+  /// multipart upload to keep streaming without a stall being misread as a timeout.
+  static let requestTimeout: TimeInterval = 120
+  /// Hard cap on the WHOLE transfer (upload + server-side transcription). This — not the inactivity
+  /// timeout — is what previously truncated long dictations at 60 s. 10 min covers a ~25 MB upload on
+  /// a slow link plus whisper-1's processing time, so multi-minute dictations complete online.
+  static let resourceTimeout: TimeInterval = 600
+
   private static let session: URLSession = {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.waitsForConnectivity = false
     configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-    configuration.timeoutIntervalForRequest = 60
-    configuration.timeoutIntervalForResource = 60
+    configuration.timeoutIntervalForRequest = requestTimeout
+    configuration.timeoutIntervalForResource = resourceTimeout
     return URLSession(configuration: configuration)
   }()
 
@@ -75,7 +83,7 @@ enum TranscriptionService {
       request.setValue(
         "multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
       request.setValue("text/plain, application/json", forHTTPHeaderField: "Accept")
-      request.timeoutInterval = 60
+      request.timeoutInterval = requestTimeout
       request.cachePolicy = .reloadIgnoringLocalCacheData
 
       // whisper-1 rejects uploads over 25 MB — bail out before reading/sending the audio.

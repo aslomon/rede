@@ -108,8 +108,11 @@ final class TranscriptionWorkflow: Workflow {
     let stopTime = Date()
 
     transcriptionTask = Task(priority: .userInitiated) {
+      // Optionally cut long pauses first; `audioURL` is the original when trimming is off/failed.
+      let audioURL = await AudioRecorder.audioForTranscription(original: url)
       defer {
         try? FileManager.default.removeItem(at: url)
+        if audioURL != url { try? FileManager.default.removeItem(at: audioURL) }
       }
 
       let requestStart = Date()
@@ -118,13 +121,13 @@ final class TranscriptionWorkflow: Workflow {
         switch backend {
         case .remote:
           text = try await TranscriptionService.transcribe(
-            audioURL: url,
+            audioURL: audioURL,
             customTerms: vocabularyHints,
             language: requestLanguage
           )
         case .local:
           text = try await LocalTranscriptionService.shared.transcribe(
-            audioURL: url,
+            audioURL: audioURL,
             language: requestLanguage,
             modelName: localModelName,
             customTerms: vocabularyHints

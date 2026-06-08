@@ -48,7 +48,8 @@ final class AppSettingsCodableTests: XCTestCase {
     XCTAssertEqual(decodedEmail.rewrite.rewriteBackend, .local)
     XCTAssertTrue(decodedEmail.rewrite.useMemoryContext)
     XCTAssertEqual(decodedEmail.slot, .textImprover)
-    XCTAssertEqual(decoded.modeOrder, [WorkflowType.transcription.rawValue, WorkflowType.textImprover.rawValue])
+    XCTAssertEqual(
+      decoded.modeOrder, [WorkflowType.transcription.rawValue, WorkflowType.textImprover.rawValue])
   }
 
   func testRoundTripPreservesDynamicDuplicateModeAndOrder() throws {
@@ -207,6 +208,27 @@ final class AppSettingsCodableTests: XCTestCase {
     let legacy = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
     XCTAssertTrue(legacy.dictationDictionary.replacements.isEmpty)
     XCTAssertFalse(legacy.dictationDictionary.spokenPunctuationEnabled)
+  }
+
+  /// Round-trips the dictation-length cap and the silence-trimming opt-in.
+  func testRoundTripPreservesDictationLengthAndSilenceTrimming() throws {
+    var settings = AppSettings()
+    settings.maxDictationMinutes = 60
+    settings.silenceTrimmingEnabled = true
+
+    let data = try makeEncoder().encode(settings)
+    let decoded = try JSONDecoder().decode(AppSettings.self, from: data)
+
+    XCTAssertEqual(decoded.maxDictationMinutes, 60)
+    XCTAssertTrue(decoded.silenceTrimmingEnabled)
+  }
+
+  /// An OLD settings.json missing the dictation keys must decode to the generous default length
+  /// (so long dictations immediately work) and silence trimming OFF (conservative opt-in).
+  func testMissingDictationKeysDecodeToSafeDefaults() throws {
+    let decoded = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+    XCTAssertEqual(decoded.maxDictationMinutes, AppSettings.defaultMaxDictationMinutes)
+    XCTAssertFalse(decoded.silenceTrimmingEnabled)
   }
 
   /// A mode persisted WITHOUT the v2 `rewrite.useMemoryContext` key decodes to false.

@@ -141,8 +141,11 @@ final class TextImprovementWorkflow: Workflow {
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
 
     processingTask = Task {
+      // Optionally cut long pauses first; `audioURL` is the original when trimming is off/failed.
+      let audioURL = await AudioRecorder.audioForTranscription(original: url)
       defer {
         try? FileManager.default.removeItem(at: url)
+        if audioURL != url { try? FileManager.default.removeItem(at: audioURL) }
       }
 
       do {
@@ -150,13 +153,13 @@ final class TextImprovementWorkflow: Workflow {
         switch backend {
         case .remote:
           rawText = try await TranscriptionService.transcribe(
-            audioURL: url,
+            audioURL: audioURL,
             customTerms: vocabularyHints,
             language: language
           )
         case .local:
           rawText = try await LocalTranscriptionService.shared.transcribe(
-            audioURL: url,
+            audioURL: audioURL,
             language: language,
             modelName: localModelName,
             customTerms: vocabularyHints

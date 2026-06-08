@@ -223,6 +223,11 @@ protocol Workflow: AnyObject, Observable {
 // MARK: - App Settings
 
 struct AppSettings: Codable, Sendable {
+  /// Default cap (minutes) for a single dictation. Generous so 10-minute dictations just work; the
+  /// cap only guards against a forgotten/runaway recording, not a feature limit. Even at this length
+  /// the 16 kHz mono AAC stays well under whisper-1's 25 MB online cap.
+  static let defaultMaxDictationMinutes = 30
+
   var hotkeyMode: HotkeyMode = .hold
   var hotkeys: [String: HotkeyConfig] = [:]
   var hasSeenOnboarding: Bool = false
@@ -277,6 +282,14 @@ struct AppSettings: Codable, Sendable {
   /// Optional audio feedback (earcons) for start / done / error, so eyes-off background-hotkey
   /// dictation gives an audible cue. Default OFF — silent unless the user opts in.
   var soundFeedbackEnabled: Bool = false
+  /// Safety cap (minutes) for a single dictation, synced to `AudioRecorder.maxRecordingDuration`.
+  /// Default generous (`defaultMaxDictationMinutes`) so long dictations work; only guards runaway
+  /// recordings. Clamped to a sane minimum when applied.
+  var maxDictationMinutes: Int = AppSettings.defaultMaxDictationMinutes
+  /// Opt-in: cut long speech pauses out of the finished recording (via `SilenceTrimmer`) before
+  /// transcription — shorter audio = faster/cheaper online uploads. Default OFF (conservative:
+  /// over-trimming could clip quiet word edges). On-device only; never sends audio anywhere new.
+  var silenceTrimmingEnabled: Bool = false
   /// MEM-2b: keys (`from→to`, lowercased) of mined suggestions the user permanently dismissed, so a
   /// declined "Lern-Vorschlag" doesn't reappear on every relaunch. Persisted; default empty.
   var dismissedImprovementSuggestionKeys: [String] = []
@@ -301,6 +314,8 @@ struct AppSettings: Codable, Sendable {
     dictationDictionary: DictationDictionary = DictationDictionary(),
     fuzzyCorrectionEnabled: Bool = true,
     soundFeedbackEnabled: Bool = false,
+    maxDictationMinutes: Int = AppSettings.defaultMaxDictationMinutes,
+    silenceTrimmingEnabled: Bool = false,
     dismissedImprovementSuggestionKeys: [String] = []
   ) {
     self.hotkeyMode = hotkeyMode
@@ -321,6 +336,8 @@ struct AppSettings: Codable, Sendable {
     self.dictationDictionary = dictationDictionary
     self.fuzzyCorrectionEnabled = fuzzyCorrectionEnabled
     self.soundFeedbackEnabled = soundFeedbackEnabled
+    self.maxDictationMinutes = maxDictationMinutes
+    self.silenceTrimmingEnabled = silenceTrimmingEnabled
     self.dismissedImprovementSuggestionKeys = dismissedImprovementSuggestionKeys
   }
 
@@ -347,6 +364,8 @@ struct AppSettings: Codable, Sendable {
     case dictationDictionary
     case fuzzyCorrectionEnabled
     case soundFeedbackEnabled
+    case maxDictationMinutes
+    case silenceTrimmingEnabled
     case dismissedImprovementSuggestionKeys
   }
 
@@ -405,6 +424,13 @@ struct AppSettings: Codable, Sendable {
       try container.decodeIfPresent(Bool.self, forKey: .fuzzyCorrectionEnabled) ?? true
     soundFeedbackEnabled =
       try container.decodeIfPresent(Bool.self, forKey: .soundFeedbackEnabled) ?? false
+    // Missing key (older settings.json) → generous default so existing installs immediately gain
+    // long-dictation support without re-configuring.
+    maxDictationMinutes =
+      try container.decodeIfPresent(Int.self, forKey: .maxDictationMinutes)
+      ?? AppSettings.defaultMaxDictationMinutes
+    silenceTrimmingEnabled =
+      try container.decodeIfPresent(Bool.self, forKey: .silenceTrimmingEnabled) ?? false
     dismissedImprovementSuggestionKeys =
       try container.decodeIfPresent([String].self, forKey: .dismissedImprovementSuggestionKeys)
       ?? []
