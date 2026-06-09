@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Local Model Download Progress Reporting**: Fixed frozen-looking model downloads by implementing real progress updates
+  - **Download Delegate Implementation**: Replaced `URLSession.download(from:)` (which reports no progress) with custom `URLSessionDownloadDelegate` that streams incremental progress via `didWriteData` callbacks
+  - **Progress UI**: Now shows "Lädt … X.X / 1.3 GB" with accurate progress fraction (throttled to ~8 MB steps to avoid excessive updates)
+  - **Ephemeral Session**: Uses ephemeral `URLSession` for download task management, properly bridging completion to async/await via `CheckedContinuation`
+  - **Verified Checksum**: Validated downloaded GGUF files against HuggingFace catalog checksums to ensure integrity before installation
+
 ### Changed
 
 - **Onboarding Window Title Bar Modernization**: Redesigned title bar for contemporary macOS appearance

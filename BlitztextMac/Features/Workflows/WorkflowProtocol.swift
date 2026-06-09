@@ -407,12 +407,15 @@ struct AppSettings: Codable, Sendable {
       LocalLLMSelection.self,
       forKey: .selectedLocalLLM
     ) {
-      selectedLocalLLM = decodedSelection
+      // Ollama has been removed. Keep the selection only if llama.cpp actually knows the model;
+      // an old Ollama tag (e.g. "gemma3:latest") is dropped so the user re-picks a GGUF model
+      // instead of silently failing every local rewrite. Robust to the runtime enum collapsing.
+      selectedLocalLLM =
+        LlamaCppModelCatalog.model(for: decodedSelection.modelID) != nil
+        ? decodedSelection : LocalLLMSelection()
     } else {
-      let legacyModel = selectedLocalLLMModelName.trimmingCharacters(in: .whitespacesAndNewlines)
-      selectedLocalLLM = legacyModel.isEmpty
-        ? LocalLLMSelection()
-        : LocalLLMSelection(runtime: .ollama, modelID: legacyModel)
+      // The legacy single-string model name was always an Ollama tag — no longer usable.
+      selectedLocalLLM = LocalLLMSelection()
     }
     modes = try container.decodeIfPresent([String: ModeConfig].self, forKey: .modes) ?? [:]
     modeOrder = try container.decodeIfPresent([String].self, forKey: .modeOrder) ?? []

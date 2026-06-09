@@ -851,13 +851,8 @@ final class AppState {
   func rewriteProvider(for config: ModeConfig) -> any RewriteProvider {
     switch resolvedRewriteBackend(for: config) {
     case .local:
-      let selection = appSettings.selectedLocalLLM
-      switch selection.runtime {
-      case .llamaCpp:
-        return LlamaCppRewriteProvider(modelID: selection.modelID)
-      case .ollama:
-        return OllamaRewriteProvider(modelID: selection.modelID)
-      }
+      // llama.cpp is the only local runtime — every on-device rewrite goes through it.
+      return LlamaCppRewriteProvider(modelID: appSettings.selectedLocalLLM.modelID)
     case .openai:
       return OpenAIRewriteProvider(modelID: config.rewrite.modelID)
     }

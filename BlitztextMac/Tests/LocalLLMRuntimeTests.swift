@@ -29,7 +29,9 @@ final class LocalLLMRuntimeTests: XCTestCase {
     XCTAssertEqual(settings.selectedLocalLLMModelName, "")
   }
 
-  func testLegacyOllamaModelNameMigratesToOllamaSelection() throws {
+  func testLegacyOllamaModelNameIsDroppedAfterOllamaRemoval() throws {
+    // Ollama was removed: a legacy single-string model name (always an Ollama tag) can't run on
+    // llama.cpp, so the selection must come back unconfigured rather than silently failing.
     let json = """
       {
         "selectedLocalLLMModelName": "gemma3:latest"
@@ -38,9 +40,26 @@ final class LocalLLMRuntimeTests: XCTestCase {
 
     let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(json.utf8))
 
-    XCTAssertEqual(decoded.selectedLocalLLM.runtime, .ollama)
-    XCTAssertEqual(decoded.selectedLocalLLM.modelID, "gemma3:latest")
+    XCTAssertFalse(decoded.selectedLocalLLM.isConfigured)
+    XCTAssertEqual(decoded.selectedLocalLLM.modelID, "")
     XCTAssertEqual(decoded.selectedLocalLLMModelName, "gemma3:latest")
+  }
+
+  func testExplicitOllamaSelectionIsDroppedAfterOllamaRemoval() throws {
+    // An explicitly-stored Ollama selection is unknown to the llama.cpp catalog and is discarded.
+    let json = """
+      {
+        "selectedLocalLLM": {
+          "runtime": "ollama",
+          "modelID": "gemma3:latest"
+        }
+      }
+      """
+
+    let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(json.utf8))
+
+    XCTAssertFalse(decoded.selectedLocalLLM.isConfigured)
+    XCTAssertEqual(decoded.selectedLocalLLM.modelID, "")
   }
 
   func testExplicitSelectionWinsOverLegacyModelName() throws {
