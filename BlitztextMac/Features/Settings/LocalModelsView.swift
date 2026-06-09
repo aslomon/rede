@@ -107,6 +107,10 @@ struct LocalModelsView: View {
       Text("GGUF-Modelle laufen direkt über den gebündelten lokalen llama.cpp-Helper.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
+      // Hardware-aware suggestion shown until the first rewrite model is installed.
+      if manager.llamaCppInstalled.isEmpty, let recommended = manager.recommended {
+        recommendationCard(recommended)
+      }
       ForEach(LlamaCppModelCatalog.models) { model in
         llamaCppCatalogRow(model)
       }
@@ -170,8 +174,18 @@ struct LocalModelsView: View {
           .font(.system(size: 14, weight: .semibold))
           .foregroundStyle(installed ? .green : .blue)
         VStack(alignment: .leading, spacing: 2) {
-          Text(model.displayName)
-            .font(.system(size: 12.5, weight: .semibold))
+          HStack(spacing: 6) {
+            Text(model.displayName)
+              .font(.system(size: 12.5, weight: .semibold))
+            if isRecommended(model) {
+              Text("Empfohlen")
+                .font(.system(size: 9, weight: .semibold))
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1)
+                .background(Capsule().fill(Color.blue.opacity(0.15)))
+                .foregroundStyle(.blue)
+            }
+          }
           Text(model.blurb)
             .font(.system(size: 10.5))
             .foregroundStyle(.secondary)
@@ -225,6 +239,50 @@ struct LocalModelsView: View {
     .background(
       RoundedRectangle(cornerRadius: 8).fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
     )
+  }
+
+  // MARK: - Recommendation
+
+  private func isRecommended(_ model: LlamaCppModelCatalog.Model) -> Bool {
+    manager.recommended?.id == model.id
+  }
+
+  private func recommendationCard(_ model: LlamaCppModelCatalog.Model) -> some View {
+    let downloading = manager.isDownloadingLlamaCpp(model.id)
+    return VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 6) {
+        Image(systemName: "sparkles").font(.system(size: 11, weight: .semibold))
+        Text("Empfohlen für deinen Mac").font(.system(size: 11, weight: .semibold))
+      }
+      .foregroundStyle(.blue)
+
+      Text(model.displayName).font(.system(size: 14, weight: .semibold))
+      Text(manager.system.recommendationReason(for: model))
+        .font(.system(size: 11)).foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+      HStack(spacing: 8) {
+        Text("\(SystemCapabilities.formatGB(model.downloadGB)) Download")
+          .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+        Spacer(minLength: 8)
+        if downloading {
+          Label("Lädt …", systemImage: "arrow.down.circle")
+            .font(.system(size: 10.5, weight: .medium)).foregroundStyle(.blue)
+        } else {
+          Button {
+            manager.downloadLlamaCpp(model)
+          } label: {
+            Label("Laden", systemImage: "arrow.down.circle.fill")
+              .font(.system(size: 11.5, weight: .semibold))
+          }
+          .buttonStyle(PopoverActionButtonStyle(.primary))
+          .disabled(!manager.system.diskFits(downloadGB: model.downloadGB))
+        }
+      }
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .liquidGlassTintedCard(accent: .blue, cornerRadius: 10)
   }
 
   // MARK: - Embedding model (semantic e-mail memory)
