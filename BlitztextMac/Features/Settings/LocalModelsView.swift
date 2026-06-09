@@ -28,7 +28,6 @@ struct LocalModelsView: View {
 
         // Engine 2 — Rewrite. llama.cpp (GGUF) is the only local runtime.
         llamaCppSection
-        if !manager.llamaCppInstalled.isEmpty { installedLlamaCppSection }
 
         Divider().opacity(0.4)
 
@@ -102,66 +101,94 @@ struct LocalModelsView: View {
   // MARK: - llama.cpp rewrite models
 
   private var llamaCppSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 10) {
       SectionLabel(text: "Sprachmodell · Umschreiben")
-      Text("GGUF-Modelle laufen direkt über den gebündelten lokalen llama.cpp-Helper.")
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-      // Hardware-aware suggestion shown until the first rewrite model is installed.
-      if manager.llamaCppInstalled.isEmpty, let recommended = manager.recommended {
-        recommendationCard(recommended)
+
+      if manager.llamaCppInstalled.isEmpty {
+        Text("GGUF-Modelle laufen direkt über den gebündelten lokalen llama.cpp-Helper.")
+          .font(.system(size: 10.5))
+          .foregroundStyle(.secondary)
+        if let recommended = manager.recommended {
+          recommendationCard(recommended)
+        }
+      } else {
+        // What you downloaded + which one is active.
+        ForEach(manager.llamaCppInstalled) { model in
+          installedModelRow(model)
+        }
       }
-      ForEach(LlamaCppModelCatalog.models) { model in
-        llamaCppCatalogRow(model)
+
+      // The full catalog stays collapsed so the page isn't a permanent wall of models.
+      InfoDisclosure(catalogDisclosureTitle) {
+        VStack(alignment: .leading, spacing: 10) {
+          if !manager.llamaCppInstalled.isEmpty, let recommended = manager.recommended,
+            !manager.isLlamaCppInstalled(recommended.id)
+          {
+            recommendationCard(recommended)
+          }
+          ForEach(notInstalledChatModels) { model in
+            llamaCppCatalogRow(model)
+          }
+        }
       }
     }
   }
 
-  private var installedLlamaCppSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Installierte GGUF-Modelle")
-      ForEach(manager.llamaCppInstalled) { model in
-        HStack(spacing: 10) {
-          Image(systemName: "checkmark.circle.fill")
-            .font(.system(size: 13))
-            .foregroundStyle(.green)
-          VStack(alignment: .leading, spacing: 1) {
-            Text(model.displayName)
-              .font(.system(size: 12, weight: .semibold))
-            Text([model.parameterSize, model.quantization].joined(separator: " · "))
-              .font(.system(size: 10))
-              .foregroundStyle(.secondary)
-          }
-          Spacer()
-          if isActive(llamaCppModel: model) {
-            BlitzStatusPill(state: .ready, label: "Aktiv")
-          } else {
-            Button {
-              selectLlamaCpp(model)
-            } label: {
-              Label("Nutzen", systemImage: "checkmark.circle")
-            }
-            .buttonStyle(PopoverActionButtonStyle(.primary))
-          }
-          Text(SystemCapabilities.formatGB(model.downloadGB))
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(.secondary)
-          Button {
-            if isActive(llamaCppModel: model) {
-              appState.appSettings.selectedLocalLLM = LocalLLMSelection()
-            }
-            manager.deleteLlamaCpp(model)
-          } label: {
-            Image(systemName: "trash")
-          }
-          .buttonStyle(PopoverActionButtonStyle(.danger))
-        }
-        .padding(10)
-        .background(
-          RoundedRectangle(cornerRadius: 8).fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
-        )
+  private var catalogDisclosureTitle: String {
+    manager.llamaCppInstalled.isEmpty ? "Alle Modelle anzeigen" : "Weitere Modelle laden"
+  }
+
+  private var notInstalledChatModels: [LlamaCppModelCatalog.Model] {
+    LlamaCppModelCatalog.models.filter { !manager.isLlamaCppInstalled($0.id) }
+  }
+
+  /// One downloaded model: shows what is installed and lets you activate / deactivate / delete it.
+  private func installedModelRow(_ model: LlamaCppModelCatalog.Model) -> some View {
+    HStack(spacing: 10) {
+      Image(systemName: "checkmark.circle.fill")
+        .font(.system(size: 13))
+        .foregroundStyle(.green)
+      VStack(alignment: .leading, spacing: 1) {
+        Text(model.displayName)
+          .font(.system(size: 12, weight: .semibold))
+        Text([model.parameterSize, model.quantization].joined(separator: " · "))
+          .font(.system(size: 10))
+          .foregroundStyle(.secondary)
       }
+      Spacer()
+      if isActive(llamaCppModel: model) {
+        BlitzStatusPill(state: .ready, label: "Aktiv")
+        Button {
+          appState.appSettings.selectedLocalLLM = LocalLLMSelection()
+        } label: {
+          Text("Deaktivieren").font(.system(size: 10.5, weight: .medium))
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+      } else {
+        Button {
+          selectLlamaCpp(model)
+        } label: {
+          Label("Aktivieren", systemImage: "checkmark.circle")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.primary))
+      }
+      Text(SystemCapabilities.formatGB(model.downloadGB))
+        .font(.system(size: 11, weight: .medium))
+        .foregroundStyle(.secondary)
+      Button {
+        if isActive(llamaCppModel: model) {
+          appState.appSettings.selectedLocalLLM = LocalLLMSelection()
+        }
+        manager.deleteLlamaCpp(model)
+      } label: {
+        Image(systemName: "trash")
+      }
+      .buttonStyle(PopoverActionButtonStyle(.danger))
     }
+    .padding(10)
+    .background(
+      RoundedRectangle(cornerRadius: 8).fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
+    )
   }
 
   private func llamaCppCatalogRow(_ model: LlamaCppModelCatalog.Model) -> some View {
