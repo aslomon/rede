@@ -1,176 +1,230 @@
-# Blitztext App - Local AI Fork
+<div align="center">
 
-This is a local-first, more capable fork of the original open-source Blitztext macOS menubar app. It extends Blitztext from a simple speech-to-text workflow into a dictation, instruction, rewrite, and local AI assistant for everyday writing on macOS.
+# ⚡ Blitztext — Local AI Edition
 
-The fork keeps the original spirit of a hackable native AI workflow, but pushes it further: a redesigned interface, a live dictation pill, clearer error and fallback states, local LLM support via Ollama, smarter rewrite modes, vocabulary learning, and prototype context-aware prompting.
+**A native macOS menu-bar app for dictation, transcription and AI rewriting that runs entirely on your Mac.**
 
-> Fork status: actively developed local AI edition. Bring your own OpenAI API key for cloud workflows, or use local models where supported. No hosted backend, no warranty, no support guarantee.
+Speak into any text field, get clean text back. Rewrite e-mails, prompts and messages with a local LLM — no cloud, no account, no telemetry. Bring your own OpenAI key only if you _want_ the online path.
 
-## What Makes This Fork Different
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black?logo=apple)
+![Universal](https://img.shields.io/badge/Universal-arm64%20%2B%20x86__64-blue)
+![Swift 5.10](https://img.shields.io/badge/Swift-5.10-orange?logo=swift)
+![Local-first](https://img.shields.io/badge/Local--first-no%20telemetry-brightgreen)
+![llama.cpp](https://img.shields.io/badge/Local%20AI-llama.cpp-purple)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
 
-- **Redesigned macOS UI**: clearer menubar structure, improved settings layout, better mode cards, and a more production-grade visual system.
-- **Live dictation pill**: visible recording, processing, fallback, and error states with clearer keyboard hints and copy/paste affordances.
-- **Local LLM support**: use Ollama-backed local rewrite models instead of relying only on the OpenAI API.
-- **Local model manager**: browse, download, delete, and inspect local models with hardware-aware recommendations.
-- **Configurable rewrite modes**: duplicate, rename, reorder, delete, and tune modes for different people, clients, or writing contexts.
-- **Rebindable global hotkeys**: configure mode-specific shortcuts and see conflicts before they bite.
-- **Smarter rewrite modes**: dedicated modes for improving text, writing emails, optimizing prompts, and turning rough speech into calmer messages.
-- **Semantic email memory**: opt-in local vector memory can retrieve similar earlier email drafts and use them as background context.
-- **Two-version preview**: rewrite modes can pause in the floating pill and let you choose which variant to insert.
-- **Better default system prompts**: each mode has a more precise prompt structure and clearer behavior expectations.
-- **Dictated instructions**: workflows can distinguish spoken instructions from text that should be inserted verbatim.
-- **Vocabulary and memory system**: frequently used names, domain terms, and custom wording can be learned and injected into future prompts.
-- **Prototype context awareness**: the app can include focused-window, selected-text, semantic email-memory, file, and content-type hints in prompts.
-- **More private by default**: local transcription, local rewrite options, fail-closed offline behavior, and opt-in archive/memory features.
-- **More robust workflow**: improved paste reliability, Accessibility fallback behavior, code signing, onboarding, and test coverage.
+</div>
 
-## What It Does
+> **Fork status.** This is a heavily extended, local-first edition of the original open-source Blitztext menu-bar app. It started as a simple speech-to-text helper and grew into a full local-AI writing workflow — a bundled **llama.cpp** runtime, a dynamic GGUF model catalog with hardware-aware recommendations, semantic memory and a redesigned interface. No hosted backend, no warranty, no support guarantee. The in-app UI is German by design; the project is documented in English.
+>
+> The point isn't a one-click finished product. It's a _hackable_, complete example of how a small native macOS app can combine dictation, local models, rewrite modes, memory and context. Clone it, build it, read the code, change it.
 
-- **Dictate**: record speech and transcribe it into text.
-- **Improve**: turn rough dictated text into cleaner writing.
-- **Write email**: transform spoken notes into a structured email draft.
-- **Optimize prompts**: convert rough intent into a clearer prompt for AI tools.
-- **Calm down**: turn frustrated speech into a calmer, usable message.
-- **Create custom modes**: keep separate prompts, hotkeys, model choices, memory settings, and enrichment levels for different writing situations.
-- **Use local AI**: run supported transcription and rewrite workflows locally when compatible models are installed.
+---
 
-## Important Preview Notes
+## ✨ Highlights
 
-- macOS only.
-- Bring your own OpenAI API key for cloud workflows.
-- Install Ollama and local models for local rewrite workflows.
-- No hosted Blitztext backend is included or provided.
-- In online mode, audio and text are sent directly from the app to the OpenAI API.
-- Local transcription via WhisperKit/CoreML is supported when a compatible model is installed.
-- Local rewrite workflows are supported through Ollama-backed models where available.
-- `./build.sh` creates a locally ad-hoc-signed development app. No notarized release binary is provided.
-- Still experimental and not production ready.
-- No warranty and no support guarantee.
+- 🎙️ **Dictate anywhere** — global hotkey, live recording pill, instant paste into the focused app.
+- 🧠 **Rewrite locally** — turn rough speech into clean e-mails, prompts or messages with an on-device LLM.
+- 📦 **Bundled llama.cpp runtime** — no separate install, no `ollama pull`, no Docker. The app ships and manages everything.
+- 🗂️ **Dynamic model catalog** — curated GGUF models, a **live Hugging Face feed** that auto-discovers new models (Gemma 4, gpt-oss…), and a field to drop in **any `.gguf` URL** yourself.
+- 🎯 **Hardware-aware recommendation** — the app knows your RAM and suggests the best model that fits (e.g. _Qwen3-32B_ on a 48 GB Mac, _Qwen3-1.7B_ on an 8 GB Mac).
+- 🔒 **Genuinely private** — in local mode nothing leaves the machine. Online calls go straight to OpenAI with _your_ key, stored only in the Keychain.
+- ⌨️ **Per-mode hotkeys**, ✍️ **custom modes**, 🧩 **vocabulary learning**, and opt-in **semantic e-mail memory** — all local.
 
-You are welcome to use, fork, adapt, and share this project under the license terms.
+---
 
-The intent is not to ship a one-click finished app. The intent is to make a more capable local-first AI workflow understandable: clone it, build it, read the code, change it, break it, fix it, and suggest improvements. If you want to learn how a small native macOS AI app can combine dictation, local models, rewrite modes, memory, and context, this fork is the most complete version of that direction.
+## 📸 Screenshots
 
-## Screenshots
+|                     Menu bar                      |                        Local models                        |                       Modes                       |
+| :-----------------------------------------------: | :--------------------------------------------------------: | :-----------------------------------------------: |
+| ![Menu bar popover](docs/screenshots/menubar.png) | ![Local models manager](docs/screenshots/local-models.png) | ![Mode configuration](docs/screenshots/modes.png) |
+|       Pick a mode, see its hotkey & backend       |    Install, activate/deactivate & recommend GGUF models    | Tune prompts, tone, memory & enrichment per mode  |
 
-<table>
-  <tr>
-    <td><img src="docs/screenshots/online-mode.png" alt="Blitztext online transcription mode" width="420"></td>
-    <td><img src="docs/screenshots/local-mode.png" alt="Blitztext secure local transcription mode" width="420"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/local-model-picker.png" alt="Blitztext local model picker" width="420"></td>
-    <td><img src="docs/screenshots/settings-customize.png" alt="Blitztext settings and customization view" width="420"></td>
-  </tr>
-</table>
+> _Screenshots live in `docs/screenshots/`. Drop in your own captures of the current build to refresh them._
 
-## Requirements
+---
 
-- macOS 14 or newer
-- Xcode 16 or newer (Swift 5.10), with Command Line Tools installed and selected for `xcodebuild`
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the Xcode project
-- For online transcription and rewriting: an OpenAI API key with access to:
-  - `whisper-1` for transcription
-  - `gpt-4o-mini` and optionally `gpt-4o` for rewriting
-- For local-only transcription: a WhisperKit CoreML model in:
-  `~/Library/Application Support/Blitztext/models/whisperkit/`
-- For local rewriting: [Ollama](https://ollama.com/) with at least one compatible local LLM installed.
-- For semantic email memory: Ollama running locally with an embedding model such as `nomic-embed-text`.
+## 🧭 What it does
 
-The build also pulls one Swift Package dependency automatically:
+Blitztext lives in the menu bar. Each **mode** is a hotkey that records your voice, transcribes it, and optionally rewrites it — then pastes the result straight into whatever app you're using.
 
-- [`argmax-oss-swift`](https://github.com/argmaxinc/argmax-oss-swift) (WhisperKit) — used for local on-device transcription.
+| Mode               | Hotkey idea   | What it does                                                          |
+| ------------------ | ------------- | --------------------------------------------------------------------- |
+| **Diktat**         | `fn + Shift`  | Pure speech → text. Nothing else.                                     |
+| **Textverbessern** | `fn + Ctrl`   | "Speak it written" — clean up rambling dictation into polished prose. |
+| **E-Mail**         | custom        | Turn spoken notes into a structured e-mail draft.                     |
+| **Prompt**         | `fn + Option` | Convert rough intent into a sharp prompt for other AI tools.          |
+| **Social**         | `fn + Cmd`    | Add tasteful emoji / soften the tone.                                 |
+| **Dampf ablassen** | custom        | Frustration in → calm, usable message out.                            |
 
-Install XcodeGen if needed:
+Every mode is **fully configurable** — rename it, rebind its hotkey, pick its backend (online/local), write a custom system prompt, set tone & context, and turn memory/enrichment on or off. Duplicate a mode to keep separate setups for different clients or contexts.
 
-```bash
-brew install xcodegen
+---
+
+## 🧠 Local AI — the core of this fork
+
+Local rewriting runs on a **bundled [llama.cpp](https://github.com/ggml-org/llama.cpp) server** that the app starts as a subprocess on `127.0.0.1`. There is **no Ollama and no external runtime** — Blitztext downloads GGUF model files, verifies them, and runs them itself.
+
+### A model catalog that grows by itself
+
+The **Local Models** window organizes everything in one place — installed models on top (activate / deactivate / delete), with the full catalog tucked behind a collapsible _"Weitere Modelle laden"_ section so the page is never a wall of choices.
+
+That section has **three sources**:
+
+1. **Curated** — a hand-picked, checksum-pinned set that covers every Mac size:
+   - **Qwen3** · 1.7B / 4B / 8B / 14B / 32B
+   - **Gemma 3** · 4B / 12B / 27B
+2. **Live Hugging Face feed** — queries trusted orgs (`ggml-org`) and surfaces their newest GGUFs automatically, so models like **Gemma 4** and **gpt-oss** appear _without an app update_. Junk repos (embedding/vision/test) are filtered out, models too large for your Mac are hidden, and the LFS hash is still verified on download.
+3. **Your own URL** — paste a direct link to any `.gguf` file and download it on the spot. Perfect for a niche fine-tune the catalog doesn't know about.
+
+### It recommends the right model for _your_ Mac
+
+Blitztext reads your chip, RAM and free disk and ranks the catalog by quality _within your budget_:
+
+> ✨ **Empfohlen für deinen Mac** — _Qwen3 · 32B · Q4_K_M_ · "Best quality that fits comfortably in your 48 GB of RAM."
+
+Models that wouldn't run are hidden; tight-but-usable ones are shown without being recommended. Big models load fast on subsequent runs — the integrity check happens once at download, not on every cold start.
+
+### Privacy of the local path
+
+- The llama.cpp server binds to `localhost` only, with a per-launch API key.
+- Audio is transcribed locally via **WhisperKit / Core ML**; temp audio is deleted after processing.
+- Nothing is uploaded, logged or phoned home. Use the app fully offline.
+
+---
+
+## ☁️ Online path (optional)
+
+Prefer the cloud for a specific mode? Set a mode's backend to **Online** and Blitztext uses the **OpenAI API directly** with your own key:
+
+- Transcription via OpenAI Audio Transcriptions (25 MB upload limit, enforced early).
+- Rewriting via Chat Completions.
+- The key lives **only in the macOS Keychain** — there is no proxy and no telemetry in between.
+
+You can mix and match per mode: dictate locally, rewrite online, or the reverse.
+
+---
+
+## 🧩 Memory, vocabulary & context (all opt-in, all local)
+
+- **Semantic e-mail memory** — an opt-in local vector store embeds your past rewrites (via a local **nomic-embed-text** GGUF on a second llama.cpp server) and retrieves similar earlier drafts as background context. Capped, retention-aware, never uploaded.
+- **Vocabulary & term learning** — frequently used names and domain terms are learned and injected into future prompts, with fuzzy correction for tricky words.
+- **Context awareness** — modes can optionally include the focused window, your current text selection, and content-type hints in the prompt.
+- **Two-variant preview** — a rewrite mode can pause in the floating pill and let you choose which version to insert.
+
+---
+
+## 🔐 Privacy & security
+
+- **Local-first & fail-closed** — local modes never silently fall back to the cloud.
+- **No App Sandbox by design**, but a tight entitlement set (audio input + network client only).
+- **`URLSessionConfiguration.ephemeral`** for network calls; temp audio deleted after use.
+- **Keychain-only** storage for your OpenAI key. **No accounts, no analytics, no hosted backend.**
+
+Read [docs/privacy.md](docs/privacy.md) before using with sensitive content.
+
+### Data flow
+
+```text
+Online transcription:  Your Mac → OpenAI Audio Transcriptions API
+Online rewriting:      Your Mac → OpenAI Chat Completions API
+Local transcription:   Your Mac → WhisperKit / Core ML (on device)
+Local rewriting:       Your Mac → bundled llama.cpp server (localhost)
+E-mail embeddings:     Your Mac → bundled llama.cpp embedding server (localhost)
+Model downloads:       Hugging Face → your Mac (checksum-verified GGUF files)
 ```
 
-## Build And Run
+---
+
+## ✅ Requirements
+
+- macOS **14.0+** (Sonoma or newer), Apple Silicon or Intel.
+- For **local AI**: a few GB of free disk per model (~1.3 GB for the smallest, ~20 GB for the largest).
+- For the **online path**: your own OpenAI API key (e.g. `gpt-4o-mini` / `gpt-4o` for rewriting, `whisper-1` for transcription).
+- **Microphone** permission, and **Accessibility** permission for direct paste.
+
+The build pulls one Swift Package automatically: [`argmax-oss-swift`](https://github.com/argmaxinc/argmax-oss-swift) (WhisperKit) for on-device transcription.
+
+---
+
+## 🛠️ Build & run from source
+
+Requires full **Xcode 16+** and [**XcodeGen**](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`). The Xcode project is generated from `BlitztextMac/project.yml` — edit that, not the `.xcodeproj`.
 
 ```bash
 git clone https://github.com/aslomon/blitztext-app.git
 cd blitztext-app
-./build.sh --run
+
+# 1. Build the bundled llama.cpp helper (universal binary + companion dylibs)
+./scripts/build-llamacpp-helper.sh
+# → prints the helper path and its SHA256
+
+# 2. Build, install to /Applications and launch — bundling that helper
+./build.sh --debug --install --run \
+  --llamacpp-helper="<path-from-step-1>" \
+  --llamacpp-helper-sha256="<sha-from-step-1>"
+
+# Release build:
+./build.sh --release --llamacpp-helper="…" --llamacpp-helper-sha256="…"
+
+# Tests (pinned to arm64):
+./test.sh
 ```
 
-For a local install into `/Applications`:
+For quick UI iteration without the local runtime, build with `--allow-missing-llamacpp-helper` (local rewrite is then unavailable). The generated `.app` is ad-hoc signed for local development only — a public release would need Developer ID signing + notarization.
 
-```bash
-./build.sh --install --run
-```
+On first launch: grant **Microphone** (and **Accessibility** for direct paste), optionally enter your **OpenAI key**, and open **Local Models** to download a GGUF model. For a slower walkthrough see [docs/setup.md](docs/setup.md) and [docs/local-models.md](docs/local-models.md).
 
-The generated `.app` is ad-hoc signed for local development only. Do not treat it as a trusted redistributable binary. A public binary release would need Developer ID signing and notarization.
+### Permissions
 
-On first launch, either paste your own OpenAI API key for online workflows or install local models for local transcription and rewriting.
+- **Microphone** — to record your voice.
+- **Accessibility** — to paste the result back into the focused app. Without it, you can still copy results manually.
 
-For a local-first setup, install a WhisperKit CoreML model, install an Ollama model through the local model manager, and enable **Sicherer Lokaler Modus** in the app.
+If auto-paste fails even though transcription works, enable Blitztext under **System Settings → Privacy & Security → Accessibility**, restart it, and remove any stale duplicate entries. Full Disk Access is _not_ required.
 
-For a slower, more explicit walkthrough, see [docs/setup.md](docs/setup.md).
+---
 
-## Permissions
+## 🏗️ Architecture (in one breath)
 
-Blitztext asks for:
-
-- **Microphone**: to record your voice.
-- **Accessibility**: to paste the result back into the app you were using.
-
-If you do not grant Accessibility permission, you can still copy results manually.
-
-Full Disk Access is not required. If auto-paste does not work even though transcription succeeds, open **System Settings -> Privacy & Security -> Accessibility**, enable Blitztext there, restart Blitztext, and try again with the cursor focused in a text field. If macOS shows multiple Blitztext entries, remove or disable the old ones and grant the permission to the app you just built or installed.
-
-## Data Flow
-
-The preview has no custom backend.
-
-```text
-Online transcription: Your Mac -> OpenAI Audio Transcriptions API
-Online rewriting:     Your Mac -> OpenAI Chat Completions API
-Local transcription:  Your Mac -> WhisperKit/CoreML on device
-Local rewriting:      Your Mac -> Ollama model on device
-Email embeddings:     Your Mac -> Ollama embedding model on device
-```
-
-The app stores your OpenAI API key in the user's macOS Keychain.
-
-Read [docs/privacy.md](docs/privacy.md) before using the preview with sensitive content.
-
-## Project Structure
+Layered **App → Features → Services**, native Swift + SwiftUI + AppKit:
 
 ```text
 BlitztextMac/
-  App/          App lifecycle, paste handling, model window wiring
-  Features/     Workflows, menubar UI, onboarding, settings, local model UI
-  Services/     Recording, providers, hotkeys, local storage, context services
-  Tests/        Swift tests for workflows, onboarding, and context behavior
-build.sh        Local build and signing script
-docs/           Setup, privacy, roadmap, preflight, and planning notes
+  App/        Lifecycle, paste handling, menu-bar/pill/onboarding/local-models windows, AppState
+  Features/   Workflows, menu-bar UI, onboarding, settings, local-model UI
+  Services/   Recording, transcription (WhisperKit + OpenAI), the llama.cpp runtime/catalog/
+              download/embedding stack, hotkeys, storage, memory, context capture
+  Tests/      XCTest suite for pure logic, Codable migrations, prompts and decisions
+build.sh      Local build + signing; scripts/build-llamacpp-helper.sh builds the runtime
+docs/         Setup, privacy, local models, roadmap and planning notes
 ```
 
-## Local Models
+Installed models are **self-describing via on-disk manifests**, so curated, Hugging-Face-fetched and custom-URL models all download, list and run through the same path.
 
-Local transcription is available through WhisperKit/CoreML, and local rewriting is available through Ollama-backed LLMs. The app does not bundle models; use the local model manager to inspect your hardware, choose suitable models, download them, and switch to the local workflow from the menubar or settings.
+---
 
-See [docs/local-models.md](docs/local-models.md).
+## 🔀 How this differs from the original
 
-## Contributing
+The upstream project is a lightweight speech-to-text helper. This fork adds, among other things:
 
-Contributions are welcome, especially if they make the preview easier to build, understand, or fork.
+- A **bundled llama.cpp runtime** that replaces the earlier Ollama dependency entirely.
+- A **dynamic, self-expanding model catalog** + hardware-aware recommendations + custom-URL models.
+- **Semantic e-mail memory** with local embeddings, vocabulary learning and context-aware prompting.
+- A **redesigned interface**, a live dictation pill, configurable modes, rebindable hotkeys, two-variant previews, onboarding, code signing and a real test suite.
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+---
 
-## Support And Roadmap
+## 🤝 Contributing & support
 
-This preview has no formal support promise. See [SUPPORT.md](SUPPORT.md) for how to ask for help without sharing secrets.
+Contributions are welcome — especially anything that makes the project easier to build, understand or fork. Please read [CONTRIBUTING.md](CONTRIBUTING.md). There's no formal support promise; see [SUPPORT.md](SUPPORT.md) for how to ask for help without sharing secrets, and [ROADMAP.md](ROADMAP.md) for direction.
 
-The current direction is documented in [ROADMAP.md](ROADMAP.md). Maintainer-facing release checks live in [docs/open-source-preflight.md](docs/open-source-preflight.md).
+---
 
-## License
+## 📄 License
 
-Code is released under the MIT License. See [LICENSE](LICENSE).
+Code is released under the **MIT License** — see [LICENSE](LICENSE). Project names, logos and app icons are not automatically granted as trademarks; see [TRADEMARKS.md](TRADEMARKS.md).
 
-Project names, logos, and app icons are not automatically granted as trademarks or brand assets. See [TRADEMARKS.md](TRADEMARKS.md).
+Local models are downloaded from **Hugging Face** (`ggml-org` and others) under their respective licenses (Apache-2.0, Gemma Terms, etc.). The bundled runtime is **llama.cpp** by ggml-org. Based on the original open-source **Blitztext** by [cmagnussen](https://github.com/cmagnussen/blitztext-app).
 
 ## Legal / Impressum & Datenschutz
 
@@ -180,3 +234,9 @@ The companion website (blitztext.de) is operated by Blackboat Internet GmbH:
 
 - Impressum: https://www.blackboat.com/impressum
 - Datenschutz / Privacy: https://www.blackboat.com/datenschutz
+
+<div align="center">
+
+**Made for people who'd rather talk than type — and keep their words on their own machine.**
+
+</div>
