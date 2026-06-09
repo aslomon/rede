@@ -122,32 +122,6 @@ struct ModelsSettingsView: View {
     }
   }
 
-  // MARK: - Secure-local toggle
-  // spec #4: at the bottom, one-line caption, trailing status pill
-
-  private var secureLocalToggle: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      HStack(spacing: 8) {
-        Toggle("Sicherer Lokaler Modus", isOn: $appState.appSettings.secureLocalModeEnabled)
-          .toggleStyle(.switch)
-          .controlSize(.small)
-          .onChange(of: appState.appSettings.secureLocalModeEnabled) { _, newValue in
-            if newValue && !appState.selectedLocalModelIsInstalled {
-              appState.installSelectedLocalModel()
-            }
-          }
-        Spacer()
-        BlitzStatusPill(
-          state: appState.appSettings.secureLocalModeEnabled ? .local : .muted,
-          label: appState.appSettings.secureLocalModeEnabled ? "Aktiv" : "Aus"
-        )
-      }
-      Text("Deaktiviert alle Online-Dienste. Nur Whisper + lokales Ollama-Modell.")
-        .font(.system(size: 10, weight: .regular))
-        .foregroundStyle(.secondary)
-    }
-  }
-
   // MARK: - Lokale Transkription (Whisper)
   // spec #3: single caption line always visible; full paragraph only in EmptyStateCard
 
