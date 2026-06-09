@@ -76,7 +76,10 @@ struct OnboardingWizardView: View {
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
     }
-    .padding(20)
+    // Extra top padding clears the floating traffic lights (full-size-content title bar).
+    .padding(.horizontal, 20)
+    .padding(.top, 38)
+    .padding(.bottom, 20)
     .frame(width: 196)
     .frame(maxHeight: .infinity, alignment: .topLeading)
   }

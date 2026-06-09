@@ -42,11 +42,48 @@ struct ModelsSettingsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       // spec #1: no top-level dual-status HStack \u{2014} pills live in section headers
+      modeSelector
+      Divider().opacity(0.5)
+      // The non-selected processing mode is dimmed so the active choice is obvious (still
+      // configurable, e.g. to enter your OpenAI key ahead of time).
       onlineBand
+        .opacity(appState.appSettings.secureLocalModeEnabled ? 0.4 : 1)
       Divider().opacity(0.5)
       localBand
+        .opacity(appState.appSettings.secureLocalModeEnabled ? 1 : 0.4)
     }
     .padding(16)
+    .animation(.easeInOut(duration: 0.2), value: appState.appSettings.secureLocalModeEnabled)
+  }
+
+  // MARK: - Processing mode (Online OpenAI vs. secure local)
+  // A clear either/or at the top, now that the popover's bottom engine bar is gone. Drives the same
+  // secureLocalModeEnabled flag and keeps installing the local model when switching to local.
+
+  private var modeSelector: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      SectionLabel(text: "Verarbeitung")
+      Picker("", selection: $appState.appSettings.secureLocalModeEnabled) {
+        Text("Online · OpenAI").tag(false)
+        Text("Lokal · Sicher").tag(true)
+      }
+      .pickerStyle(.segmented)
+      .controlSize(.small)
+      .labelsHidden()
+      .onChange(of: appState.appSettings.secureLocalModeEnabled) { _, newValue in
+        if newValue && !appState.selectedLocalModelIsInstalled {
+          appState.installSelectedLocalModel()
+        }
+      }
+      Text(
+        appState.appSettings.secureLocalModeEnabled
+          ? "Alles bleibt auf deinem Mac: Whisper + lokales Ollama-Modell. Keine Online-Dienste."
+          : "Nutzt die OpenAI-API mit deinem eigenen Key. Leistungsfähiger, aber Audio/Text gehen online."
+      )
+      .font(.system(size: 10.5))
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
+    }
   }
 
   // MARK: - Online band (OpenAI)
@@ -82,7 +119,6 @@ struct ModelsSettingsView: View {
     ) {
       localTranscriptionSection
       localLLMSection
-      secureLocalToggle
     }
   }
 

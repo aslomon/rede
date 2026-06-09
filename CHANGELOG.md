@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Onboarding Window Title Bar Modernization**: Redesigned title bar for contemporary macOS appearance
+  - **Transparent Full-Size Content View**: Added `.fullSizeContentView` and transparent titlebar so glass surface extends to the top window edge
+  - **Floating Traffic Lights**: Traffic lights now float over content instead of sitting in an opaque title band above each step
+  - **Movable by Window Background**: Enabled window dragging from the background area; adjusted left sidebar padding to accommodate floating controls
+  - **Visual Consistency**: Matches modern macOS design language seen in apps like Safari and Preview, eliminating the opaque title bar that interrupted the glass surface
+- **Settings Popover Density & Layout**: Optimized for more content without scrolling
+  - **Increased Minimum Height**: Settings page now enforces `minHeight: 600pt` (vs. 410pt main page width) to display more controls before scrolling
+  - **Engine Bar Relocation**: Removed engine/model selection footer from main popover page; now lives exclusively in Settings → Modelle tab
+- **Processing Mode Selector**: Clear visual choice between Online (OpenAI) and Local (Secure) processing
+  - **Mode Toggle**: New segmented picker at top of Modelle settings: "Online · OpenAI" vs. "Lokal · Sicher" driving `secureLocalModeEnabled` flag
+  - **Visual Dimming**: Non-selected mode section (Online or Local) now dims to 0.4 opacity, making active choice obvious at a glance
+  - **Auto-Install on Switch**: Selecting "Lokal · Sicher" now automatically installs the selected local model (Whisper + Ollama) if not yet installed
+  - **Configurable Offline Setup**: Users can still configure OpenAI key (or vice versa) ahead of time despite dimming, for smooth mode switching
 - **Menu Bar Headers Redesign**: Complete visual overhaul across Main, Settings, and Workflow headers
   - **Brand Identity**: Integrated Blitztext brand logo (BrandMark component) into Main and Settings headers for consistent visual anchor
   - **Main Header**: Reorganized from multi-line to single clean row: `[Logo] Blitztext [Bereit Status] … [⚙]` with inline status pill (removed separate status line)

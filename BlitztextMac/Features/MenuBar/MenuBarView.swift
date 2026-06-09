@@ -36,8 +36,10 @@ struct MenuBarView: View {
         WorkflowPageView(appState: appState)
       }
     }
-    // The SwiftUI root width IS the popover width (it overrides NSPopover.contentSize). 410 to match.
+    // The SwiftUI root width IS the popover width (it overrides NSPopover.contentSize). Width stays
+    // at the compact 410; the dense settings page just gets more HEIGHT so more fits before scrolling.
     .frame(width: 410)
+    .frame(minHeight: appState.page == .settings ? 600 : 0, alignment: .top)
     // Opaque backstop: fixes dark-mode transparency wash-out (macOS 26 glass / <26 material).
     .blitztextSurface()
     .animation(.easeInOut(duration: 0.2), value: appState.page)
@@ -76,11 +78,8 @@ private struct MainPageView: View {
       workflowList
         .padding(.vertical, 2)
 
-      engineFooter
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .padding(.bottom, 6)
-
+      // Engine/model selection lives only in Settings → Modelle now; the popover start page no
+      // longer carries the bottom engine bar.
       appFooter
     }
   }

@@ -46,7 +46,13 @@ final class OnboardingWindowController {
     let hosting = NSHostingController(rootView: rootView)
     let window = NSWindow(contentViewController: hosting)
     window.title = "Blitztext einrichten"
-    window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+    // Modern macOS look: transparent, full-size-content title bar so the glass surface runs to the
+    // very top edge and the traffic lights float over the content, instead of an opaque title band
+    // sitting above every step.
+    window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+    window.titlebarAppearsTransparent = true
+    window.titleVisibility = .hidden
+    window.isMovableByWindowBackground = true
     window.setContentSize(NSSize(width: 620, height: 560))
     window.minSize = NSSize(width: 560, height: 520)
     window.isReleasedWhenClosed = false
