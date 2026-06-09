@@ -84,7 +84,8 @@ struct WhisperModelsSection: View {
         } label: {
           Label("Nutzen", systemImage: "checkmark.circle")
         }
-        .buttonStyle(PopoverActionButtonStyle(.primary))
+        // Secondary so it reads clearly different from the filled, primary "Laden" (download).
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
       }
       Button {
         appState.reinstallLocalTranscriptionModel(model.id)

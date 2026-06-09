@@ -118,14 +118,12 @@ struct LocalModelRowView: View {
         } label: {
           Label("Nutzen", systemImage: "checkmark.circle")
         }
-        .buttonStyle(PopoverActionButtonStyle(.primary))
+        // Secondary so "activate an installed model" reads clearly different from the filled,
+        // primary "Laden" (download) action.
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
       }
+      // Size is already shown in metaRow on the left — the "… auf Disk" line here was a duplicate.
       let record = manager.installedRecord(for: model.tag)
-      if let record {
-        Text(SystemCapabilities.formatGB(record.sizeGB) + " auf Disk")
-          .font(.system(size: 9.5))
-          .foregroundStyle(.secondary)
-      }
       DeleteModelButton(
         displayName: model.displayName,
         deleteTag: record?.name ?? model.tag,

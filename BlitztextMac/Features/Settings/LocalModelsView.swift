@@ -17,6 +17,12 @@ struct LocalModelsView: View {
         header
         if !manager.serverReachable { serverDownBanner }
 
+        // Hardware facts first — the model recommendation and the per-model RAM fit are based on them.
+        VStack(alignment: .leading, spacing: 8) {
+          SectionLabel(text: "Dieser Mac")
+          systemCard
+        }
+
         // Engine 1 — Transcription (Whisper). Always local; independent of the Ollama server.
         WhisperModelsSection(appState: appState)
 
@@ -43,8 +49,6 @@ struct LocalModelsView: View {
 
         if let error = manager.lastError { errorBanner(error) }
 
-        // Reference, not action — hardware facts collapse out of the way at the bottom.
-        InfoDisclosure("Dieser Mac") { systemCard }
         footerHint
       }
       .padding(16)
@@ -61,8 +65,11 @@ struct LocalModelsView: View {
   private var header: some View {
     HStack(alignment: .top) {
       VStack(alignment: .leading, spacing: 2) {
-        Text("Lokale Modelle")
-          .font(.system(size: 16, weight: .semibold))
+        HStack(spacing: 8) {
+          BrandMark(size: 18)
+          Text("Lokale Modelle")
+            .font(.system(size: 16, weight: .semibold))
+        }
         Text("Transkription, Sprachmodell und Embedding — laden, neu laden, entfernen.")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
@@ -147,7 +154,7 @@ struct LocalModelsView: View {
             } label: {
               Label("Nutzen", systemImage: "checkmark.circle")
             }
-            .buttonStyle(PopoverActionButtonStyle(.primary))
+            .buttonStyle(PopoverActionButtonStyle(.secondary))
           }
         } else if pulling {
           Label("Wird geladen …", systemImage: "arrow.down.circle")
@@ -214,7 +221,7 @@ struct LocalModelsView: View {
         } label: {
           Label("Nutzen", systemImage: "checkmark.circle")
         }
-        .buttonStyle(PopoverActionButtonStyle(.primary))
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
       }
       Text(SystemCapabilities.formatGB(record.sizeGB))
         .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
@@ -233,9 +240,14 @@ struct LocalModelsView: View {
   // MARK: - Catalog
 
   private var catalogSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    // Only show models that actually run on this Mac's RAM — anything that doesn't fit (fit ==
+    // .tooLarge) is hidden so it can't be downloaded into a model that won't load.
+    let runnable = OllamaModelCatalog.models.filter {
+      manager.system.fit(forRuntimeRAMGB: $0.estimatedRuntimeRAMGB) != .tooLarge
+    }
+    return VStack(alignment: .leading, spacing: 8) {
       SectionLabel(text: "Verfügbare Modelle")
-      ForEach(OllamaModelCatalog.models) { model in
+      ForEach(runnable) { model in
         LocalModelRowView(
           model: model,
           manager: manager,

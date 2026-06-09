@@ -21,71 +21,93 @@ struct OnboardingWizardView: View {
   }
 
   var body: some View {
-    VStack(spacing: 0) {
-      header
-      Divider()
+    HStack(spacing: 0) {
+      // Persistent brand rail (uniform across all steps) instead of a per-page top header.
+      sidebar
+      Divider().opacity(0.5)
 
-      ScrollView {
-        stepBody
-          .padding(20)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          // Asymmetric directional push transition (change 5)
-          .transition(
-            .asymmetric(
-              insertion: .push(from: navigatingForward ? .trailing : .leading),
-              removal: .push(from: navigatingForward ? .leading : .trailing)
+      VStack(spacing: 0) {
+        ScrollView {
+          stepBody
+            .padding(28)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // Asymmetric directional push transition (change 5)
+            .transition(
+              .asymmetric(
+                insertion: .push(from: navigatingForward ? .trailing : .leading),
+                removal: .push(from: navigatingForward ? .leading : .trailing)
+              )
             )
-          )
+        }
+        footer
       }
-
-      Divider()
-      footer
     }
-    .frame(minWidth: 600, minHeight: 540)
+    .frame(minWidth: 680, minHeight: 520)
     // Replaced .easeInOut(duration: 0.18) with spring (change 5)
     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: viewModel.step)
     // Glass backdrop for the entire wizard window (change 1)
     .blitztextSurface()
   }
 
-  // MARK: - Header
+  // MARK: - Sidebar (brand rail)
 
-  private var header: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(alignment: .center) {
-        Text("Blitztext einrichten")
-          .font(.system(size: 13, weight: .semibold))
+  /// Left rail: brand mark + the full step list with the current step highlighted and completed
+  /// steps check-marked. Replaces the old top header + segmented progress so the wizard reads as one
+  /// uniform surface, not a page with a header.
+  private var sidebar: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      HStack(spacing: 8) {
+        BrandMark(size: 20)
+        Text("Blitztext")
+          .font(.system(size: 15, weight: .semibold))
           .foregroundStyle(.primary)
-        Spacer()
-        BlitzStatusPill(
-          state: viewModel.canAdvance(appState) ? .ready : .warning,
-          label: "Schritt \(viewModel.step.displayIndex)/\(OnboardingViewModel.stepCount)"
-        )
+      }
+      .padding(.bottom, 24)
+
+      VStack(alignment: .leading, spacing: 2) {
+        ForEach(OnboardingViewModel.OnboardingStep.allCases) { step in
+          stepRailRow(step)
+        }
       }
 
-      // Segmented linear progress track (change 2)
-      stepProgressTrack
+      Spacer(minLength: 16)
+
+      Text("Schritt \(viewModel.step.displayIndex) von \(OnboardingViewModel.stepCount)")
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
     }
-    .padding(.horizontal, 20)
-    .padding(.vertical, 12)
+    .padding(20)
+    .frame(width: 196)
+    .frame(maxHeight: .infinity, alignment: .topLeading)
   }
 
-  /// A fixed-height segmented track: filled segments for past/active steps, faint for upcoming.
-  /// Height 3pt, corner radius 1.5pt — replaces the 8-capsule chip strip (change 2).
-  private var stepProgressTrack: some View {
-    HStack(spacing: 3) {
-      ForEach(OnboardingViewModel.OnboardingStep.allCases) { step in
-        let isActive = step == viewModel.step
-        let isPast = step.rawValue < viewModel.step.rawValue
-        let filled = isActive || isPast
-        let tint = isActive ? viewModel.step.accent : (isPast ? step.accent : Color.secondary)
-
-        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-          .fill(filled ? tint : Color.secondary.opacity(0.15))
-          .frame(height: 3)
-          .animation(.easeInOut(duration: 0.22), value: viewModel.step)
+  private func stepRailRow(_ step: OnboardingViewModel.OnboardingStep) -> some View {
+    let isActive = step == viewModel.step
+    let isPast = step.rawValue < viewModel.step.rawValue
+    return HStack(spacing: 10) {
+      ZStack {
+        Circle()
+          .fill(isActive ? step.accent.opacity(0.18) : Color.clear)
+          .frame(width: 24, height: 24)
+        Image(systemName: isPast ? "checkmark" : step.systemImage)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundStyle(
+            isActive
+              ? AnyShapeStyle(step.accent)
+              : (isPast ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tertiary)))
       }
+      Text(step.title)
+        .font(.system(size: 12, weight: isActive ? .semibold : .regular))
+        .foregroundStyle(isActive ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+      Spacer(minLength: 0)
     }
+    .padding(.vertical, 5)
+    .padding(.horizontal, 8)
+    .background(
+      RoundedRectangle(cornerRadius: 8)
+        .fill(isActive ? Color.primary.opacity(0.05) : Color.clear)
+    )
+    .animation(.easeInOut(duration: 0.2), value: viewModel.step)
   }
 
   // MARK: - Step body

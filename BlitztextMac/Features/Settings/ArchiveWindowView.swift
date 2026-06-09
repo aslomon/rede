@@ -56,8 +56,11 @@ struct ArchiveWindowView: View {
   private var header: some View {
     HStack(alignment: .top) {
       VStack(alignment: .leading, spacing: 2) {
-        Text("Transkriptions-Archiv")
-          .font(.system(size: 16, weight: .semibold))
+        HStack(spacing: 8) {
+          BrandMark(size: 18)
+          Text("Transkriptions-Archiv")
+            .font(.system(size: 16, weight: .semibold))
+        }
         Text(headerSubtitle)
           .font(.system(size: 11))
           .foregroundStyle(.secondary)

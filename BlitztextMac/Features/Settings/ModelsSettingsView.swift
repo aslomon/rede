@@ -254,8 +254,55 @@ struct ModelsSettingsView: View {
 
   private var localLLMSection: some View {
     SettingsSection("Lokales Sprachmodell (Ollama)") {
+      // When no local LLM is chosen yet, surface the hardware-based recommendation with a direct
+      // download right here, so the user doesn't have to open the management window first.
+      if appState.appSettings.selectedLocalLLMModelName.trimmingCharacters(
+        in: .whitespacesAndNewlines
+      ).isEmpty,
+        let recommended = appState.localModelManager.recommended
+      {
+        ollamaRecommendation(recommended)
+      }
       LocalLLMModelPicker(appState: appState)
     }
+  }
+
+  /// Compact "Empfohlen für deinen Mac" card with a direct Laden button, shown in the Modelle tab
+  /// only while no local rewrite model is selected.
+  private func ollamaRecommendation(_ model: OllamaModelCatalog.Model) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 6) {
+        Image(systemName: "sparkles").font(.system(size: 10.5, weight: .semibold))
+        Text("Empfohlen für deinen Mac").font(.system(size: 10.5, weight: .semibold))
+        Spacer(minLength: 0)
+      }
+      .foregroundStyle(.blue)
+
+      HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 1) {
+          Text(model.displayName).font(.system(size: 11.5, weight: .semibold))
+          Text("ca. \(SystemCapabilities.formatGB(model.downloadGB)) Download")
+            .font(.system(size: 10)).foregroundStyle(.secondary)
+        }
+        Spacer(minLength: 8)
+        if appState.localModelManager.isPulling(model.tag) {
+          ProgressView().controlSize(.small)
+        } else {
+          Button {
+            appState.localModelManager.pull(model.tag)
+          } label: {
+            Label("Laden", systemImage: "arrow.down.circle.fill")
+              .font(.system(size: 10.5, weight: .semibold))
+          }
+          .buttonStyle(PopoverActionButtonStyle(.primary))
+          .controlSize(.small)
+          .disabled(appState.localModelManager.isPreparingOllama)
+        }
+      }
+    }
+    .padding(10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .liquidGlassInfoBanner(accent: .blue)
   }
 }
 

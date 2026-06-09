@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Settings Header**: New format: `[← Back] [Logo] Settings [Right Actions]` with brand mark for consistency
   - **Workflow Header**: Preserved existing mode-icon design; logo integration optional for future refinement
   - **Simplified Layout**: Removed header divider (no visual separation); transparent background using standard surface color
+- **Window Headers with BrandMark**: Added Blitztext brand logo (18pt BrandMark) to three window headers
+  - **Transcription Archive Header**: Logo now displays before "Transkriptions-Archiv" title for visual consistency
+  - **Local Models Header**: Logo now displays before "Lokale Modelle" title for visual consistency
+  - **Onboarding Header**: Logo now displays before "Blitztext einrichten" title for visual consistency
+  - **BrandMark Accessibility**: Made BrandMark component public (module-level) for reuse across window headers (previously private to MenuBarView)
 - **Local Whisper Model Loading**: Enhanced user feedback during model initialization
   - **Model Loading State**: Added `localModelPreparing` flag to surface slow first-load initialization (ANE compilation on large models can take minutes)
   - **Model Switching Behavior**: When user explicitly switches Whisper models, new model now preloads immediately with visible status instead of blocking on next dictation
@@ -22,6 +27,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Improvement Detection Section**: Updated privacy disclosure text from "Lokal protokolliert (0600)" to "Lokal protokolliert (nur du)" for clarity
 - **Paste Context Section**: Updated privacy disclosure text from "Lokal protokolliert (0600)" to "Lokal protokolliert (nur du)" for consistency
 - **Improvements List**: Removed clear button from bottom of improvements list (clutter reduction)
+- **Onboarding Wizard Layout Redesign**: Complete restructuring from horizontal top-header + content layout to left-rail + content design
+  - **Brand Rail (Left)**: New persistent left sidebar (196pt width) displaying Blitztext logo, full step list with icons, current step highlighting (accent color + background), completed steps marked with checkmark, and "Schritt X von Y" counter at bottom
+  - **Step List Visual Hierarchy**: Current step emphasizes name in semibold with accent color background; completed steps show green checkmark; upcoming steps appear faded; all steps navigable via click
+  - **Content Area (Right)**: Removed top header entirely; content now full-width with consistent glass surface throughout; footer buttons remain at bottom
+  - **Visual Cohesion**: Wizard now reads as one uniform surface rather than a page with separate header; unified glass backdrop across entire window
+  - **Window Sizing**: Adjusted minimum width to 680pt (from 600pt) to accommodate left rail; height reduced slightly to 520pt (from 540pt) for better screen fit
+  - **Animation**: Retained asymmetric push transitions for step content; updated spring animation for smoother step navigation
+- **Local Models Settings Reorganization**: Restructured hardware-aware model management and recommendation flow
+  - **Hardware Specs First**: New "Dieser Mac" section moved to top with system capabilities card (RAM, GPU, architecture) — shown directly, not collapsed
+  - **Catalog Filtering**: "Verfügbare Modelle" section now filters out models too large to run on device (tooLarge fit rating) preventing download of unrunnable models
+  - **Ollama Recommendation Card**: New blue-accented recommendation banner in Models tab shows hardware-recommended model with direct download button when no local LLM is selected yet
+  - **Duplicate Size Removal**: Removed redundant size display in LocalModelRowView (size already shown in hardware specs card)
+- **Model Activation Button Clarity**: Changed all model "Nutzen" (activate) buttons from primary to secondary button style
+  - **Visual Distinction**: Secondary style clearly differentiates activation from primary "Laden" (download) action
+  - **Affected Areas**: LocalModelRowView, LocalModelsView (Whisper and Ollama sections), WhisperModelsSection
+  - **UX Clarity**: Users no longer confuse downloading a model with activating an already-installed model
 
 ### Added
 

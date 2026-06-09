@@ -5,8 +5,8 @@ import SwiftUI
 
 /// Small Blitztext brand mark (the menu-bar bars), tinted to the foreground colour. Loaded from the
 /// bundled `menubar_icon` resource via NSImage (it is not in an asset catalog, so `Image("…")` can't
-/// find it). Used in the popover headers for a consistent brand anchor.
-private struct BrandMark: View {
+/// find it). Used in the popover AND window headers for a consistent brand anchor.
+struct BrandMark: View {
   var size: CGFloat = 15
 
   var body: some View {
