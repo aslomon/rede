@@ -39,6 +39,7 @@ final class LocalModelsWindowController {
     window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
     window.titlebarAppearsTransparent = true
     window.titleVisibility = .hidden
+    window.titlebarSeparatorStyle = .none  // removes the hairline separator under the title bar
     window.isMovableByWindowBackground = true
     window.setContentSize(NSSize(width: 560, height: 660))
     window.minSize = NSSize(width: 520, height: 480)

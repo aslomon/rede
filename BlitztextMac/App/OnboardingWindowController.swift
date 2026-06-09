@@ -52,6 +52,7 @@ final class OnboardingWindowController {
     window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
     window.titlebarAppearsTransparent = true
     window.titleVisibility = .hidden
+    window.titlebarSeparatorStyle = .none  // removes the hairline separator under the title bar
     window.isMovableByWindowBackground = true
     window.setContentSize(NSSize(width: 620, height: 560))
     window.minSize = NSSize(width: 560, height: 520)
