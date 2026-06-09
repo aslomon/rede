@@ -962,7 +962,7 @@ final class AppState {
       case .backendNotReady(.local):
         return
           "Kein lokales Sprachmodell ausgewählt. Wähle in den Einstellungen unter "
-          + "„Lokales Sprachmodell (Ollama)“ ein Modell aus."
+          + "„Lokales Sprachmodell“ ein GGUF-Modell aus."
       }
     }
   }
@@ -1092,6 +1092,19 @@ final class AppState {
     return name.isEmpty ? ModeConfig.defaultUserName(for: config.slot) : name
   }
 
+  /// Subtitle for a local-rewrite mode: always llama.cpp, with the active model's display name.
+  private func localRewriteSubtitle() -> String {
+    let selection = appSettings.selectedLocalLLM
+    guard selection.isConfigured else {
+      return "Lokal über llama.cpp — noch kein Modell gewählt"
+    }
+    let name =
+      localModelManager.installedLlamaCppModel(for: selection.modelID)?.displayName
+      ?? LlamaCppModelCatalog.model(for: selection.modelID)?.displayName
+      ?? selection.modelID
+    return "Lokal über llama.cpp (\(name))"
+  }
+
   func workflowSubtitle(for config: ModeConfig) -> String {
     let type = config.slot
     if type == .emojiText {
@@ -1100,11 +1113,7 @@ final class AppState {
     if type == .textImprover || type == .dampfAblassen {
       switch resolvedRewriteBackend(for: config) {
       case .local:
-        let model = appSettings.selectedLocalLLMModelName.trimmingCharacters(
-          in: .whitespacesAndNewlines)
-        return model.isEmpty
-          ? "Lokal über Ollama — noch kein Modell gewählt"
-          : "Lokal über Ollama (\(model))"
+        return localRewriteSubtitle()
       case .openai:
         return type.subtitle
       }
@@ -1127,10 +1136,7 @@ final class AppState {
     case .textImprover, .dampfAblassen, .emojiText:
       switch resolvedRewriteBackend(for: type) {
       case .local:
-        let selection = appSettings.selectedLocalLLM
-        return selection.isConfigured
-          ? "\(selection.runtime.backendLabel) (\(selection.modelID))"
-          : "\(selection.runtime.backendLabel) — noch kein Modell gewählt"
+        return localRewriteSubtitle()
       case .openai:
         return type.subtitle
       }

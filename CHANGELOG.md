@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Live Hugging Face Model Catalog**: Dynamically fetch and browse chat models directly from Hugging Face (ggml-org)
+  - **HuggingFaceModelService**: Fetches live GGUF models from trusted orgs with heuristic parameter parsing and deduplication
+  - **Dynamic Expansion**: New models (Gemma 4, gpt-oss) automatically appear as they're published without app updates
+  - **Quality Filtering**: Automatically excludes embedding, vision, test, and audio models; filters oversized models for user's RAM
+  - **Manifest-based Resolution**: Uses HF file LFS metadata (SHA256) for integrity verification, avoiding re-hashing large downloaded files
+  - **UI Integration**: New collapsible "Aus dem Hugging-Face-Katalog" section in Lokale Modelle window with refresh button and loading state
+- **HuggingFaceModelServiceTests**: Unit tests covering parameter parsing, model derivation, deduplication, and junk filtering
+
 ### Fixed
 
 - **Local Model Download Progress Reporting**: Fixed frozen-looking model downloads by implementing real progress updates
