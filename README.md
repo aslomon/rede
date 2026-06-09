@@ -61,6 +61,17 @@ Every mode is **fully configurable** — rename it, rebind its hotkey, pick its 
 
 ---
 
+## 🎛️ Built to feel simple
+
+The point isn't a pile of features — it's a handful of small interactions that just work, and stay out of your way:
+
+- **Every mode's system prompt is yours.** Create your own modes and **write or edit the system prompt** for each one — set the tone and behavior in plain text. No hidden magic.
+- **Opt-in, never opt-out.** Memory, archive, two-variant preview, context capture — all off until you switch them on. The defaults stay calm.
+- **It just pastes.** Speak, and the result lands in the field you're already in (with a copy-only fallback if paste is blocked).
+- **No bloat.** No account, no dashboard, no settings you'll never touch — a menu-bar app that does a few things well.
+
+---
+
 ## 🧠 Local AI — the core of this fork
 
 Local rewriting runs on a **bundled [llama.cpp](https://github.com/ggml-org/llama.cpp) server** that the app starts as a subprocess on `127.0.0.1`. There is **no Ollama and no external runtime** — Blitztext downloads GGUF model files, verifies them, and runs them itself.
@@ -107,10 +118,10 @@ You can mix and match per mode: dictate locally, rewrite online, or the reverse.
 
 ## 🧩 Memory, vocabulary & context (all opt-in, all local)
 
-- **Semantic e-mail memory** — an opt-in local vector store embeds your past rewrites (via a local **nomic-embed-text** GGUF on a second llama.cpp server) and retrieves similar earlier drafts as background context. Capped, retention-aware, never uploaded.
+- **Semantic e-mail memory that learns** — opt in, and the more e-mails you dictate, the better it gets. A local vector store (a **nomic-embed-text** GGUF on a second llama.cpp server) embeds your finished drafts, so Blitztext can recall how you phrased _similar cases before_ and feed that back as quiet background context. Capped, retention-aware, never uploaded.
+- **Two-variant preview — toggleable** — switch it on per mode and a rewrite pauses in the floating pill with **two versions**; pick the one you like and it's inserted. Off for modes where you just want the answer.
 - **Vocabulary & term learning** — frequently used names and domain terms are learned and injected into future prompts, with fuzzy correction for tricky words.
 - **Context awareness** — modes can optionally include the focused window, your current text selection, and content-type hints in the prompt.
-- **Two-variant preview** — a rewrite mode can pause in the floating pill and let you choose which version to insert.
 
 ---
 

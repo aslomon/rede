@@ -11,7 +11,7 @@ This repository is a native macOS menu bar app, not a web app. Treat the local c
 - Tests: XCTest target `BlitztextMacTests`.
 - External Swift package: `argmax-oss-swift` / WhisperKit, pinned in `project.yml`.
 - Remote services: OpenAI audio transcription and chat completions, called directly from the app with the user's own API key.
-- Local services: WhisperKit/CoreML model folders for transcription and Ollama on `localhost:11434` for local rewriting.
+- Local services: WhisperKit/CoreML model folders for transcription and the bundled llama.cpp runtime (a `localhost` server, started as a subprocess) for local rewriting and e-mail-memory embeddings.
 - There is no hosted backend, account system, sync layer, telemetry service, or bundled model package.
 
 ## Repository Layout
@@ -76,7 +76,7 @@ Important details:
 - Put workflow-specific behavior in `Features/Workflows/`.
 - Put UI in `Features/...` or `Views/`; do not hide business rules inside SwiftUI body builders.
 - Keep prompt construction provider-agnostic in `LLMService`.
-- Keep network transport inside provider/service types such as `OpenAIRewriteProvider`, `OllamaRewriteProvider`, `TranscriptionService`, and `OllamaService`.
+- Keep network transport inside provider/service types such as `OpenAIRewriteProvider`, `LlamaCppRewriteProvider`, `LlamaCppServerClient`, and the transcription services.
 - Prefer small pure functions for parsing, prompt assembly, persistence transforms, and decision logic so they can be tested without AppKit permissions.
 - Maintain `@MainActor` boundaries for UI, AppKit, pasteboard, accessibility, and observable state.
 - Move expensive file, model, and text processing work off the main actor with structured concurrency.
@@ -102,7 +102,7 @@ This app handles audio, transcripts, clipboard contents, API keys, selected text
 - Store API keys only in macOS Keychain through `KeychainService`.
 - Keep OpenAI calls direct and explicit; do not add hidden proxying, telemetry, analytics, or hosted services.
 - Use `URLSessionConfiguration.ephemeral` for network clients unless there is a clear reason not to.
-- Keep local Ollama traffic on `localhost`; do not redirect local rewrite text to remote services.
+- Keep local llama.cpp traffic on `localhost`; do not redirect local rewrite text to remote services.
 - Temporary audio must be deleted after processing or cancellation.
 - Clipboard behavior must remain honest: if auto-paste fails, preserve copy-only fallback UX.
 - Accessibility context and automatic field context must remain opt-in, capped, and clearly described.
@@ -146,7 +146,7 @@ Rewrite behavior is controlled by:
 - `RewriteBackend`
 - `RewriteProvider`
 - `OpenAIRewriteProvider`
-- `OllamaRewriteProvider`
+- `LlamaCppRewriteProvider` (+ `LlamaCppRuntimeService`, `LlamaCppModelCatalog`)
 - `LLMService`
 - `RewriteModelRegistry`
 
@@ -172,7 +172,7 @@ Add or update focused XCTest coverage for:
 - Pure formatting and UI decision helpers.
 - Error descriptions users depend on.
 
-Prefer tests around pure functions and injected dependencies. Avoid tests that require real microphone, real Accessibility permission, real OpenAI credentials, or live Ollama unless the task explicitly calls for integration testing.
+Prefer tests around pure functions and injected dependencies. Avoid tests that require real microphone, real Accessibility permission, real OpenAI credentials, or a live local model server unless the task explicitly calls for integration testing.
 
 Run `./test.sh` after logic changes. Run `./build.sh --debug` after structural, UI, resource, signing, or project configuration changes.
 
