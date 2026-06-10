@@ -1,10 +1,10 @@
 #!/usr/bin/env swift
-// Generates the rede app icon set + menu bar template icons.
-// Same visual language as the Blitztext original (black rounded square, white mark) with the
-// rede speech motif: a white speech bubble carrying three rounded "speech" bars, the middle one
-// in the warm rede accent (coral). Usage:
+// Generates the rede app icon set + menu bar template icons — "electric" direction.
+// Electric-violet rounded square, white speech bubble (tail bottom-left) carrying an
+// acid-lime voice waveform. Usage:
 //   swift generate-icons.swift <output-dir>
-// Writes: rede.iconset/ (for iconutil), menubar_icon.png, menubar_icon@2x.png
+// Writes: rede.iconset/ (for iconutil), menubar_icon.png, menubar_icon@2x.png,
+//         rede-icon-1024.png (asset-catalog master).
 
 import AppKit
 import CoreGraphics
@@ -19,10 +19,12 @@ let outputDir = URL(fileURLWithPath: args[1], isDirectory: true)
 let iconsetDir = outputDir.appendingPathComponent("rede.iconset", isDirectory: true)
 try FileManager.default.createDirectory(at: iconsetDir, withIntermediateDirectories: true)
 
-// rede brand accent (warm coral) — see DESIGN.md (rede edition).
-let accent = CGColor(red: 1.00, green: 0.36, blue: 0.30, alpha: 1.0)
-let black = CGColor(red: 0.04, green: 0.04, blue: 0.05, alpha: 1.0)
+// rede brand palette (DESIGN.md, rede edition).
+let violet = CGColor(red: 0.431, green: 0.337, blue: 0.973, alpha: 1.0)  // #6E56F8
+let lime = CGColor(red: 0.800, green: 1.000, blue: 0.102, alpha: 1.0)  // #CCFF1A
 let white = CGColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+let ink = CGColor(red: 0.055, green: 0.043, blue: 0.102, alpha: 1.0)  // #0E0B1A
+let mist = CGColor(red: 0.949, green: 0.941, blue: 0.984, alpha: 1.0)  // #F2F0FB
 
 func makeContext(size: Int) -> CGContext {
   let ctx = CGContext(
@@ -42,79 +44,83 @@ func writePNG(_ ctx: CGContext, to url: URL) {
   try! data.write(to: url)
 }
 
-/// Rounded "speech bars" inside a bubble: the mark reads as someone speaking.
-/// All geometry in unit coordinates of the artwork square (0…1), drawn bottom-up (CG coords).
-/// `punchColor` paints the non-accent bars (e.g. the icon's black background colour);
-/// nil punches them to full transparency (correct for the monochrome template icon).
-func drawMark(
-  in ctx: CGContext, artworkRect: CGRect, barColor: CGColor, accentColor: CGColor?,
-  punchColor: CGColor?
-) {
+/// A horizontal voice waveform: alternating quad-curve humps across [x0, x1] centred on `cy`.
+/// `humps` = number of half-waves; the first one goes UP (screen-up = +y in CG bottom-up coords).
+func wavePath(x0: CGFloat, x1: CGFloat, cy: CGFloat, amplitude: CGFloat, humps: Int) -> CGPath {
+  let path = CGMutablePath()
+  path.move(to: CGPoint(x: x0, y: cy))
+  let segment = (x1 - x0) / CGFloat(humps)
+  for index in 0..<humps {
+    let startX = x0 + CGFloat(index) * segment
+    let endX = startX + segment
+    let controlY = cy + (index % 2 == 0 ? amplitude : -amplitude)
+    path.addQuadCurve(
+      to: CGPoint(x: endX, y: cy),
+      control: CGPoint(x: (startX + endX) / 2, y: controlY))
+  }
+  return path
+}
+
+/// Speech bubble (rounded body + tail bottom-left) carrying a voice waveform.
+/// `bubbleColor` fills the bubble; `waveColor` strokes the wave (nil = punch the wave to
+/// transparency, used for the monochrome menu bar template).
+func drawMark(in ctx: CGContext, artworkRect: CGRect, bubbleColor: CGColor, waveColor: CGColor?) {
   let w = artworkRect.width
 
-  // Speech bubble body: rounded rect occupying the upper ~62% of the artwork, plus a tail.
+  // Bigger mark, less empty margin inside the rounded square (user feedback).
   let bubble = CGRect(
-    x: artworkRect.minX + 0.16 * w,
-    y: artworkRect.minY + 0.34 * w,
-    width: 0.68 * w,
-    height: 0.46 * w
+    x: artworkRect.minX + 0.10 * w,
+    y: artworkRect.minY + 0.30 * w,
+    width: 0.80 * w,
+    height: 0.56 * w
   )
-  let bubbleRadius = 0.115 * w
-  let bubblePath = CGMutablePath()
-  bubblePath.addRoundedRect(
-    in: bubble, cornerWidth: bubbleRadius, cornerHeight: bubbleRadius)
+  let bubbleRadius = 0.155 * w
+  let bubblePath = CGPath(
+    roundedRect: bubble, cornerWidth: bubbleRadius, cornerHeight: bubbleRadius, transform: nil)
 
-  // Tail: top edge sits inside the bubble's full-width zone (x past the corner-radius band,
-  // y just below the lowest bar) so the white union is seamless and never crosses a bar.
+  // Tail: top edge inside the bubble's full-width zone so the union is seamless.
   let tail = CGMutablePath()
-  tail.move(to: CGPoint(x: bubble.minX + 0.14 * w, y: bubble.minY + 0.115 * w))
-  tail.addLine(to: CGPoint(x: bubble.minX + 0.33 * w, y: bubble.minY + 0.115 * w))
-  tail.addLine(to: CGPoint(x: bubble.minX + 0.095 * w, y: artworkRect.minY + 0.16 * w))
+  tail.move(to: CGPoint(x: bubble.minX + 0.16 * w, y: bubble.minY + 0.10 * w))
+  tail.addLine(to: CGPoint(x: bubble.minX + 0.38 * w, y: bubble.minY + 0.10 * w))
+  tail.addLine(to: CGPoint(x: bubble.minX + 0.07 * w, y: artworkRect.minY + 0.12 * w))
   tail.closeSubpath()
 
-  // Fill bubble and tail SEPARATELY: one combined fillPath XORs their overlap away
-  // (opposite path windings), punching a hole exactly where the tail enters the bubble.
-  ctx.setFillColor(barColor)
+  // Fill bubble and tail in SEPARATE fillPath calls (a single combined fill would XOR the
+  // overlap away due to opposite windings, punching a hole where the tail meets the bubble).
+  ctx.setFillColor(bubbleColor)
   ctx.addPath(bubblePath)
   ctx.fillPath()
   ctx.addPath(tail)
   ctx.fillPath()
 
-  // Three speech bars inside the bubble — middle one accent-colored, the others punched
-  // (painted in punchColor, or true transparency for the template variant). CG coords are
-  // bottom-up: topBarY is the BOTTOM edge of the topmost bar; lower bars subtract the gap.
-  // Lowest bar bottom = bubble.maxY - 0.335w = bubble.minY + 0.125w → clears the tail (0.115w).
-  let barHeight = 0.062 * w
-  let barRadius = barHeight / 2
-  let barX = bubble.minX + 0.10 * w
-  let topBarY = bubble.maxY - 0.125 * w
-  let gap = 0.105 * w
-  let widths: [CGFloat] = [0.46 * w, 0.34 * w, 0.40 * w]
+  // Voice waveform across the bubble.
+  let wave = wavePath(
+    x0: bubble.minX + 0.17 * w,
+    x1: bubble.maxX - 0.17 * w,
+    cy: bubble.midY + 0.03 * w,
+    amplitude: 0.10 * w,
+    humps: 3)
+  let lineWidth = 0.06 * w
 
-  for (index, barWidth) in widths.enumerated() {
-    let rect = CGRect(
-      x: barX, y: topBarY - CGFloat(index) * gap, width: barWidth, height: barHeight)
-    let path = CGPath(
-      roundedRect: rect, cornerWidth: barRadius, cornerHeight: barRadius, transform: nil)
-    if index == 1, let accentColor {
-      ctx.setFillColor(accentColor)
-      ctx.addPath(path)
-      ctx.fillPath()
-    } else if let punchColor {
-      ctx.setFillColor(punchColor)
-      ctx.addPath(path)
-      ctx.fillPath()
-    } else {
-      // True punch-through for the monochrome template icon.
-      ctx.setBlendMode(.clear)
-      ctx.addPath(path)
-      ctx.fillPath()
-      ctx.setBlendMode(.normal)
-    }
+  if let waveColor {
+    ctx.setStrokeColor(waveColor)
+    ctx.setLineWidth(lineWidth)
+    ctx.setLineCap(.round)
+    ctx.addPath(wave)
+    ctx.strokePath()
+  } else {
+    // Punch the wave to transparency for the template icon.
+    ctx.setBlendMode(.clear)
+    ctx.setStrokeColor(white)
+    ctx.setLineWidth(lineWidth)
+    ctx.setLineCap(.round)
+    ctx.addPath(wave)
+    ctx.strokePath()
+    ctx.setBlendMode(.normal)
   }
 }
 
-/// Full app icon: black rounded square (Big-Sur-style margin) + white bubble mark.
+/// Full app icon: soft mist rounded square + violet bubble + lime wave (the "soft / hell" direction).
 func drawAppIcon(size: Int) -> CGContext {
   let ctx = makeContext(size: size)
   let s = CGFloat(size)
@@ -125,25 +131,24 @@ func drawAppIcon(size: Int) -> CGContext {
     x: (s - artworkSide) / 2, y: (s - artworkSide) / 2, width: artworkSide, height: artworkSide)
   let cornerRadius = 0.225 * artworkSide
 
-  ctx.setFillColor(black)
+  ctx.setFillColor(mist)
   ctx.addPath(
     CGPath(
       roundedRect: artworkRect, cornerWidth: cornerRadius, cornerHeight: cornerRadius,
       transform: nil))
   ctx.fillPath()
 
-  drawMark(
-    in: ctx, artworkRect: artworkRect, barColor: white, accentColor: accent, punchColor: black)
+  drawMark(in: ctx, artworkRect: artworkRect, bubbleColor: violet, waveColor: lime)
   return ctx
 }
 
-/// Menu bar template icon: monochrome black mark on transparent (macOS tints it).
+/// Menu bar template icon: monochrome black bubble on transparent (macOS tints it); the wave is
+/// punched to transparency so the silhouette reads as "speech".
 func drawMenuBarIcon(size: Int) -> CGContext {
   let ctx = makeContext(size: size)
   let s = CGFloat(size)
   let artworkRect = CGRect(x: 0, y: 0, width: s, height: s)
-  // Template icons: solid black; bars punch through to transparent, no accent.
-  drawMark(in: ctx, artworkRect: artworkRect, barColor: black, accentColor: nil, punchColor: nil)
+  drawMark(in: ctx, artworkRect: artworkRect, bubbleColor: ink, waveColor: nil)
   return ctx
 }
 

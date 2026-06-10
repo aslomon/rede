@@ -8,23 +8,23 @@ struct WelcomeStepView: View {
       OnboardingStepHeader(
         systemImage: "sparkles",
         accent: .blue,
-        title: "Willkommen bei rede",
-        subtitle: "Einmal einrichten. Danach sprechen, loslassen, Text sitzt im Feld."
+        title: "lass uns reden",
+        subtitle: "Einmal einrichten — danach: sprechen, loslassen, Text sitzt im Feld."
       )
 
       VStack(alignment: .leading, spacing: 10) {
         valueBullet(
           icon: "mic.fill", accent: .blue,
-          title: "Sprechen statt tippen",
-          detail: "Hotkey halten, sprechen, loslassen.")
+          title: "sprechen statt tippen",
+          detail: "hotkey halten, einfach reden, loslassen. fertig.")
         valueBullet(
           icon: "text.badge.checkmark", accent: .purple,
-          title: "Fertig formuliert",
-          detail: "E-Mail, Prompt oder Social aus deinem Diktat.")
+          title: "kommt fertig formuliert raus",
+          detail: "e-mail, prompt oder social — direkt aus deinem diktat.")
         valueBullet(
           icon: "lock.shield.fill", accent: .green,
-          title: "Online oder komplett lokal",
-          detail: "Du entscheidest, wo Verarbeitung läuft.")
+          title: "online oder komplett lokal",
+          detail: "du entscheidest, wo's läuft. lokal bleibt alles auf deinem mac.")
       }
     }
   }

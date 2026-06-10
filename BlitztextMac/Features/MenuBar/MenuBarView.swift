@@ -20,6 +20,29 @@ struct BrandMark: View {
   }
 }
 
+/// The rede wordmark: lowercase "rede" in SF Rounded bold + an oversized brand accent dot —
+/// "rede." IS the name. The dot is a drawn circle (bigger and bolder than a typographic period),
+/// lime on dark surfaces and violet on light (lime washes out on white) — see RedeBrand.dotColor.
+struct Wordmark: View {
+  var size: CGFloat = 16
+  @Environment(\.colorScheme) private var colorScheme
+
+  var body: some View {
+    HStack(alignment: .firstTextBaseline, spacing: size * 0.07) {
+      Text("rede")
+        .font(.system(size: size, weight: .bold, design: .rounded))
+        .foregroundStyle(.primary)
+      Circle()
+        .fill(RedeBrand.dotColor(colorScheme))
+        .frame(width: size * 0.30, height: size * 0.30)
+        // Sit the dot on the text baseline (a period rests there too).
+        .alignmentGuide(.firstTextBaseline) { dimension in dimension[.bottom] }
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("rede")
+  }
+}
+
 // MARK: - Root router
 
 struct MenuBarView: View {
@@ -42,6 +65,9 @@ struct MenuBarView: View {
     .frame(minHeight: appState.page == .settings ? 600 : 0, alignment: .top)
     // Opaque backstop: fixes dark-mode transparency wash-out (macOS 26 glass / <26 material).
     .blitztextSurface()
+    // rede voice: SF Rounded across the popover for a young, friendly tone. Monospaced runs
+    // (hotkeys, paths) opt out explicitly with .monospaced, so they are unaffected.
+    .fontDesign(.rounded)
     .animation(.easeInOut(duration: 0.2), value: appState.page)
   }
 }
@@ -88,13 +114,11 @@ private struct MainPageView: View {
 
   private var headerBand: some View {
     VStack(spacing: 0) {
-      HStack(spacing: 8) {
+      HStack(spacing: 7) {
         BrandMark()
-        Text("rede")
-          .font(.system(size: 13, weight: .semibold))
-          .foregroundStyle(.primary)
+        Wordmark(size: 16)
         if appState.isConfigured {
-          BlitzStatusPill(state: .ready, label: "Bereit")
+          BlitzStatusPill(state: .ready, label: "läuft")
         }
 
         Spacer()
@@ -689,11 +713,11 @@ private struct RecordingBodyView: View {
       .accessibilityLabel("Aufnahme beenden")
 
       VStack(spacing: 4) {
-        Text("Ich höre zu … Klicke zum Stoppen.")
+        Text("läuft … ich hör zu. klick zum stoppen.")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
 
-        Text("Enter = beenden · Esc = abbrechen")
+        Text("enter = beenden · esc = abbrechen")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
       }
@@ -716,7 +740,7 @@ struct TranscriptionActiveView: View {
         if workflow.isRecording {
           RecordingBodyView(audioLevel: workflow.audioLevel) { workflow.stop() }
         } else {
-          processingView(message: "Wird transkribiert …")
+          processingView(message: "wird transkribiert …")
         }
 
       case .done(let text):
@@ -888,9 +912,9 @@ private func variantChoicePopoverHint() -> some View {
     Image(systemName: "square.split.2x1")
       .font(.system(size: 24, weight: .semibold))
       .foregroundStyle(.secondary)
-    Text("Version in der Pille wählen")
+    Text("version in der pille wählen")
       .font(.system(size: 13, weight: .semibold))
-    Text("Eingefügt wird erst nach deiner Auswahl.")
+    Text("kommt erst nach deiner auswahl rein.")
       .font(.system(size: 11))
       .foregroundStyle(.secondary)
     Spacer().frame(height: 12)
@@ -910,7 +934,7 @@ private struct _AutoPasteView: View {
   private var iconName: String {
     copyOnly ? "doc.on.clipboard.fill" : "checkmark.circle.fill"
   }
-  private var title: String { copyOnly ? "In die Zwischenablage kopiert" : "Eingefügt" }
+  private var title: String { copyOnly ? "kopiert — liegt bereit" : "sitzt." }
 
   var body: some View {
     // Spec change #14: .padding(.top, 16) on VStack replaces Spacer().frame(height: 20)
@@ -929,7 +953,7 @@ private struct _AutoPasteView: View {
         .foregroundStyle(.primary)
 
       if copyOnly {
-        Text("Mit ⌘V einfügen.")
+        Text("einfach mit ⌘V einfügen.")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
       }
@@ -988,7 +1012,7 @@ private struct _ErrorView: View {
         .padding(.horizontal, 8)
 
       Button(action: onRetry) {
-        Text("Nochmal versuchen")
+        Text("nochmal")
           .font(.system(size: 12, weight: .medium))
           .foregroundStyle(.primary)
           .frame(maxWidth: .infinity)

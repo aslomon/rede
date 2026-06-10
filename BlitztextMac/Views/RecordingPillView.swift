@@ -93,7 +93,7 @@ struct RecordingPillView: View {
         Image(systemName: "clipboard")
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(accentColor)
-        Text("Nicht eingefügt")
+        Text("nicht eingefügt — liegt bereit")
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(.primary)
         Spacer(minLength: 8)
@@ -132,7 +132,7 @@ struct RecordingPillView: View {
         Button {
           onCopy(copyOnlyText ?? "")
         } label: {
-          Text("Kopieren")
+          Text("kopieren")
             .font(.system(size: 11, weight: .medium))
             .foregroundStyle(.white)
             .padding(.horizontal, 12)
@@ -159,16 +159,18 @@ struct RecordingPillView: View {
 
   // MARK: - Layout
 
+  // The pill keeps its per-mode accent (mode cueing). rede branding lives in the WRITING — the
+  // lowercase voice across status/error/copied/variant copy — not in recoloring the live state.
   private var tint: Color { phase == .cancelled ? .red : accentColor }
 
   /// Spoken summary of the pill's current state for VoiceOver.
   private var pillAccessibilityLabel: String {
     switch phase {
-    case .failed: return "Fehler: \(errorMessage ?? "")"
-    case .copyOnly: return "Konnte nicht einfügen. Text kopiert: \(copyOnlyText ?? "")"
-    case .variantChoice: return "Zwei Versionen bereit. Wähle eine Version zum Einfügen."
-    case .processing: return "Wird transkribiert"
-    default: return "Aufnahme läuft"
+    case .failed: return "fehler: \(errorMessage ?? "")"
+    case .copyOnly: return "nicht eingefügt — liegt in der zwischenablage: \(copyOnlyText ?? "")"
+    case .variantChoice: return "zwei versionen bereit. wähl eine zum einfügen."
+    case .processing: return "wird transkribiert"
+    default: return "läuft — ich hör zu"
     }
   }
 

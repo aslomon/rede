@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- rede mark: speech bubble + tail (white) carrying three speech bars; middle bar = accent. -->
-  <rect x="164" y="205" width="696" height="471" rx="118" fill="#FFFFFF"/>
-  <path d="M 307 558 L 502 558 L 261 860 Z" fill="#FFFFFF"/>
-  <rect x="266" y="269" width="471" height="64" rx="32" fill="#0A0A0D"/>
-  <rect x="266" y="377" width="348" height="64" rx="32" fill="#FF5C4D"/>
-  <rect x="266" y="485" width="410" height="64" rx="32" fill="#0A0A0D"/>
+  <!-- rede mark (soft): violet speech bubble + tail carrying an acid-lime voice waveform.
+       The soft mist ground is the Icon Composer fill layer (see icon.json). -->
+  <rect x="100" y="230" width="824" height="470" rx="140" fill="#6E56F8"/>
+  <path d="M300 640 L520 640 L250 882 Z" fill="#6E56F8"/>
+  <path d="M344 465 q56 -100 112 0 t112 0 t112 0" fill="none" stroke="#CCFF1A" stroke-width="62" stroke-linecap="round"/>
 </svg>

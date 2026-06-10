@@ -4,14 +4,22 @@ Visuelle Sprache der Menüleisten-App **rede** (Spin-off des Blitztext-Designsys
 Komponentennamen behalten das Blitz-Präfix für günstige Upstream-Merges). Neue UI muss sich hier
 einfügen.
 
-## Marke
+## Marke — „Voice-First / Electric"
 
-- Wortmarke: **rede**, immer klein geschrieben — auch am Satzanfang (wie „iPhone").
-- Brand-Akzent: **Coral `#FF5C4D`** (sRGB 1.00/0.36/0.30). Nur für Branding-Flächen (App-Icon,
-  künftige Landing-/Store-Assets) — NICHT als zusätzlicher UI-Akzent; die Modus-Akzente unten
-  bleiben unverändert.
-- Icon-Motiv: Sprechblase mit drei Sprechbalken (mittlerer Balken Coral) auf schwarzem Grund —
-  gleiche reduzierte Stilsprache wie das Blitztext-Original, anderes Mark.
+- Wortmarke: **rede**, immer klein geschrieben — auch am Satzanfang (wie „iPhone") — mit einem
+  Akzent-Punkt: `rede.` Der Punkt ist Statement + Voice-Cue. Gerendert über die `Wordmark`-View
+  in SF Rounded Bold; der Punkt nutzt `RedeBrand.dotColor` (lime auf dunklen Flächen, violet auf
+  hellen — lime würde auf Weiß ausbleichen).
+- Brand-Farben (`RedeBrand`, Single Source in `MenuBarStyle.swift`):
+  - **Electric Violet `#6E56F8`** — primärer Markenakzent, in beiden Modi lesbar, zeitlos-digital.
+  - **Acid Lime `#CCFF1A`** — High-Energy-„live"-Pop. NUR auf dunklen/Ink-Flächen lesbar
+    (App-Icon, Aufnahme-Zustand, dunkle Kontexte) — niemals als Text auf hellem Fill.
+  - **Ink `#0E0B1A`** — fast-schwarzer Markengrund (Icon, dunkle Akzentflächen).
+- Typo-Charakter: **SF Rounded** für die gesamte Popover-/Window-UI (`.fontDesign(.rounded)` am
+  Root) — jung, freundlich, ohne Font-Bundling. Monospace-Runs (Hotkeys, Pfade) setzen
+  `.monospaced` explizit und bleiben unberührt.
+- Icon-Motiv: weiße Sprechblase (Tail unten links) mit einer **Acid-Lime Voice-Waveform** auf
+  Electric-Violet-Rundquadrat. Deterministisch aus `scripts/generate-icons.swift`.
 
 ## Tonalität
 
@@ -198,20 +206,38 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
 - `workflowHeader`: Modus-Name auf `.semibold` 13pt, Akzentfarbe auf Icon.
 - Systemeinstellungen-Reihenfolge: Bedienungshilfen → Installation & Start → Tastenkürzel → Feedback → Einrichtung → Updates → Über & Lizenzen → Sauber Entfernen.
 
-### In-App-Copy bleibt Deutsch
+### In-App-Copy bleibt Deutsch — durchgängig kleingeschrieben
 
-Alle Labels, Buttons, Captions, Tooltips in Deutsch (du-Form, knapp). Code, Kommentare, Commits in Englisch.
+Alle Labels, Buttons, Captions, Tooltips in Deutsch (du-Form, knapp). Code, Kommentare, Commits in
+Englisch.
+
+**rede-Voice (Marken-Tonalität):**
+
+- **Konsequente Kleinschreibung** der gesamten nutzersichtbaren UI-Copy — auch Substantive und
+  Satzanfänge (Teil der Wortmarke-Logik „rede."). Ausnahmen: feststehende Eigennamen/Akronyme
+  (OpenAI, GGUF, Whisper, macOS, ⌘V, Mac), die ihre Schreibweise behalten.
+- Lockerer, junger Ton mit dosiertem Gen-Z-Einschlag — aber funktionale Labels bleiben eindeutig.
+  Gut: „läuft", „sitzt.", „lass uns reden", „läuft … ich hör zu". Status-/Erfolgs-/Onboarding-Copy
+  darf Charakter zeigen; Fehlertexte und sicherheits-/datenschutzrelevante Hinweise bleiben klar
+  und nüchtern.
+
+### Recording-Pille (Brand-Präsenz)
+
+Der Live-Punkt der schwebenden Pille trägt das **rede-Violett** (`RedeBrand.violet`, via `tint`),
+nicht den per-Modus-Akzent — so liest sich die Pille auf einen Blick als „rede". Die Waveform
+behält den Modus-Akzent zur Modus-Kodierung. Rot nur im Abbruch-Zustand.
 
 ## App- und Menüleisten-Icons
 
-- App-Icon: schwarze Rundquadrat-Fläche mit dem **rede-Mark**: weiße Sprechblase (Tail unten
-  links) mit drei abgerundeten Sprechbalken — oben/unten schwarz gestanzt, Mitte Coral
-  (`#FF5C4D`). Keine Zusatzsymbole, keine lauten Illustrationen, keine Verläufe im Mark.
+- App-Icon: **Electric-Violet (`#6E56F8`) Rundquadrat** mit dem rede-Mark — weiße Sprechblase
+  (Tail unten links) mit einer **Acid-Lime (`#CCFF1A`) Voice-Waveform**. Keine Zusatzsymbole,
+  keine lauten Illustrationen.
 - Quelle: `scripts/generate-icons.swift` rendert Iconset, `AppIcon.icns` und Menüleisten-PNGs
-  deterministisch — Icon-Änderungen passieren im Skript, nicht in Bild-Editoren.
-- macOS 26 Icon: `AppIcon.icon` ist die primäre Liquid-Glass-Quelle. Der schwarze Hintergrund
-  liegt als Icon-Composer-Fill an, das rede-Mark als SVG-Layer (`rede-mark.svg`);
-  `AppIcon.icns` bleibt Fallback für ältere macOS-Darstellungen.
-- Menüleisten-Icon: Idle ist das monochrome Template des rede-Marks (Sprechblase, Balken
+  deterministisch (CoreGraphics) — Icon-Änderungen passieren im Skript, nicht in Bild-Editoren.
+  Danach: `iconutil -c icns <out>/rede.iconset -o AppIcon.icns` + PNGs ins Resources-/Asset-Set.
+- macOS 26 Icon: `AppIcon.icon` ist die primäre Liquid-Glass-Quelle. Der Violett-Verlauf liegt
+  als Icon-Composer-Fill an, das rede-Mark als SVG-Layer (`rede-mark.svg`); `AppIcon.icns` bleibt
+  Fallback für ältere macOS-Darstellungen.
+- Menüleisten-Icon: Idle ist das monochrome Template des rede-Marks (Sprechblase, Welle
   transparent gestanzt). Während Aufnahme/Verarbeitung keine mode-spezifischen Badge-Symbole;
   nur das normale Zeichen plus kleiner pulsierender Statuspunkt.

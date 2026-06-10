@@ -1,5 +1,23 @@
 import SwiftUI
 
+// MARK: - rede brand palette (single source of truth)
+
+/// The rede brand colors. `violet` is the primary brand accent (timeless, readable in both
+/// schemes); `lime` is the high-energy "live" pop — only legible on dark/ink surfaces, so use it
+/// for the recording state, the icon, and dark-context accents, never as text on a light fill.
+/// See DESIGN.md (rede edition).
+enum RedeBrand {
+  static let violet = Color(red: 0.431, green: 0.337, blue: 0.973)  // #6E56F8
+  static let lime = Color(red: 0.800, green: 1.000, blue: 0.102)  // #CCFF1A
+  static let ink = Color(red: 0.055, green: 0.043, blue: 0.102)  // #0E0B1A
+
+  /// The wordmark accent dot: lime on dark surfaces (where it pops), violet on light (where lime
+  /// would wash out). Keeps the mark legible in both menu-bar appearances.
+  static func dotColor(_ colorScheme: ColorScheme) -> Color {
+    colorScheme == .dark ? lime : violet
+  }
+}
+
 // MARK: - Mode accent color (single source of truth)
 
 extension WorkflowType {
