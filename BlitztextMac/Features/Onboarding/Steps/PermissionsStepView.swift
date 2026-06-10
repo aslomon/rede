@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Step 2: microphone + accessibility permissions. Both are soft-warned — the wizard always lets
+/// Step: microphone + accessibility permissions. Both are soft-warned — the wizard always lets
 /// the user continue, it just shows a coloured hint while a grant is still missing.
 struct PermissionsStepView: View {
   @Bindable var appState: AppState
@@ -11,8 +11,8 @@ struct PermissionsStepView: View {
       OnboardingStepHeader(
         systemImage: "hand.raised.fill",
         accent: .orange,
-        title: "Berechtigungen",
-        subtitle: "Mikrofon nimmt auf. Bedienungshilfen fügen direkt ein."
+        title: "berechtigungen",
+        subtitle: "mikrofon nimmt auf. bedienungshilfen fügen direkt ein."
       )
 
       microphoneCard
@@ -27,7 +27,7 @@ struct PermissionsStepView: View {
   private var microphoneCard: some View {
     OnboardingCard(accent: micStatus.isGranted ? nil : .orange) {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "Mikrofon")
+        SectionLabel(text: "mikrofon")
 
         HStack(spacing: 6) {
           Image(
@@ -44,7 +44,7 @@ struct PermissionsStepView: View {
         }
 
         if !micStatus.isGranted {
-          InfoDisclosure("Warum") {
+          InfoDisclosure("warum") {
             Text(micStatusDetail)
           }
         }
@@ -52,16 +52,16 @@ struct PermissionsStepView: View {
         // Primary grant action (only shown when not yet granted) (change 11)
         HStack(spacing: 8) {
           if micStatus == .notDetermined {
-            Button("Mikrofon erlauben") { requestMicrophone() }
+            Button("mikrofon erlauben") { requestMicrophone() }
               .buttonStyle(PopoverActionButtonStyle(.warning))
           } else if micStatus == .denied {
-            Button("In Einstellungen öffnen") {
+            Button("in systemeinstellungen öffnen") {
               MicrophonePermissionService.openSystemSettings()
             }
             .buttonStyle(PopoverActionButtonStyle(.warning))
           }
 
-          // 'Erneut prüfen' hidden when already granted; rendered as subordinate icon-button
+          // 'erneut prüfen' hidden when already granted; rendered as subordinate icon-button
           // when not granted (change 11)
           if !micStatus.isGranted {
             Button {
@@ -70,7 +70,7 @@ struct PermissionsStepView: View {
               Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(PopoverIconButtonStyle(.quiet))
-            .help("Status aktualisieren")
+            .help("status aktualisieren")
           }
         }
       }
@@ -79,21 +79,21 @@ struct PermissionsStepView: View {
 
   private var micStatusTitle: String {
     switch micStatus {
-    case .granted: return "Status: erlaubt"
-    case .denied: return "Status: blockiert"
-    case .notDetermined: return "Status: noch nicht erteilt"
+    case .granted: return "läuft — mikrofon ist erlaubt"
+    case .denied: return "blockiert"
+    case .notDetermined: return "noch nicht erteilt"
     }
   }
 
   private var micStatusDetail: String {
     switch micStatus {
     case .granted:
-      return "Aufnehmen ist freigegeben."
+      return "aufnehmen ist freigegeben."
     case .denied:
       return
-        "macOS hat das Mikrofon blockiert. Erlaube rede in den Systemeinstellungen unter Datenschutz → Mikrofon."
+        "macOS hat das mikrofon blockiert. erlaube rede in den systemeinstellungen unter datenschutz → mikrofon."
     case .notDetermined:
-      return "rede braucht das Mikrofon zum Aufnehmen deiner Stimme."
+      return "rede braucht das mikrofon zum aufnehmen deiner stimme."
     }
   }
 

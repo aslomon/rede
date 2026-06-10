@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Step 4: the local engines. The Whisper picker + install controls mirror `ModelsSettingsView`'s
+/// Step: the local engines. The Whisper picker + install controls mirror `ModelsSettingsView`'s
 /// transcription block (only relevant in offline mode); the local rewrite model is always shown,
-/// but labelled Optional because online rewriting never needs it.
+/// but labelled optional because online rewriting never needs it.
 struct ModelsStepView: View {
   @Bindable var appState: AppState
   @State private var transcriptionRecheckToken = 0
@@ -22,9 +22,9 @@ struct ModelsStepView: View {
       OnboardingStepHeader(
         systemImage: "shippingbox",
         accent: .green,
-        title: "Lokale Modelle",
+        title: "lokale modelle",
         subtitle: needsWhisper
-          ? "Lade ein lokales Whisper-Modell." : "Im Online-Modus ist hier nichts Pflicht."
+          ? "lade ein lokales Whisper-Modell." : "im online-modus ist hier nichts pflicht."
       )
 
       whisperCard
@@ -33,7 +33,7 @@ struct ModelsStepView: View {
       if needsWhisper {
         localRewriteCard
       } else {
-        InfoDisclosure("Lokales Umformen") {
+        InfoDisclosure("lokales umformen") {
           localRewriteCard
         }
       }
@@ -47,9 +47,9 @@ struct ModelsStepView: View {
     {
       VStack(alignment: .leading, spacing: 10) {
         HStack(spacing: 6) {
-          SectionLabel(text: "Whisper (Sprache → Text)")
+          SectionLabel(text: "Whisper (sprache → text)")
           Spacer()
-          Button("Prüfen") { transcriptionRecheckToken += 1 }
+          Button("prüfen") { transcriptionRecheckToken += 1 }
             .font(.system(size: 10, weight: .medium))
             .buttonStyle(PopoverActionButtonStyle(.quiet))
             .disabled(appState.isDownloadingLocalModel)
@@ -57,7 +57,7 @@ struct ModelsStepView: View {
 
         // Download-in-progress status pill above controls (change 10)
         if appState.isDownloadingLocalModel {
-          BlitzStatusPill(state: .download, label: "Download läuft — bitte warten")
+          BlitzStatusPill(state: .download, label: "download läuft — bitte warten")
         }
 
         if needsWhisper {
@@ -71,9 +71,9 @@ struct ModelsStepView: View {
               .fixedSize(horizontal: false, vertical: true)
           }
         } else {
-          BlitzStatusPill(state: .online, label: "Online Whisper")
-          InfoDisclosure("Lokale Modelle") {
-            Text("Ein lokales Modell brauchst du nur im sicheren lokalen Modus.")
+          BlitzStatusPill(state: .online, label: "online Whisper")
+          InfoDisclosure("lokale modelle") {
+            Text("ein lokales modell brauchst du nur im sicheren lokalen modus.")
           }
         }
       }
@@ -113,7 +113,7 @@ struct ModelsStepView: View {
 
   private var modelPicker: some View {
     HStack(spacing: 8) {
-      Text("Modell")
+      Text("modell")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       Picker(
@@ -138,7 +138,7 @@ struct ModelsStepView: View {
     if let progress = appState.localModelDownloadProgress {
       VStack(alignment: .leading, spacing: 4) {
         ProgressView(value: progress)
-        Text(appState.localModelDownloadStatusText ?? "Modell wird geladen...")
+        Text(appState.localModelDownloadStatusText ?? "modell wird geladen …")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
       }
@@ -159,10 +159,10 @@ struct ModelsStepView: View {
   private var localRewriteCard: some View {
     OnboardingCard {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "Optional – nur für lokales Umformen")
-        InfoDisclosure("Wofür") {
+        SectionLabel(text: "optional – nur für lokales umformen")
+        InfoDisclosure("wofür") {
           Text(
-            "Formuliert Texte lokal um (E-Mail, Prompt, Social) über den gebündelten llama.cpp-Helper. Nur nötig, wenn ein Modus offline umformen soll."
+            "formuliert texte lokal um (E-Mail, Prompt, Social) über den gebündelten llama.cpp-Helper. nur nötig, wenn ein modus offline umformen soll."
           )
         }
 

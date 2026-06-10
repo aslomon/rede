@@ -19,19 +19,19 @@ final class LaunchAtLoginService {
         switch status {
         case .enabled:
             isEnabled = true
-            helperText = "rede startet beim Anmelden automatisch."
+            helperText = "rede startet beim anmelden automatisch."
         case .notFound:
             isEnabled = false
-            helperText = "rede muss in /Applications liegen, damit der Anmeldestart verf\u{00FC}gbar ist."
+            helperText = "rede muss in /Applications liegen, damit der anmeldestart verf\u{00FC}gbar ist."
         case .requiresApproval:
             isEnabled = true
-            helperText = "Noch in den Systemeinstellungen freigeben."
+            helperText = "noch in den systemeinstellungen freigeben."
         case .notRegistered:
             isEnabled = false
             helperText = "rede startet nicht automatisch."
         @unknown default:
             isEnabled = false
-            helperText = "Auf diesem Mac nicht verfügbar."
+            helperText = "auf diesem Mac nicht verfügbar."
         }
     }
 
@@ -48,8 +48,8 @@ final class LaunchAtLoginService {
         } catch {
             refresh()
             errorText = enabled
-                ? "Anmeldestart konnte nicht aktiviert werden. Lege rede in /Applications und versuche es erneut."
-                : "Anmeldestart konnte nicht deaktiviert werden. Bitte versuche es erneut."
+                ? "anmeldestart konnte nicht aktiviert werden. lege rede in /Applications und versuche es erneut."
+                : "anmeldestart konnte nicht deaktiviert werden. bitte versuche es erneut."
         }
     }
 }

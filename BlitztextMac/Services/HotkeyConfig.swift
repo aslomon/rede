@@ -61,7 +61,7 @@ struct HotkeyConfig: Codable, Sendable, Equatable, Identifiable {
 
   var label: String {
     let parts = labelParts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-    return parts.isEmpty ? "Nicht gesetzt" : parts.joined(separator: " + ")
+    return parts.isEmpty ? "nicht gesetzt" : parts.joined(separator: " + ")
   }
 
   var isConfigured: Bool {
@@ -262,7 +262,7 @@ enum HotkeyRegistry {
       guard config.isConfigured else { continue }
       guard Set(config.normalizedModifiers) == candidateModifiers else { continue }
       guard Set(config.normalizedKeys.map(\.keyCode)) == candidateKeys else { continue }
-      return "Konflikt: \(candidate.label) ist bereits belegt."
+      return "konflikt: \(candidate.label) ist bereits belegt."
     }
     return nil
   }

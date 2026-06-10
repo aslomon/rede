@@ -21,21 +21,21 @@ struct ArchiveSettingsView: View {
 
   private var archiveSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "Transkriptions-Archiv")
+      SectionLabel(text: "transkriptions-archiv")
 
       // Status → Action: Toggle first, privacy detail behind disclosure.
       Toggle(
-        "Transkriptionen lokal archivieren",
+        "transkriptionen lokal archivieren",
         isOn: $appState.isArchiveEnabled
       )
       .toggleStyle(.switch)
       .controlSize(.small)
 
-      InfoDisclosure("Datenschutz") {
+      InfoDisclosure("datenschutz") {
         Text(
-          "Aus für maximale Privatsphäre. Wenn aktiv, werden Roh- und Endtext der letzten "
-            + "90 Tage on-device gespeichert (nur du, kein Audio, nichts verlässt den Mac). "
-            + "Das Archiv speichert nur Text. Gelernte Begriffe pflegst du im Tab \u{201E}Vokabular\u{201C}."
+          "aus für maximale privatsphäre. wenn aktiv, werden roh- und endtext der letzten "
+            + "90 tage on-device gespeichert (nur du, kein audio, nichts verlässt den Mac). "
+            + "das archiv speichert nur text. gelernte begriffe pflegst du im tab \u{201E}vokabular\u{201C}."
         )
       }
 
@@ -44,10 +44,10 @@ struct ArchiveSettingsView: View {
       } else {
         EmptyStateCard(
           icon: "archivebox",
-          title: "Archiv ist aus",
+          title: "archiv ist aus",
           caption:
-            "Es wird nichts gespeichert. Aktiviere das Archiv, um Transkriptionen on-device "
-            + "festzuhalten und Memory zu speisen.",
+            "es wird nichts gespeichert. aktiviere das archiv, um transkriptionen on-device "
+            + "festzuhalten und memory zu speisen.",
           accent: .primary
         )
       }
@@ -61,7 +61,7 @@ struct ArchiveSettingsView: View {
 
   private var bottomActionBar: some View {
     HStack {
-      Button("Archiv-Fenster öffnen …") {
+      Button("archiv-fenster öffnen …") {
         NotificationCenter.default.post(name: .openArchiveWindow, object: nil)
       }
       .font(.system(size: 10, weight: .medium))
@@ -69,21 +69,21 @@ struct ArchiveSettingsView: View {
 
       Spacer()
 
-      Button("Archiv löschen") { showClearArchiveConfirm = true }
+      Button("archiv löschen") { showClearArchiveConfirm = true }
         .font(.system(size: 10, weight: .medium))
         .buttonStyle(PopoverActionButtonStyle(.danger))
         .disabled(!appState.isArchiveEnabled || appState.archiveStore.entries.isEmpty)
         .accessibilityLabel("Archiv löschen")
         .confirmationDialog(
-          "Archiv löschen?",
+          "archiv löschen?",
           isPresented: $showClearArchiveConfirm,
           titleVisibility: .visible
         ) {
-          Button("Löschen", role: .destructive) { appState.clearArchive() }
-          Button("Abbrechen", role: .cancel) {}
+          Button("löschen", role: .destructive) { appState.clearArchive() }
+          Button("abbrechen", role: .cancel) {}
         } message: {
           Text(
-            "Alle archivierten Transkriptionen werden on-device entfernt. Das lässt sich nicht rückgängig machen."
+            "alle archivierten transkriptionen werden on-device entfernt. das lässt sich nicht rückgängig machen."
           )
         }
     }
@@ -100,7 +100,7 @@ struct ArchiveSettingsView: View {
     let preview = Array(all.prefix(Self.inlinePreviewLimit))
 
     if preview.isEmpty {
-      Text("Noch keine Einträge. Neue Transkriptionen erscheinen hier nach Tag.")
+      Text("noch keine einträge. neue transkriptionen erscheinen hier nach tag.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .padding(.top, 2)

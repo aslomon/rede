@@ -20,11 +20,11 @@ struct DictationReplacementsBlock: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Ersetzungen")
+      Text("ersetzungen")
         .font(.system(size: 11, weight: .medium))
         .foregroundStyle(.secondary)
       Text(
-        "Festes Wortpaar: gesagt \u{2192} geschrieben. Lokal angewendet, bevor der Text eingefügt wird."
+        "festes wortpaar: gesagt \u{2192} geschrieben. lokal angewendet, bevor der text eingefügt wird."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -58,7 +58,7 @@ struct DictationReplacementsBlock: View {
 
   private var addRow: some View {
     HStack(spacing: 6) {
-      TextField("Gesprochen", text: $newFrom)
+      TextField("gesprochen", text: $newFrom)
         .textFieldStyle(.roundedBorder)
         .font(.system(size: 11))
         .accessibilityLabel("Wort")
@@ -66,13 +66,13 @@ struct DictationReplacementsBlock: View {
       Image(systemName: "arrow.right")
         .font(.system(size: 8, weight: .semibold))
         .foregroundStyle(.tertiary)
-      TextField("Ersetzung", text: $newTo)
+      TextField("ersetzung", text: $newTo)
         .textFieldStyle(.roundedBorder)
         .font(.system(size: 11))
         .accessibilityLabel("Ersetzung")
         .onSubmit { addReplacement() }
 
-      Toggle("Ganzes Wort", isOn: $newWholeWord)
+      Toggle("ganzes wort", isOn: $newWholeWord)
         .toggleStyle(.checkbox)
         .controlSize(.small)
         .font(.system(size: 10.5))
@@ -90,7 +90,7 @@ struct DictationReplacementsBlock: View {
   }
 
   private var duplicateHint: some View {
-    Text("Schon vorhanden.")
+    Text("schon vorhanden.")
       .font(.system(size: 10.5))
       .foregroundStyle(.orange)
       .transition(.opacity)

@@ -23,22 +23,22 @@ final class LocalModelStateTests: XCTestCase {
     XCTAssertNil(LocalTranscriptionModel.sizeLabel(for: "some-model-without-size"))
   }
 
-  /// A not-installed model must read "Nicht geladen — N MB" (never "Installiert"), and an
-  /// installed one must read "Installiert".
+  /// A not-installed model must read "nicht geladen — N MB" (never "geladen"), and an
+  /// installed one must read "geladen" (rede voice: lowercase UI copy).
   func testInstallStateLabelIsHonest() {
     let missing = LocalTranscriptionModel(
       id: "openai_whisper-small_216MB",
       url: URL(fileURLWithPath: "/tmp/nope"),
       isInstalled: false
     )
-    XCTAssertEqual(missing.installStateLabel, "Nicht geladen — 216 MB")
+    XCTAssertEqual(missing.installStateLabel, "nicht geladen — 216 MB")
 
     let present = LocalTranscriptionModel(
       id: "openai_whisper-small_216MB",
       url: URL(fileURLWithPath: "/tmp/yes"),
       isInstalled: true
     )
-    XCTAssertEqual(present.installStateLabel, "Installiert")
+    XCTAssertEqual(present.installStateLabel, "geladen")
   }
 
   // MARK: - WhisperKit transcription model: disk-truth `isUsableModel`

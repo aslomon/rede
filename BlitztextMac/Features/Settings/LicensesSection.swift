@@ -10,11 +10,11 @@ struct LicensesSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Über & Lizenzen")
+      SectionLabel(text: "über & lizenzen")
 
       Text(
-        "Diese App baut auf Open-Source-Software auf. Die Lizenzhinweise gehören zu jeder "
-          + "weitergegebenen Kopie dazu."
+        "diese app baut auf open-source-software auf. die lizenzhinweise gehören zu jeder "
+          + "weitergegebenen kopie dazu."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -44,7 +44,7 @@ struct LicensesSection: View {
         }
         .padding(.top, 6)
       } label: {
-        Text("Open-Source-Lizenzen anzeigen")
+        Text("open-source-lizenzen anzeigen")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
       }

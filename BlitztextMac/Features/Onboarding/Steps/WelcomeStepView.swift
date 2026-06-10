@@ -1,15 +1,18 @@
 import SwiftUI
 
-/// Step 1: a warm intro with three value bullets and (when applicable) the "move to /Applications"
-/// nudge carried over from the old in-popover onboarding.
+/// Step 1: a warm intro with three value bullets plus the one personal question — your name.
+/// Merging the old identity step in here gives the welcome screen an actual decision (DESIGN.md:
+/// one main decision per step) instead of being a read-only marketing page.
 struct WelcomeStepView: View {
+  @Bindable var appState: AppState
+
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
       OnboardingStepHeader(
         systemImage: "sparkles",
         accent: .blue,
         title: "lass uns reden",
-        subtitle: "Einmal einrichten — danach: sprechen, loslassen, Text sitzt im Feld."
+        subtitle: "einmal einrichten — danach: sprechen, loslassen, text sitzt im feld."
       )
 
       VStack(alignment: .leading, spacing: 10) {
@@ -24,7 +27,31 @@ struct WelcomeStepView: View {
         valueBullet(
           icon: "lock.shield.fill", accent: .green,
           title: "online oder komplett lokal",
-          detail: "du entscheidest, wo's läuft. lokal bleibt alles auf deinem mac.")
+          detail: "du entscheidest, wo's läuft. lokal bleibt alles auf deinem Mac.")
+      }
+
+      nameCard
+    }
+  }
+
+  /// The single decision on this step: the user's name. It becomes the fixed writing perspective
+  /// ("Ich schreibe als …") for rewrite prompts and a speech-recognition spelling hint.
+  private var nameCard: some View {
+    OnboardingCard(accent: .blue) {
+      VStack(alignment: .leading, spacing: 8) {
+        SectionLabel(text: "wie heißt du?")
+
+        TextField("dein name", text: $appState.appSettings.userDisplayName)
+          .textFieldStyle(.roundedBorder)
+          .font(.system(size: 13))
+
+        Text(
+          "wird deine schreibperspektive („Ich schreibe als …“) und hilft der spracherkennung, "
+            + "deinen namen richtig zu schreiben. bleibt lokal in deinen einstellungen."
+        )
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
       }
     }
   }
@@ -50,5 +77,4 @@ struct WelcomeStepView: View {
       Spacer(minLength: 0)
     }
   }
-
 }

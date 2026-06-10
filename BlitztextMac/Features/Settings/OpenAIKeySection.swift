@@ -25,21 +25,21 @@ struct OpenAIKeySection: View {
         SectionLabel(text: "OpenAI API Key")
         Spacer()
         if appState.hasValue(for: .openAIAPIKey) && !editing {
-          // spec #5: 'Ändern' in header slot
+          // spec #5: 'ändern' in header slot
           Button {
             editing = true
           } label: {
-            Label("Ändern", systemImage: "pencil")
+            Label("ändern", systemImage: "pencil")
           }
           .buttonStyle(PopoverActionButtonStyle(.quiet))
         } else if editing && appState.hasValue(for: .openAIAPIKey) {
-          // spec #5: 'Abbrechen' replaces 'Ändern' when editing=true and a key already exists
+          // spec #5: 'abbrechen' replaces 'ändern' when editing=true and a key already exists
           Button {
             apiKey = ""
             editing = false
             errorText = nil
           } label: {
-            Label("Abbrechen", systemImage: "xmark")
+            Label("abbrechen", systemImage: "xmark")
           }
           .buttonStyle(PopoverActionButtonStyle(.quiet))
         }
@@ -54,15 +54,15 @@ struct OpenAIKeySection: View {
       }
 
       // spec #2: full explanation moved into InfoDisclosure
-      InfoDisclosure("Warum?") {
+      InfoDisclosure("warum?") {
         VStack(alignment: .leading, spacing: 6) {
           Text(
-            "Ohne Key bleiben die Online-Modelle deaktiviert. "
-              + "Trage deinen OpenAI-Key ein, um sie für Transkription und Umschreiben zu nutzen."
+            "ohne key bleiben die online-modelle deaktiviert. "
+              + "trage deinen OpenAI-Key ein, um sie für transkription und umschreiben zu nutzen."
           )
           Text(
-            "Dein Key bleibt lokal in dieser App. "
-              + "Audio und Text werden direkt an die OpenAI API gesendet."
+            "dein key bleibt lokal in dieser app. "
+              + "audio und text werden direkt an die OpenAI-API gesendet."
           )
         }
       }
@@ -106,7 +106,7 @@ struct OpenAIKeySection: View {
         .font(.system(size: 11.5))
         .focused($focused, equals: .openAIAPIKey)
 
-      Button("Einfügen") {
+      Button("einfügen") {
         pasteAPIKeyFromClipboard()
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
@@ -122,10 +122,10 @@ struct OpenAIKeySection: View {
         save()
       } label: {
         if saved {
-          Label("Gespeichert", systemImage: "checkmark")
+          Label("gespeichert", systemImage: "checkmark")
             .font(.system(size: 12, weight: .medium))
         } else {
-          Text("Speichern")
+          Text("speichern")
             .font(.system(size: 12, weight: .medium))
         }
       }
@@ -141,7 +141,7 @@ struct OpenAIKeySection: View {
 
     if editing || !appState.hasValue(for: .openAIAPIKey) {
       guard !trimmedAPIKey.isEmpty else {
-        errorText = "Bitte trage deinen OpenAI API Key ein."
+        errorText = "bitte trage deinen OpenAI API Key ein."
         return
       }
       do {
@@ -157,7 +157,7 @@ struct OpenAIKeySection: View {
     KeychainService.invalidateCache()
     if !appState.hasValue(for: .openAIAPIKey) {
       errorText =
-        "OpenAI API Key wurde nicht persistent gespeichert. Bitte App neu starten und erneut versuchen."
+        "OpenAI API Key wurde nicht persistent gespeichert. bitte app neu starten und erneut versuchen."
       return
     }
 
@@ -169,14 +169,14 @@ struct OpenAIKeySection: View {
 
   private func pasteAPIKeyFromClipboard() {
     guard let rawText = NSPasteboard.general.string(forType: .string) else {
-      errorText = "Zwischenablage enthält keinen Text."
+      errorText = "zwischenablage enthält keinen text."
       return
     }
 
     let firstLine = rawText.components(separatedBy: .newlines).first ?? rawText
     let trimmedKey = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
     guard trimmedKey.range(of: Self.openAIAPIKeyPattern, options: .regularExpression) != nil else {
-      errorText = "Zwischenablage enthält keinen plausiblen OpenAI API Key."
+      errorText = "zwischenablage enthält keinen plausiblen OpenAI API Key."
       return
     }
 

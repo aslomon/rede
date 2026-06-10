@@ -17,7 +17,9 @@ struct LocalLLMModelPicker: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
-        Text("Lokales Sprachmodell")
+        // Short row label — the surrounding section/card already names the feature
+        // ("lokales sprachmodell"), so repeating it here was a duplicate heading.
+        Text("aktives modell")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
         Spacer()
@@ -36,11 +38,11 @@ struct LocalLLMModelPicker: View {
   @ViewBuilder
   private var statusPill: some View {
     if selectedLlamaCppModel != nil {
-      BlitzStatusPill(state: .ready, label: "Gewählt")
+      BlitzStatusPill(state: .ready, label: "gewählt")
     } else if manager.llamaCppInstalled.isEmpty {
-      BlitzStatusPill(state: .download, label: "Laden")
+      BlitzStatusPill(state: .download, label: "laden")
     } else {
-      BlitzStatusPill(state: .warning, label: "Auswählen")
+      BlitzStatusPill(state: .warning, label: "auswählen")
     }
   }
 
@@ -61,8 +63,8 @@ struct LocalLLMModelPicker: View {
 
   private var compactStatusHint: String {
     manager.llamaCppInstalled.isEmpty
-      ? "Noch kein GGUF-Modell — Modelle einrichten."
-      : "Kein Modell gewählt — Modelle verwalten."
+      ? "noch kein GGUF-Modell — modelle einrichten."
+      : "kein modell gewählt — modelle verwalten."
   }
 
   private var selectedLlamaCppModel: LlamaCppModelCatalog.Model? {
@@ -89,11 +91,11 @@ struct LocalLLMModelPicker: View {
       }
       .buttonStyle(PopoverIconButtonStyle(.quiet))
       .disabled(manager.isRefreshing)
-      .help("Status prüfen")
+      .help("status prüfen")
     }
   }
 
   private var manageButtonTitle: String {
-    manager.llamaCppInstalled.isEmpty ? "Modelle laden …" : "Modelle verwalten …"
+    manager.llamaCppInstalled.isEmpty ? "modelle laden …" : "modelle verwalten …"
   }
 }

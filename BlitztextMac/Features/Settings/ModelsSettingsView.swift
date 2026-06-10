@@ -34,9 +34,9 @@ struct ModelsSettingsView: View {
     }
     if let size = LocalTranscriptionModel.sizeLabel(for: appState.selectedLocalModelName) {
       return
-        "\u{201E}\(name)\u{201C} ist nicht geladen \u{2014} \(size). Wird beim Installieren lokal gespeichert."
+        "\u{201E}\(name)\u{201C} ist nicht geladen \u{2014} \(size). wird beim laden lokal gespeichert."
     }
-    return "\u{201E}\(name)\u{201C} ist nicht geladen. Wird beim Installieren lokal gespeichert."
+    return "\u{201E}\(name)\u{201C} ist nicht geladen. wird beim laden lokal gespeichert."
   }
 
   var body: some View {
@@ -62,10 +62,10 @@ struct ModelsSettingsView: View {
 
   private var modeSelector: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Verarbeitung")
+      SectionLabel(text: "verarbeitung")
       Picker("", selection: $appState.appSettings.secureLocalModeEnabled) {
-        Text("Online · OpenAI").tag(false)
-        Text("Lokal · Sicher").tag(true)
+        Text("online · OpenAI").tag(false)
+        Text("lokal · sicher").tag(true)
       }
       .pickerStyle(.segmented)
       .controlSize(.small)
@@ -77,8 +77,8 @@ struct ModelsSettingsView: View {
       }
       Text(
         appState.appSettings.secureLocalModeEnabled
-          ? "Alles bleibt auf deinem Mac: Whisper + lokales llama.cpp-Modell. Keine Online-Dienste."
-          : "Nutzt die OpenAI-API mit deinem eigenen Key. Leistungsfähiger, aber Audio/Text gehen online."
+          ? "alles bleibt auf deinem Mac: Whisper + lokales llama.cpp-Modell. keine online-dienste."
+          : "nutzt die OpenAI-API mit deinem eigenen key. leistungsfähiger, aber audio/text gehen online."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -92,10 +92,10 @@ struct ModelsSettingsView: View {
 
   private var onlineBand: some View {
     ModelsSectionWithPill(
-      "Online",
+      "online",
       pill: BlitzStatusPill(
         state: appState.hasOpenAIKey ? .online : .warning,
-        label: appState.hasOpenAIKey ? "Online bereit" : "OpenAI fehlt"
+        label: appState.hasOpenAIKey ? "online bereit" : "OpenAI fehlt"
       )
     ) {
       if !appState.hasOpenAIKey {
@@ -111,7 +111,7 @@ struct ModelsSettingsView: View {
 
   private var localBand: some View {
     ModelsSectionWithPill(
-      "Lokal",
+      "lokal",
       pill: BlitzStatusPill(
         state: appState.hasAnyTranscriptionEngine ? .local : .download,
         label: appState.hasAnyTranscriptionEngine ? "Whisper lokal" : "Whisper laden"
@@ -127,12 +127,12 @@ struct ModelsSettingsView: View {
 
   private var localTranscriptionSection: some View {
     SettingsSection(
-      "Lokale Transkription (Whisper)",
+      "lokale transkription (Whisper)",
       action: appState.isDownloadingLocalModel
-        ? nil : (label: "Prüfen", perform: { transcriptionRecheckToken += 1 })
+        ? nil : (label: "prüfen", perform: { transcriptionRecheckToken += 1 })
     ) {
       // Short caption always visible (spec #3)
-      Text("Lokale Sprach-zu-Text-Engine (WhisperKit). Daten bleiben auf dem Gerät.")
+      Text("lokale sprache-zu-text-engine (WhisperKit). daten bleiben auf dem gerät.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
@@ -141,13 +141,13 @@ struct ModelsSettingsView: View {
       if !appState.hasAnyTranscriptionEngine {
         EmptyStateCard(
           icon: "waveform",
-          title: "Kein Whisper-Modell geladen",
+          title: "kein Whisper-Modell geladen",
           caption:
-            "Die Transkriptions-Engine läuft über WhisperKit lokal auf diesem Mac. "
-            + "Das Modell wird auf dem Gerät gespeichert. "
-            + "Lade ein Modell, damit rede Sprache lokal in Text umwandeln kann.",
+            "die transkriptions-engine läuft über WhisperKit lokal auf diesem Mac. "
+            + "das modell wird auf dem gerät gespeichert. "
+            + "lade ein modell, damit rede sprache lokal in text umwandeln kann.",
           accent: .blue,
-          buttonLabel: "Modell laden",
+          buttonLabel: "modell laden",
           action: { appState.installSelectedLocalModel() }
         )
       }
@@ -160,7 +160,7 @@ struct ModelsSettingsView: View {
       if appState.localModelPreparing && !appState.isDownloadingLocalModel {
         HStack(spacing: 6) {
           ProgressView().controlSize(.small)
-          Text("Modell wird vorbereitet … beim ersten Mal kann das einige Minuten dauern.")
+          Text("modell wird vorbereitet … beim ersten mal kann das einige minuten dauern.")
             .font(.system(size: 10.5))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -182,7 +182,7 @@ struct ModelsSettingsView: View {
     Button {
       NotificationCenter.default.post(name: .openLocalModelsWindow, object: nil)
     } label: {
-      Label("Alle lokalen Modelle verwalten", systemImage: "square.stack.3d.up")
+      Label("alle lokalen modelle verwalten", systemImage: "square.stack.3d.up")
         .font(.system(size: 10.5, weight: .medium))
     }
     .buttonStyle(PopoverActionButtonStyle(.secondary))
@@ -233,7 +233,7 @@ struct ModelsSettingsView: View {
     if let progress = appState.localModelDownloadProgress {
       VStack(alignment: .leading, spacing: 4) {
         ProgressView(value: progress)
-        Text(appState.localModelDownloadStatusText ?? "Modell wird geladen...")
+        Text(appState.localModelDownloadStatusText ?? "modell wird geladen …")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
       }
@@ -251,7 +251,7 @@ struct ModelsSettingsView: View {
         }
 
         Link(
-          "Modellseite",
+          "modellseite",
           destination: LocalTranscriptionService.modelPageURL(
             for: appState.selectedLocalModelName)
         )
@@ -263,7 +263,7 @@ struct ModelsSettingsView: View {
   // MARK: - Lokales Sprachmodell (llama.cpp)
 
   private var localLLMSection: some View {
-    SettingsSection("Lokales Sprachmodell") {
+    SettingsSection("lokales sprachmodell") {
       LocalLLMModelPicker(appState: appState)
     }
   }

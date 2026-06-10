@@ -66,7 +66,7 @@ struct RecordingPillView: View {
       Image(systemName: "exclamationmark.triangle.fill")
         .font(.system(size: 12, weight: .semibold))
         .foregroundStyle(.red)
-      Text(errorMessage ?? "Fehler")
+      Text(errorMessage ?? "fehler")
         .font(.system(size: 11, weight: .medium))
         .foregroundStyle(.primary)
         .lineLimit(2)
@@ -141,7 +141,7 @@ struct RecordingPillView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Text kopieren")
-        .help("Text in die Zwischenablage kopieren")
+        .help("text in die zwischenablage kopieren")
 
         Text("oder ⌘V")
           .font(.system(size: 10.5))
@@ -235,14 +235,14 @@ struct RecordingPillView: View {
       affordanceButton(
         systemName: "checkmark",
         tint: accentColor,
-        help: "Enter = beenden",
+        help: "enter = beenden",
         accessibilityLabel: "Aufnahme beenden",
         action: onStop
       )
       affordanceButton(
         systemName: "xmark",
         tint: Color.primary.opacity(0.55),
-        help: "Abbrechen",
+        help: "abbrechen",
         accessibilityLabel: "Aufnahme abbrechen",
         action: onCancel
       )
@@ -343,6 +343,6 @@ struct CopyOnlyDismissButton: View {
       }
     }
     .accessibilityLabel("Schließen")
-    .help("Schließen")
+    .help("schließen")
   }
 }

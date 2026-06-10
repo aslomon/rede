@@ -19,7 +19,7 @@ struct WhisperModelsSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Transkription · Whisper (\(installedCount))")
+      SectionLabel(text: "transkription · Whisper (\(installedCount))")
 
       ForEach(models) { model in
         modelRow(model)
@@ -44,7 +44,7 @@ struct WhisperModelsSection: View {
   private var preparingRow: some View {
     HStack(spacing: 8) {
       ProgressView().controlSize(.small)
-      Text("Modell wird vorbereitet … große Modelle brauchen beim ersten Mal einige Minuten.")
+      Text("modell wird vorbereitet … große modelle brauchen beim ersten mal einige minuten.")
         .font(.system(size: 10.5)).foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
       Spacer()
@@ -77,14 +77,14 @@ struct WhisperModelsSection: View {
   ) -> some View {
     if model.isInstalled {
       if isActive {
-        BlitzStatusPill(state: .ready, label: "Aktiv")
+        BlitzStatusPill(state: .ready, label: "aktiv")
       } else {
         Button {
           appState.appSettings.selectedLocalTranscriptionModelName = model.id
         } label: {
-          Label("Nutzen", systemImage: "checkmark.circle")
+          Label("nutzen", systemImage: "checkmark.circle")
         }
-        // Secondary so it reads clearly different from the filled, primary "Laden" (download).
+        // Secondary so it reads clearly different from the filled, primary "laden" (download).
         .buttonStyle(PopoverActionButtonStyle(.secondary))
       }
       Button {
@@ -93,7 +93,7 @@ struct WhisperModelsSection: View {
         Image(systemName: "arrow.clockwise")
       }
       .buttonStyle(PopoverIconButtonStyle(.quiet))
-      .help("Neu laden (löscht und lädt frisch)")
+      .help("neu laden (löscht und lädt frisch)")
       DeleteModelButton(
         displayName: model.displayName,
         freedSizeText: sizeText,
@@ -103,7 +103,7 @@ struct WhisperModelsSection: View {
       Button {
         appState.installLocalModel(named: model.id)
       } label: {
-        Label("Laden", systemImage: "arrow.down.circle.fill")
+        Label("laden", systemImage: "arrow.down.circle.fill")
           .font(.system(size: 11.5, weight: .semibold))
       }
       .buttonStyle(PopoverActionButtonStyle(.primary))
@@ -113,13 +113,13 @@ struct WhisperModelsSection: View {
   private var downloadProgressRow: some View {
     VStack(alignment: .leading, spacing: 4) {
       ProgressView(value: appState.localModelDownloadProgress ?? 0)
-      Text(appState.localModelDownloadStatusText ?? "Modell wird geladen …")
+      Text(appState.localModelDownloadStatusText ?? "modell wird geladen …")
         .font(.system(size: 10.5)).foregroundStyle(.secondary)
     }
   }
 
   private func subtitle(installed: Bool, sizeText: String?) -> String {
     let size = sizeText ?? "—"
-    return installed ? "Lokal · \(size)" : "Nicht geladen · \(size)"
+    return installed ? "lokal · \(size)" : "nicht geladen · \(size)"
   }
 }

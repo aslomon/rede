@@ -8,7 +8,7 @@ struct OnboardingWizardView: View {
   /// Tracks direction for asymmetric push transitions.
   @State private var navigatingForward = true
 
-  /// Closes the wizard window (the "Später" link and the red close button share this path).
+  /// Closes the wizard window (the "später" link and the red close button share this path).
   let onClose: () -> Void
   /// Finishes onboarding, closes the window, and opens the popover settings.
   let onOpenSettings: () -> Void
@@ -47,20 +47,21 @@ struct OnboardingWizardView: View {
     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: viewModel.step)
     // Glass backdrop for the entire wizard window (change 1)
     .blitztextSurface()
+    // rede voice: SF Rounded across the whole wizard window, matching the popover root.
+    // Monospaced runs (hotkeys, paths) opt out explicitly with .monospaced.
+    .fontDesign(.rounded)
   }
 
   // MARK: - Sidebar (brand rail)
 
-  /// Left rail: brand mark + the full step list with the current step highlighted and completed
-  /// steps check-marked. Replaces the old top header + segmented progress so the wizard reads as one
-  /// uniform surface, not a page with a header.
+  /// Left rail: the rede wordmark + the full step list with the current step highlighted and
+  /// completed steps check-marked. Replaces the old top header + segmented progress so the wizard
+  /// reads as one uniform surface, not a page with a header.
   private var sidebar: some View {
     VStack(alignment: .leading, spacing: 0) {
       HStack(spacing: 8) {
         BrandMark(size: 20)
-        Text("rede")
-          .font(.system(size: 15, weight: .semibold))
-          .foregroundStyle(.primary)
+        Wordmark(size: 16)
       }
       .padding(.bottom, 24)
 
@@ -72,7 +73,7 @@ struct OnboardingWizardView: View {
 
       Spacer(minLength: 16)
 
-      Text("Schritt \(viewModel.step.displayIndex) von \(OnboardingViewModel.stepCount)")
+      Text("schritt \(viewModel.step.displayIndex) von \(OnboardingViewModel.stepCount)")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
     }
@@ -119,9 +120,7 @@ struct OnboardingWizardView: View {
   private var stepBody: some View {
     switch viewModel.step {
     case .welcome:
-      WelcomeStepView()
-    case .identity:
-      IdentityStepView(appState: appState)
+      WelcomeStepView(appState: appState)
     case .installLocation:
       InstallLocationStepView()
     case .permissions:
@@ -132,6 +131,10 @@ struct OnboardingWizardView: View {
       ModelsStepView(appState: appState)
     case .modes:
       ModesStepView(appState: appState, viewModel: viewModel)
+    case .hotkeys:
+      HotkeysStepView(appState: appState)
+    case .extras:
+      ExtrasStepView(appState: appState)
     case .finish:
       FinishStepView(appState: appState, onOpenSettings: openSettings)
     }
@@ -145,7 +148,7 @@ struct OnboardingWizardView: View {
         Button {
           back()
         } label: {
-          Label("Zurück", systemImage: "chevron.left")
+          Label("zurück", systemImage: "chevron.left")
         }
         .buttonStyle(PopoverActionButtonStyle(.secondary))
         .font(.system(size: 12, weight: .medium))
@@ -154,17 +157,17 @@ struct OnboardingWizardView: View {
       Spacer()
 
       if viewModel.isLastStep {
-        // On the Finish step: replace 'Später' with 'Zu den Einstellungen' (change 4)
-        Button("Zu den Einstellungen") { openSettings() }
+        // On the Finish step: replace 'später' with 'zu den einstellungen' (change 4)
+        Button("zu den einstellungen") { openSettings() }
           .buttonStyle(PopoverActionButtonStyle(.secondary))
           .font(.system(size: 11.5))
       } else {
-        // On all other steps: keep 'Später' but remove .cancelAction shortcut (change 3)
-        Button("Später") { onClose() }
+        // On all other steps: keep 'später' but remove .cancelAction shortcut (change 3)
+        Button("später") { onClose() }
           .buttonStyle(PopoverActionButtonStyle(.quiet))
           .font(.system(size: 11.5))
         // Note: .keyboardShortcut(.cancelAction) intentionally removed so Esc does not
-        // close the wizard while a TextField is focused on the Identity step.
+        // close the wizard while a TextField is focused on the welcome step.
       }
 
       primaryButton
@@ -173,6 +176,8 @@ struct OnboardingWizardView: View {
     .padding(.vertical, 12)
   }
 
+  // DESIGN.md: GlassProminentButtonStyle is the primary CTA in floating surfaces (pill, onboarding
+  // footer) — prominent glass on macOS 26, PopoverActionButtonStyle(.primary) on 14–25.
   private var primaryButton: some View {
     Button {
       primaryAction()
@@ -180,7 +185,7 @@ struct OnboardingWizardView: View {
       Text(viewModel.step.primaryActionLabel)
         .font(.system(size: 12.5, weight: .semibold))
     }
-    .buttonStyle(PopoverActionButtonStyle(.primary))
+    .buttonStyle(GlassProminentButtonStyle())
     .disabled(!viewModel.canAdvance(appState))
     .modifier(DefaultActionShortcut(isEnabled: viewModel.canAdvance(appState)))
   }

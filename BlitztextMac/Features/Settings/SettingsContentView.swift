@@ -6,13 +6,13 @@ struct SettingsContentView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      // Four-tab segmented picker (short labels fit the 340pt popover).
+      // Five-tab segmented picker (short lowercase labels fit the 410pt popover).
       Picker("", selection: $appState.settingsTabSelection) {
-        Text("Prompts").tag(0)
-        Text("Modelle").tag(1)
-        Text("Vokabular").tag(2)
-        Text("Archiv").tag(3)
-        Text("System").tag(4)
+        Text("prompts").tag(0)
+        Text("modelle").tag(1)
+        Text("vokabular").tag(2)
+        Text("archiv").tag(3)
+        Text("system").tag(4)
       }
       .pickerStyle(.segmented)
       .controlSize(.small)
@@ -70,11 +70,11 @@ struct SettingsContentView: View {
         .frame(width: 18, height: 18)
 
       VStack(alignment: .leading, spacing: 3) {
-        Text("Richte rede ein")
+        Text("richte rede ein")
           .font(.system(size: 11.5, weight: .semibold))
           .foregroundStyle(.primary)
         Text(
-          "Die geführte Einrichtung erledigt Rechte, Verarbeitung und Modi in wenigen Schritten."
+          "die geführte einrichtung erledigt rechte, verarbeitung und modi in wenigen schritten."
         )
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
@@ -83,7 +83,7 @@ struct SettingsContentView: View {
 
       Spacer(minLength: 0)
 
-      Button("Öffnen") {
+      Button("öffnen") {
         NotificationCenter.default.post(name: .openOnboardingWindow, object: nil)
       }
       .font(.system(size: 10.5, weight: .medium))

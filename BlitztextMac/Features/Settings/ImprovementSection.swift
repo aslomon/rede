@@ -14,10 +14,10 @@ struct ImprovementSection: View {
       // Plain heading + content (NOT a carded SettingsSection): the row list is already cards, so a
       // box here was a box-in-box. Matches the popover section style.
       VStack(alignment: .leading, spacing: 10) {
-        SectionLabel(text: "Verbesserungen · was du nach dem Diktat änderst")
+        SectionLabel(text: "verbesserungen · was du nach dem diktat änderst")
         Text(
-          "Lokal protokolliert (nur du). Lernt aus deinen Korrekturen — wiederkehrende schlägt es "
-            + "als festes Wörterbuch-Wort vor."
+          "lokal protokolliert (nur du). lernt aus deinen korrekturen — wiederkehrende schlägt es "
+            + "als festes wörterbuch-wort vor."
         )
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
@@ -42,10 +42,10 @@ struct ImprovementSection: View {
   /// the dictation dictionary; "Verwerfen" hides it for this session.
   private var suggestionsBlock: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Lern-Vorschläge")
+      Text("lern-vorschläge")
         .font(.system(size: 10, weight: .semibold))
         .foregroundStyle(.secondary)
-      Text("Wiederkehrende Korrekturen — als festes Wörterbuch-Wort übernehmen?")
+      Text("wiederkehrende korrekturen — als festes wörterbuch-wort übernehmen?")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
@@ -65,8 +65,8 @@ struct ImprovementSection: View {
 
   private var emptyState: some View {
     Text(
-      "Noch keine Korrekturen erkannt. Sobald du eingefügten Text im Feld änderst, erscheint die "
-        + "Verbesserung hier."
+      "noch keine korrekturen erkannt. sobald du eingefügten text im feld änderst, erscheint die "
+        + "verbesserung hier."
     )
     .font(.system(size: 11))
     .foregroundStyle(.secondary)
@@ -77,7 +77,7 @@ struct ImprovementSection: View {
 
   private var recentList: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Zuletzt")
+      Text("zuletzt")
         .font(.system(size: 10, weight: .semibold))
         .foregroundStyle(.secondary)
       VStack(spacing: 6) {
@@ -92,9 +92,9 @@ struct ImprovementSection: View {
 
   private var clearButton: some View {
     DestructiveClearButton(
-      "Verlauf löschen",
+      "verlauf löschen",
       message:
-        "Alle erkannten Verbesserungen (eingefügter Text und deine Korrektur) werden on-device entfernt. Das lässt sich nicht rückgängig machen."
+        "alle erkannten verbesserungen (eingefügter text und deine korrektur) werden on-device entfernt. das lässt sich nicht rückgängig machen."
     ) {
       appState.clearImprovements()
     }
@@ -119,7 +119,7 @@ private struct ImprovementRow: View {
 
   private var appLabel: String {
     let name = (observation.appName ?? "").trimmingCharacters(in: .whitespaces)
-    return name.isEmpty ? "Unbekannte App" : name
+    return name.isEmpty ? "unbekannte app" : name
   }
 
   var body: some View {
@@ -128,7 +128,7 @@ private struct ImprovementRow: View {
       if observation.changed {
         beforeAfter
       } else {
-        Text("Unverändert übernommen.")
+        Text("unverändert übernommen.")
           .font(.system(size: 10))
           .foregroundStyle(.tertiary)
       }
@@ -165,8 +165,8 @@ private struct ImprovementRow: View {
     // "Eingefügt" = the text rede pasted; "Korrektur" = what the user changed it to. Clearer
     // than the ambiguous "Vorher/Nachher" (it was unclear which side was rede's output).
     VStack(alignment: .leading, spacing: 2) {
-      diffLine(label: "Eingefügt", text: observation.inserted, accent: .secondary)
-      diffLine(label: "Korrektur", text: observation.finalText, accent: .primary)
+      diffLine(label: "eingefügt", text: observation.inserted, accent: .secondary)
+      diffLine(label: "korrektur", text: observation.finalText, accent: .primary)
     }
   }
 
@@ -226,11 +226,11 @@ private struct ImprovementSuggestionRow: View {
 
       Spacer(minLength: 6)
 
-      Button("Übernehmen", action: onAccept)
+      Button("übernehmen", action: onAccept)
         .font(.system(size: 10, weight: .medium))
         .buttonStyle(PopoverActionButtonStyle(.primary))
         .accessibilityLabel("Vorschlag übernehmen: \(suggestion.from) zu \(suggestion.to)")
-      Button("Verwerfen", action: onDismiss)
+      Button("verwerfen", action: onDismiss)
         .font(.system(size: 10, weight: .medium))
         .buttonStyle(PopoverActionButtonStyle(.secondary))
         .accessibilityLabel("Vorschlag verwerfen: \(suggestion.from) zu \(suggestion.to)")

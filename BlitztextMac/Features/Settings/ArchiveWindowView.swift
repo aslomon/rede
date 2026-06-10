@@ -20,10 +20,10 @@ struct ArchiveWindowView: View {
 
     var label: String {
       switch self {
-      case .verlauf: return "Verlauf"
-      case .diktate: return "Diktate"
-      case .kontext: return "Kontext"
-      case .verbesserungen: return "Verbesserungen"
+      case .verlauf: return "verlauf"
+      case .diktate: return "diktate"
+      case .kontext: return "kontext"
+      case .verbesserungen: return "verbesserungen"
       }
     }
   }
@@ -50,6 +50,8 @@ struct ArchiveWindowView: View {
     // Top inset clears the floating traffic lights (full-size-content title bar).
     .padding(.top, 38)
     .frame(minWidth: 460, minHeight: 480)
+    // rede voice: SF Rounded for the whole window, matching the popover/onboarding roots.
+    .fontDesign(.rounded)
   }
 
   // MARK: - Header
@@ -59,7 +61,7 @@ struct ArchiveWindowView: View {
       VStack(alignment: .leading, spacing: 2) {
         HStack(spacing: 8) {
           BrandMark(size: 18)
-          Text("Transkriptions-Archiv")
+          Text("transkriptions-archiv")
             .font(.system(size: 16, weight: .semibold))
         }
         Text(headerSubtitle)
@@ -80,8 +82,8 @@ struct ArchiveWindowView: View {
   /// off (and where to turn it on) so the empty facets below don't look like a bug.
   private var headerSubtitle: String {
     appState.isArchiveEnabled
-      ? "Lokal gespeichert (nur du, kein Audio). Nichts verlässt deinen Mac."
-      : "Archivierung ist aus — hier erscheint nichts, bis du sie im Einstellungen-Tab Archiv aktivierst."
+      ? "lokal gespeichert (nur du, kein audio). nichts verlässt deinen Mac."
+      : "archivierung ist aus — hier erscheint nichts, bis du sie im einstellungen-tab archiv aktivierst."
   }
 
   // MARK: - Facet picker + content
@@ -122,8 +124,8 @@ struct ArchiveWindowView: View {
         ImprovementSection(appState: appState)
       } else {
         facetOffHint(
-          "Verbesserungs-Erkennung ist aus. Aktiviere sie im Einstellungen-Tab Archiv, "
-            + "um zu sehen, wie du eingefügten Text danach korrigierst.")
+          "verbesserungs-erkennung ist aus. aktiviere sie im tab vokabular (memory), "
+            + "um zu sehen, wie du eingefügten text danach korrigierst.")
       }
     }
   }
@@ -146,7 +148,7 @@ struct ArchiveWindowView: View {
     let grouped = appState.archiveStore.entriesByDay()
 
     if grouped.isEmpty {
-      facetOffHint("Noch keine Einträge. Neue Transkriptionen erscheinen hier nach Tag.")
+      facetOffHint("noch keine einträge. neue transkriptionen erscheinen hier nach tag.")
     } else {
       VStack(alignment: .leading, spacing: 12) {
         ForEach(grouped, id: \.day) { group in
@@ -173,9 +175,9 @@ struct ArchiveWindowView: View {
 
   private var clearArchiveButton: some View {
     DestructiveClearButton(
-      "Archiv löschen",
+      "archiv löschen",
       message:
-        "Alle archivierten Transkriptionen werden on-device entfernt. Das lässt sich nicht rückgängig machen."
+        "alle archivierten transkriptionen werden on-device entfernt. das lässt sich nicht rückgängig machen."
     ) {
       appState.clearArchive()
     }
@@ -185,8 +187,8 @@ struct ArchiveWindowView: View {
 
   private func dayHeader(for day: Date) -> String {
     let calendar = Calendar.current
-    if calendar.isDateInToday(day) { return "Heute" }
-    if calendar.isDateInYesterday(day) { return "Gestern" }
+    if calendar.isDateInToday(day) { return "heute" }
+    if calendar.isDateInYesterday(day) { return "gestern" }
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "de_DE")
     formatter.dateFormat = "EEEE, d. MMMM"

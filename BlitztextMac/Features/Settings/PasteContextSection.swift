@@ -12,8 +12,8 @@ struct PasteContextSection: View {
     // Plain heading + content (NOT a carded SettingsSection): in the archive window the row list is
     // already made of cards, so a box here produced a box-in-box. Matches the popover section style.
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "Kontext · Wo du diktierst")
-      Text("Lokal protokolliert (nur du), nur mit dem Archiv. Kein Text — nur, wo du diktierst.")
+      SectionLabel(text: "kontext · wo du diktierst")
+      Text("lokal protokolliert (nur du), nur mit dem archiv. kein text — nur, wo du diktierst.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
@@ -32,7 +32,7 @@ struct PasteContextSection: View {
 
   private var emptyState: some View {
     Text(
-      "Noch nichts protokolliert. Sobald du diktierst, erscheint hier, wo der Text gelandet ist."
+      "noch nichts protokolliert. sobald du diktierst, erscheint hier, wo der text gelandet ist."
     )
     .font(.system(size: 11))
     .foregroundStyle(.secondary)
@@ -43,7 +43,7 @@ struct PasteContextSection: View {
 
   private var aggregate: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Du diktierst meist in:")
+      Text("du diktierst meist in:")
         .font(.system(size: 11, weight: .semibold))
       FlowLayout(spacing: 6) {
         ForEach(appState.topPasteContexts.prefix(6), id: \.0) { category, count in
@@ -57,7 +57,7 @@ struct PasteContextSection: View {
 
   private var recentList: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Zuletzt")
+      Text("zuletzt")
         .font(.system(size: 10, weight: .semibold))
         .foregroundStyle(.secondary)
       VStack(spacing: 6) {
@@ -72,9 +72,9 @@ struct PasteContextSection: View {
 
   private var clearButton: some View {
     DestructiveClearButton(
-      "Verlauf löschen",
+      "verlauf löschen",
       message:
-        "Das lokale Kontext-Protokoll (nur Metadaten — wo du diktiert hast) wird entfernt. Das lässt sich nicht rückgängig machen."
+        "das lokale kontext-protokoll (nur metadaten — wo du diktiert hast) wird entfernt. das lässt sich nicht rückgängig machen."
     ) {
       appState.clearPasteContexts()
     }
@@ -144,7 +144,7 @@ private struct PasteContextRow: View {
 
   private var appLabel: String {
     let name = (context.appName ?? "").trimmingCharacters(in: .whitespaces)
-    return name.isEmpty ? "Unbekannte App" : name
+    return name.isEmpty ? "unbekannte app" : name
   }
 
   var body: some View {

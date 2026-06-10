@@ -22,12 +22,12 @@ struct LocalTranscriptionModel: Identifiable, Hashable {
     Self.sizeLabel(for: id)
   }
 
-  /// Honest, picker-ready state label. Installed models read "Installiert"; missing models
-  /// read "Nicht geladen — N MB" (or just "Nicht geladen" when no size hint is available).
+  /// Honest, picker-ready state label. Installed models read "geladen"; missing models
+  /// read "nicht geladen — N MB" (or just "nicht geladen" when no size hint is available).
   var installStateLabel: String {
-    if isInstalled { return "Installiert" }
-    if let sizeLabel { return "Nicht geladen — \(sizeLabel)" }
-    return "Nicht geladen"
+    if isInstalled { return "geladen" }
+    if let sizeLabel { return "nicht geladen — \(sizeLabel)" }
+    return "nicht geladen"
   }
 
   /// Parses the trailing `…_<n>MB` size token from a WhisperKit model name into "216 MB".

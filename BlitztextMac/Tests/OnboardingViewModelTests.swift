@@ -20,20 +20,27 @@ final class OnboardingViewModelTests: XCTestCase {
   // MARK: - Step shape
 
   func testJourneyStepsInExpectedOrder() {
-    XCTAssertEqual(OnboardingViewModel.stepCount, 8)
+    XCTAssertEqual(OnboardingViewModel.stepCount, 9)
     XCTAssertEqual(
       OnboardingViewModel.OnboardingStep.allCases,
-      [.welcome, .identity, .installLocation, .permissions, .processing, .models, .modes, .finish])
+      [
+        .welcome, .installLocation, .permissions, .processing, .models, .modes, .hotkeys,
+        .extras, .finish,
+      ])
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.welcome.displayIndex, 1)
-    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.displayIndex, 8)
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.displayIndex, 9)
   }
 
   func testJourneyStepsExposeShortMetadata() {
-    XCTAssertEqual(OnboardingViewModel.OnboardingStep.identity.title, "Identität")
-    XCTAssertEqual(OnboardingViewModel.OnboardingStep.installLocation.title, "Speicherort")
+    // rede voice: rail titles are lowercase.
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.installLocation.title, "speicherort")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.hotkeys.title, "hotkeys")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.extras.title, "extras")
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.permissions.systemImage, "hand.raised.fill")
-    XCTAssertEqual(OnboardingViewModel.OnboardingStep.processing.primaryActionLabel, "Auswahl prüfen")
-    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.primaryActionLabel, "Fertig")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.hotkeys.systemImage, "keyboard")
+    XCTAssertEqual(
+      OnboardingViewModel.OnboardingStep.processing.primaryActionLabel, "auswahl prüfen")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.primaryActionLabel, "fertig")
   }
 
   // MARK: - canAdvance gating
@@ -43,17 +50,18 @@ final class OnboardingViewModelTests: XCTestCase {
     let vm = OnboardingViewModel(appState: appState)
 
     for step in [
-      OnboardingViewModel.OnboardingStep.welcome, .installLocation, .permissions, .modes, .finish,
+      OnboardingViewModel.OnboardingStep.installLocation, .permissions, .modes, .hotkeys,
+      .extras, .finish,
     ] {
       vm.step = step
       XCTAssertTrue(vm.canAdvance(appState), "\(step) must always advance (soft gating)")
     }
   }
 
-  func testIdentityNeedsName() {
+  func testWelcomeNeedsName() {
     let appState = makeAppState()
     let vm = OnboardingViewModel(appState: appState)
-    vm.step = .identity
+    vm.step = .welcome
 
     appState.appSettings.userDisplayName = "   "
     XCTAssertFalse(vm.canAdvance(appState))
@@ -113,22 +121,28 @@ final class OnboardingViewModelTests: XCTestCase {
 
     XCTAssertTrue(vm.isFirstStep)
     vm.next()
-    XCTAssertEqual(vm.step, .identity)
-    vm.next()
     XCTAssertEqual(vm.step, .installLocation)
     vm.next()
     XCTAssertEqual(vm.step, .permissions)
+    vm.next()
+    XCTAssertEqual(vm.step, .processing)
+    vm.back()
+    XCTAssertEqual(vm.step, .permissions)
     vm.back()
     XCTAssertEqual(vm.step, .installLocation)
-    vm.back()
-    XCTAssertEqual(vm.step, .identity)
     vm.back()
     XCTAssertEqual(vm.step, .welcome)
     // Back at the first step is a no-op.
     vm.back()
     XCTAssertEqual(vm.step, .welcome)
 
-    vm.step = .finish
+    vm.step = .modes
+    vm.next()
+    XCTAssertEqual(vm.step, .hotkeys)
+    vm.next()
+    XCTAssertEqual(vm.step, .extras)
+    vm.next()
+    XCTAssertEqual(vm.step, .finish)
     XCTAssertTrue(vm.isLastStep)
     // Next at the last step is a no-op.
     vm.next()

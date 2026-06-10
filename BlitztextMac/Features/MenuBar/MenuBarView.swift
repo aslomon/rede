@@ -78,8 +78,6 @@ private struct MainPageView: View {
   @Bindable var appState: AppState
   @Environment(\.colorScheme) private var colorScheme
 
-  // MARK: State for engine footer expand/collapse (spec change #1)
-  @State private var engineExpanded = false
   // MARK: Namespace for workflow row glass morphing (spec change #6)
   @Namespace private var rowNamespace
 
@@ -144,7 +142,7 @@ private struct MainPageView: View {
           }
         }
         .buttonStyle(PopoverIconButtonStyle(.quiet))
-        .help("Einstellungen")
+        .help("einstellungen")
         .accessibilityLabel("Einstellungen")
       }
       .padding(.horizontal, 16)
@@ -162,11 +160,6 @@ private struct MainPageView: View {
 
   // MARK: Status lines
 
-  // Spec change #4: Replace raw Circle dot + Text with BlitzStatusPill(.ready)
-  private var configuredStatusLine: some View {
-    BlitzStatusPill(state: .ready, label: "Bereit")
-  }
-
   // Spec change #5: Remove the three-line body Text paragraph; keep icon circle, headline, button
   private var unconfiguredStatusLine: some View {
     VStack(spacing: 10) {
@@ -179,198 +172,17 @@ private struct MainPageView: View {
           .foregroundStyle(.orange)
       }
 
-      Text("Einrichtung nötig")
+      Text("einrichtung nötig")
         .font(.system(size: 14, weight: .semibold))
         .foregroundStyle(.primary)
 
       Button {
         NotificationCenter.default.post(name: .openOnboardingWindow, object: nil)
       } label: {
-        Label("Einrichten", systemImage: "sparkles")
+        Label("einrichten", systemImage: "sparkles")
       }
       .buttonStyle(PopoverActionButtonStyle(.primary))
     }
-  }
-
-  // MARK: Engine Footer (spec change #1 + #2)
-  //
-  // Compressed to a BlitzStatusPill at rest; tap to reveal the full enginePanel inline.
-  // Saves ~60pt vertical space in the default state.
-
-  private var engineFooter: some View {
-    VStack(spacing: 0) {
-      // Compressed pill — always visible
-      Button {
-        withAnimation(.easeInOut(duration: 0.2)) {
-          engineExpanded.toggle()
-        }
-      } label: {
-        HStack(spacing: 6) {
-          BlitzStatusPill(
-            state: appState.appSettings.secureLocalModeEnabled ? .local : .online,
-            label: engineStatusSummary
-          )
-          Spacer()
-          Image(systemName: engineExpanded ? "chevron.up" : "chevron.down")
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundStyle(.tertiary)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel("Transkriptions-Engine")
-      .accessibilityHint(engineExpanded ? "Einklappen" : "Ausklappen")
-
-      // Expanded engine panel (spec change #2: .liquidGlassCard replaces manual RoundedRect)
-      if engineExpanded {
-        enginePanel
-          .padding(.top, 4)
-          .transition(.opacity.combined(with: .move(edge: .top)))
-      }
-    }
-  }
-
-  /// One-line summary shown in the compressed pill label.
-  private var engineStatusSummary: String {
-    if appState.appSettings.secureLocalModeEnabled {
-      if appState.isDownloadingLocalModel {
-        return appState.localModelDownloadStatusText ?? "Modell wird geladen…"
-      }
-      if appState.selectedLocalModelIsInstalled {
-        return "Lokal · \(appState.selectedLocalModelDisplayName)"
-      }
-      return "\(appState.selectedLocalModelDisplayName) nicht geladen"
-    }
-    return "Online · Whisper"
-  }
-
-  // MARK: Engine Panel
-
-  // Spec change #2: .liquidGlassCard() replaces the manual RoundedRectangle fill + overlay pair
-  private var enginePanel: some View {
-    let modelOptions = LocalTranscriptionService.modelOptions()
-    let selectedModelInstalled = appState.selectedLocalModelIsInstalled
-
-    return VStack(alignment: .leading, spacing: 8) {
-      // Engine selector row
-      HStack(spacing: 8) {
-        Text("Transkription")
-          .font(.system(size: 10.5, weight: .medium))
-          .foregroundStyle(.secondary)
-
-        Picker(
-          "",
-          selection: Binding(
-            get: { appState.appSettings.secureLocalModeEnabled },
-            set: { newValue in
-              if newValue {
-                appState.enableSecureLocalMode()
-              } else {
-                appState.appSettings.secureLocalModeEnabled = false
-              }
-            }
-          )
-        ) {
-          Text("Online").tag(false)
-          Text("Lokal").tag(true)
-        }
-        .labelsHidden()
-        .pickerStyle(.segmented)
-        .controlSize(.small)
-        .disabled(appState.isDownloadingLocalModel)
-        .frame(maxWidth: .infinity)
-      }
-
-      // Status line: accent dot + engine name
-      engineStatusLine
-
-      // Local-mode extras
-      if appState.appSettings.secureLocalModeEnabled {
-        HStack(spacing: 8) {
-          Text("Modell")
-            .font(.system(size: 10.5, weight: .medium))
-            .foregroundStyle(.secondary)
-
-          Picker(
-            "",
-            selection: Binding(
-              get: { appState.selectedLocalModelName },
-              set: { appState.appSettings.selectedLocalTranscriptionModelName = $0 }
-            )
-          ) {
-            ForEach(modelOptions) { model in
-              Text(menuBarModelLabel(for: model)).tag(model.id)
-            }
-          }
-          .labelsHidden()
-          .frame(maxWidth: .infinity)
-          .controlSize(.small)
-          .disabled(appState.isDownloadingLocalModel)
-        }
-
-        if let progress = appState.localModelDownloadProgress {
-          VStack(alignment: .leading, spacing: 4) {
-            ProgressView(value: progress)
-            Text(appState.localModelDownloadStatusText ?? "Modell wird geladen…")
-              .font(.system(size: 10.5))
-              .foregroundStyle(.secondary)
-          }
-        } else if !selectedModelInstalled {
-          Button(appState.localModelDownloadButtonTitle) {
-            appState.installSelectedLocalModel()
-          }
-          .controlSize(.small)
-          .buttonStyle(PopoverActionButtonStyle(.primary))
-        }
-
-        if let errorText = appState.localModelDownloadErrorText {
-          Text(errorText)
-            .font(.system(size: 10.5))
-            .foregroundStyle(.red)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-      }
-    }
-    .padding(10)
-    .liquidGlassCard(cornerRadius: LiquidGlass.cardCornerRadius)
-  }
-
-  private var engineStatusLine: some View {
-    HStack(spacing: 6) {
-      Circle()
-        .fill(appState.appSettings.secureLocalModeEnabled ? Color.green : Color.blue)
-        .frame(width: 6, height: 6)
-
-      Text(engineStatusText)
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-        .lineLimit(2)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-  }
-
-  private var engineStatusText: String {
-    if appState.appSettings.secureLocalModeEnabled {
-      if appState.isDownloadingLocalModel {
-        return appState.localModelDownloadStatusText ?? "Lokales Modell wird geladen."
-      }
-      if appState.selectedLocalModelIsInstalled {
-        return "Lokal mit \(appState.selectedLocalModelDisplayName)."
-      }
-      return "\(appState.selectedLocalModelDisplayName) ist noch nicht installiert."
-    }
-    return "Online via OpenAI Whisper."
-  }
-
-  private func menuBarModelLabel(for model: LocalTranscriptionModel) -> String {
-    if model.isInstalled {
-      return "\(model.shortDisplayName) · geladen"
-    }
-    if let size = model.sizeLabel {
-      return "\(model.shortDisplayName) · nicht geladen (\(size))"
-    }
-    return "\(model.shortDisplayName) · nicht geladen"
   }
 
   // MARK: Banners
@@ -384,11 +196,11 @@ private struct MainPageView: View {
         .frame(width: 18, height: 18)
 
       VStack(alignment: .leading, spacing: 3) {
-        Text("Einfügen braucht Bedienungshilfen.")
+        Text("einfügen braucht bedienungshilfen.")
           .font(.system(size: 11.5, weight: .semibold))
           .foregroundStyle(.primary)
 
-        Text("Nach Updates kann macOS die Freigabe neu verlangen.")
+        Text("nach updates kann macOS die freigabe neu verlangen.")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
@@ -396,7 +208,7 @@ private struct MainPageView: View {
 
       Spacer(minLength: 0)
 
-      Button("Öffnen") {
+      Button("öffnen") {
         appState.requestAccessibilityPermission()
       }
       .font(.system(size: 10.5, weight: .medium))
@@ -415,11 +227,11 @@ private struct MainPageView: View {
         .frame(width: 18, height: 18)
 
       VStack(alignment: .leading, spacing: 3) {
-        Text("Für sauberen Anmeldestart nach /Applications verschieben.")
+        Text("für sauberen anmeldestart nach /Applications verschieben.")
           .font(.system(size: 11.5, weight: .semibold))
           .foregroundStyle(.primary)
 
-        Text("Sonst entstehen leichter doppelte Login-Items oder uneinheitliche Updates.")
+        Text("sonst entstehen leichter doppelte login-items oder uneinheitliche updates.")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
@@ -427,7 +239,7 @@ private struct MainPageView: View {
 
       Spacer(minLength: 0)
 
-      Button("Prüfen") {
+      Button("prüfen") {
         appState.openSettings(tab: 4)
       }
       .font(.system(size: 10.5, weight: .medium))
@@ -476,7 +288,7 @@ private struct SettingsPageView: View {
           HStack(spacing: 3) {
             Image(systemName: "chevron.left")
               .font(.system(size: 10, weight: .semibold))
-            Text("Zurück")
+            Text("zurück")
               .font(.system(size: 12))
           }
           .foregroundStyle(.secondary)
@@ -487,7 +299,7 @@ private struct SettingsPageView: View {
 
         HStack(spacing: 6) {
           BrandMark(size: 13)
-          Text("Einstellungen")
+          Text("einstellungen")
             .font(.system(size: 12, weight: .semibold))
         }
 
@@ -515,7 +327,7 @@ private struct SettingsPageView: View {
         HStack(spacing: 4) {
           Image(systemName: "hand.raised")
             .font(.system(size: 10, weight: .semibold))
-          Text("Rechte")
+          Text("rechte")
             .font(.system(size: 12))
         }
         .foregroundStyle(.orange)
@@ -584,7 +396,7 @@ private struct WorkflowPageView: View {
         HStack(spacing: 3) {
           Image(systemName: "chevron.left")
             .font(.system(size: 10, weight: .semibold))
-          Text("Zurück")
+          Text("zurück")
             .font(.system(size: 12))
         }
         .foregroundStyle(.secondary)
@@ -617,8 +429,8 @@ private struct WorkflowPageView: View {
         .font(.system(size: 11, weight: .semibold))
         .foregroundStyle(.orange)
       Text(
-        "Aufnahme war zu lang und wurde nach \(minutes) Min automatisch gestoppt. "
-          + "Nur der Anfang wurde übernommen."
+        "aufnahme war zu lang und wurde nach \(minutes) Min automatisch gestoppt. "
+          + "nur der anfang wurde übernommen."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -658,7 +470,7 @@ private struct AppFooter: View {
         .buttonStyle(PopoverActionButtonStyle(.primary))
       }
 
-      Button("Beenden") {
+      Button("beenden") {
         NSApplication.shared.terminate(nil)
       }
       .font(.system(size: 10, weight: .medium))

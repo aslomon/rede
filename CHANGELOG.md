@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Onboarding Redesign (9 steps)**: The first-run wizard now covers every key setting in one pass
+  - **Welcome + Identity merged**: The intro step asks for the user's name directly (one decision per step, no read-only marketing page)
+  - **New "hotkeys" step**: Hold-vs-toggle trigger decision plus a read-only keycap overview of all mode hotkeys (editing stays in the per-mode card)
+  - **New "extras" step**: Opt-in comfort toggles for launch-at-login, sound feedback (earcons), and the local archive & memory master switch — privacy copy stays sober and explicit
+  - **Extended recap**: The finish step now summarizes processing, Whisper, modes & hotkey mode, and chosen extras
+  - **Visual polish**: Sidebar carries the `rede.` wordmark, the primary footer CTA uses `GlassProminentButtonStyle`, the wizard root renders in SF Rounded, and the processing choice cards use color-scheme-aware `MenuBarTokens` fills
+- **rede Voice Rollout (lowercase UI copy)**: Completed the brand-wide lowercase sweep across the popover, all five settings tabs, the onboarding wizard, the archive and local-models windows, the recording pill cards, picker enum labels (hotkey mode, tone, emoji density, rewrite backend, reply context), and workflow status lines — proper nouns/compounds (OpenAI, Whisper-Modell, E-Mail-Memory) and mode names keep their casing; error texts may keep sentence casing (documented in DESIGN.md)
+- **System Tab Hotkey Section**: Single section heading with the halten/umschalten picker, its explainer line, the read-only per-mode table and a cross-reference to per-mode editing (removed the nested double label)
+- **Local Models Window Consistency**: All model rows (installed GGUF, catalog, embedding) now sit on `liquidGlassCard(cornerRadius: 8)`, deletes route through the shared confirming `DeleteModelButton`, the embedding row shows the "embedding" pill instead of a bare trash button, and the window renders in SF Rounded (same for the archive window)
+- **Popover Cleanup**: Removed the dead engine-footer/engine-panel code path left over from the engine bar's move to Einstellungen → Modelle
+
 ### Added
 
 - **Automatic App Updates via Sparkle**: Self-hosted update mechanism for macOS (feature-gated with `SPARKLE_ENABLED` for App Store variant compatibility)

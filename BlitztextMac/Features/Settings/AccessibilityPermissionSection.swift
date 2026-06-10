@@ -15,16 +15,16 @@ struct AccessibilityPermissionSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Bedienungshilfen")
+      SectionLabel(text: "bedienungshilfen")
 
-      BlitzStatusPill(state: isGranted ? .ready : .warning, label: isGranted ? "Erkannt" : "Fehlt")
+      BlitzStatusPill(state: isGranted ? .ready : .warning, label: isGranted ? "erkannt" : "fehlt")
 
       HStack(alignment: .top, spacing: 8) {
         VStack(alignment: .leading, spacing: 3) {
           Text(
             isGranted
-              ? "Direktes Einfügen ist freigegeben."
-              : "Direktes Einfügen ist noch nicht freigegeben."
+              ? "direktes einfügen ist freigegeben."
+              : "direktes einfügen ist noch nicht freigegeben."
           )
           .font(.system(size: 11.5, weight: .semibold))
           .foregroundStyle(.primary)
@@ -33,13 +33,13 @@ struct AccessibilityPermissionSection: View {
             // The remove-and-re-add path must be reachable here too, not only via the
             // stale-grant banner: a FRESH install (hadAccessibilityGrant == false) hits the
             // same dead end when macOS shows the toggle as on for an outdated entry.
-            InfoDisclosure("Hilfe") {
+            InfoDisclosure("hilfe") {
               VStack(alignment: .leading, spacing: 4) {
-                Text("Öffne Bedienungshilfen und aktiviere rede.")
+                Text("öffne bedienungshilfen und aktiviere rede.")
                 Text(
-                  "Sieht der Schalter schon aktiv aus, wird aber nicht erkannt: den "
-                    + "rede-Eintrag mit dem Minus (−) entfernen und neu hinzufügen. Das "
-                    + "passiert vor allem nach Updates oder Neubauten der App."
+                  "sieht der schalter schon aktiv aus, wird aber nicht erkannt: den "
+                    + "rede-eintrag mit dem minus (−) entfernen und neu hinzufügen. das "
+                    + "passiert vor allem nach updates oder neubauten der app."
                 )
               }
             }
@@ -52,25 +52,25 @@ struct AccessibilityPermissionSection: View {
       }
 
       // Button hierarchy:
-      // • isGranted == true:  'Bedienungshilfen öffnen' → .quiet (demoted, already done)
-      //                       'Erneut prüfen' → .secondary
-      // • isGranted == false: 'Bedienungshilfen öffnen' → .warning (sole primary CTA)
-      //                       'Erneut prüfen' as icon button (.quiet), not a full label button
+      // • isGranted == true:  'bedienungshilfen öffnen' → .quiet (demoted, already done)
+      //                       'erneut prüfen' → .secondary
+      // • isGranted == false: 'bedienungshilfen öffnen' → .warning (sole primary CTA)
+      //                       'erneut prüfen' as icon button (.quiet), not a full label button
       if isGranted {
         HStack(spacing: 8) {
-          Button("Bedienungshilfen öffnen") {
+          Button("bedienungshilfen öffnen") {
             appState.requestAccessibilityPermission()
           }
           .buttonStyle(PopoverActionButtonStyle(.quiet))
 
-          Button("Erneut prüfen") {
+          Button("erneut prüfen") {
             appState.refreshAccessibilityPermission()
           }
           .buttonStyle(PopoverActionButtonStyle(.secondary))
         }
       } else {
         HStack(spacing: 8) {
-          Button("Bedienungshilfen öffnen") {
+          Button("bedienungshilfen öffnen") {
             appState.requestAccessibilityPermission()
           }
           .buttonStyle(PopoverActionButtonStyle(.warning))
@@ -82,7 +82,7 @@ struct AccessibilityPermissionSection: View {
           }
           .buttonStyle(PopoverIconButtonStyle(.quiet))
           .accessibilityLabel("Erneut prüfen")
-          .help("Erneut prüfen")
+          .help("erneut prüfen")
         }
       }
     }
@@ -100,12 +100,12 @@ struct AccessibilityPermissionSection: View {
           .frame(width: 16, height: 16)
 
         VStack(alignment: .leading, spacing: 3) {
-          Text("Freigabe wird nicht mehr erkannt.")
+          Text("freigabe wird nicht mehr erkannt.")
             .font(.system(size: 11.5, weight: .semibold))
             .foregroundStyle(.primary)
 
           Text(
-            "Nach einem Update kann macOS rede unter Bedienungshilfen noch als aktiviert anzeigen, ohne es wirklich zu erkennen. So behebst du das einmalig:"
+            "nach einem update kann macOS rede unter bedienungshilfen noch als aktiviert anzeigen, ohne es wirklich zu erkennen. so behebst du das einmalig:"
           )
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
@@ -114,15 +114,15 @@ struct AccessibilityPermissionSection: View {
       }
 
       VStack(alignment: .leading, spacing: 4) {
-        staleStep(number: "1", text: "Bedienungshilfen öffnen.")
+        staleStep(number: "1", text: "bedienungshilfen öffnen.")
         staleStep(
           number: "2",
           text:
-            "Den vorhandenen rede-Eintrag in der Liste auswählen und mit dem Minus (−) entfernen."
+            "den vorhandenen rede-eintrag in der liste auswählen und mit dem minus (−) entfernen."
         )
         staleStep(
           number: "3",
-          text: "rede erneut hinzufügen bzw. den Schalter wieder einschalten.")
+          text: "rede erneut hinzufügen bzw. den schalter wieder einschalten.")
       }
       .padding(.leading, 24)
     }

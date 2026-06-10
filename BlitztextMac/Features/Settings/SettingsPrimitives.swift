@@ -186,8 +186,8 @@ struct DestructiveClearButton: View {
       .buttonStyle(PopoverActionButtonStyle(.danger))
       .accessibilityLabel(label)
       .confirmationDialog("\(label)?", isPresented: $showConfirm, titleVisibility: .visible) {
-        Button("Löschen", role: .destructive, action: action)
-        Button("Abbrechen", role: .cancel) {}
+        Button("löschen", role: .destructive, action: action)
+        Button("abbrechen", role: .cancel) {}
       } message: {
         Text(message)
       }

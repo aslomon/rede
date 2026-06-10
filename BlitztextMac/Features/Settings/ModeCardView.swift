@@ -113,12 +113,12 @@ struct ModeCardView: View {
       HStack(spacing: 6) {
         if isRewriteMode {
           BlitzStatusPill(
-            state: backendPillState, label: effectiveBackend == .local ? "Lokal" : "Online")
+            state: backendPillState, label: effectiveBackend == .local ? "lokal" : "online")
         } else {
-          BlitzStatusPill(state: .online, label: "Freitext")
+          BlitzStatusPill(state: .online, label: "freitext")
         }
         if isAdvancedNonDefault {
-          BlitzStatusPill(state: .warning, label: "Angepasst")
+          BlitzStatusPill(state: .warning, label: "angepasst")
         }
         Spacer(minLength: 0)
       }
@@ -141,19 +141,19 @@ struct ModeCardView: View {
       return appState.workflowSubtitle(for: config)
     }
     if type == .emojiText {
-      return "Emoji-Dichte: \(config.rewrite.emojiDensity.displayName)."
+      return "emoji-dichte: \(config.rewrite.emojiDensity.displayName)."
     }
     if effectiveBackend == .local {
-      return "Umformung läuft lokal über llama.cpp."
+      return "umformung läuft lokal über llama.cpp."
     }
-    return "Umformung über \(config.rewrite.modelID)."
+    return "umformung über \(config.rewrite.modelID)."
   }
 
   private var editorFooter: some View {
     HStack {
       moveControls
       Spacer()
-      Button("Zurücksetzen") {
+      Button("zurücksetzen") {
         appState.resetMode(id: modeID)
       }
       .font(.system(size: 10, weight: .medium))
@@ -161,8 +161,8 @@ struct ModeCardView: View {
 
       if appState.canDeleteMode(id: modeID) {
         DestructiveClearButton(
-          "Löschen",
-          message: "Dieser eigene Modus wird dauerhaft aus rede entfernt."
+          "löschen",
+          message: "dieser eigene modus wird dauerhaft aus rede entfernt."
         ) {
           appState.deleteMode(id: modeID)
         }
@@ -171,7 +171,7 @@ struct ModeCardView: View {
       Button {
         withAnimation(.easeInOut(duration: 0.16)) { showEditor = false }
       } label: {
-        Label("Fertig", systemImage: "checkmark")
+        Label("fertig", systemImage: "checkmark")
       }
       .buttonStyle(PopoverActionButtonStyle(.primary))
     }
@@ -186,7 +186,7 @@ struct ModeCardView: View {
       }
       .buttonStyle(PopoverIconButtonStyle(.quiet))
       .disabled(!appState.canMoveMode(id: modeID, offset: -1))
-      .help("Nach oben")
+      .help("nach oben")
       .accessibilityLabel("Modus nach oben verschieben")
 
       Button {
@@ -196,7 +196,7 @@ struct ModeCardView: View {
       }
       .buttonStyle(PopoverIconButtonStyle(.quiet))
       .disabled(!appState.canMoveMode(id: modeID, offset: 1))
-      .help("Nach unten")
+      .help("nach unten")
       .accessibilityLabel("Modus nach unten verschieben")
     }
   }
@@ -222,7 +222,7 @@ struct ModeCardView: View {
 
   private var advancedToggleLabel: some View {
     HStack(spacing: 6) {
-      Text("Erweitert")
+      Text("erweitert")
         .font(.system(size: 11, weight: .medium))
         .foregroundStyle(.secondary)
       // "angepasst" indicator dot enlarged to 7x7 for better visibility (spec change 13)
@@ -255,7 +255,7 @@ struct ModeCardView: View {
 
       // (2) Disabled note immediately below the editor when a custom prompt is active
       if hasCustomPrompt {
-        Text("Deaktiviert, solange eine eigene Anweisung gesetzt ist.")
+        Text("schreibstil & kontext sind deaktiviert, solange eine eigene anweisung gesetzt ist.")
           .font(.system(size: 10))
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
@@ -319,7 +319,7 @@ struct ModeCardView: View {
         Image(systemName: showEditor ? "checkmark" : "pencil")
       }
       .buttonStyle(PopoverIconButtonStyle(showEditor ? .primary : .quiet))
-      .help(showEditor ? "Bearbeitung schließen" : "Modus bearbeiten")
+      .help(showEditor ? "bearbeitung schließen" : "modus bearbeiten")
       .accessibilityLabel(showEditor ? "Bearbeitung schließen" : "Modus bearbeiten")
       Toggle("Aktiv", isOn: bind(\.isEnabled))
         .toggleStyle(.switch)
@@ -332,7 +332,7 @@ struct ModeCardView: View {
 
   private var nameField: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Name")
+      Text("name")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       TextField(ModeConfig.defaultUserName(for: type), text: bind(\.userName))
@@ -345,7 +345,7 @@ struct ModeCardView: View {
 
   private var backendPicker: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Verarbeitung")
+      Text("verarbeitung")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       Picker(
@@ -362,13 +362,13 @@ struct ModeCardView: View {
       .pickerStyle(.menu)
       .disabled(forcedOffline)
 
-      InfoDisclosure("Datenfluss") {
+      InfoDisclosure("datenfluss") {
         if forcedOffline {
-          Text("Sicherer lokaler Modus erzwingt lokale Verarbeitung.")
+          Text("sicherer lokaler modus erzwingt lokale verarbeitung.")
         } else if effectiveBackend == .local {
-          Text("Lokal auf diesem Mac über llama.cpp, ohne Cloud.")
+          Text("lokal auf diesem Mac über llama.cpp, ohne cloud.")
         } else {
-          Text("Text wird zur Formulierung an die OpenAI-API gesendet.")
+          Text("text wird zur formulierung an die OpenAI-API gesendet.")
         }
       }
     }
@@ -379,7 +379,7 @@ struct ModeCardView: View {
   private var modelPicker: some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack {
-        Text("Modell")
+        Text("modell")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
         Spacer()
@@ -391,7 +391,7 @@ struct ModeCardView: View {
             appState.loadAvailableModels()
           } label: {
             BlitzStatusPill(
-              state: .warning, label: appState.isLoadingModels ? "Lädt …" : "Modelle laden")
+              state: .warning, label: appState.isLoadingModels ? "lädt …" : "modelle laden")
           }
           .buttonStyle(.plain)
           .disabled(appState.isLoadingModels)

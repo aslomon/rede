@@ -36,8 +36,8 @@ struct ArchiveEntryRowActions: View {
 
   private var actionBar: some View {
     HStack(spacing: 6) {
-      copyButton(title: "Kopieren", text: entry.finalText, feedback: "Endtext")
-      copyButton(title: "Transkript kopieren", text: entry.rawTranscript, feedback: "Transkript")
+      copyButton(title: "kopieren", text: entry.finalText, feedback: "endtext")
+      copyButton(title: "transkript kopieren", text: entry.rawTranscript, feedback: "transkript")
       Spacer()
       rerunMenu
     }
@@ -64,7 +64,7 @@ struct ArchiveEntryRowActions: View {
           Image(systemName: "arrow.triangle.2.circlepath")
             .font(.system(size: 9, weight: .semibold))
         }
-        Text("Neu umschreiben …")
+        Text("neu umschreiben …")
           .font(.system(size: 10, weight: .medium))
       }
       .padding(.horizontal, 10)
@@ -105,7 +105,7 @@ struct ArchiveEntryRowActions: View {
         text: rerunError, color: .orange, icon: "exclamationmark.triangle.fill")
     } else if let rerunResult {
       VStack(alignment: .leading, spacing: 4) {
-        Text("NEU (\(rerunModeName ?? "")) ✓".uppercased())
+        Text("neu (\(rerunModeName ?? "")) ✓".uppercased())
           .font(.system(size: 9, weight: .medium))
           .foregroundStyle(.green)
         if let rerunFallbackNote {
@@ -119,7 +119,7 @@ struct ArchiveEntryRowActions: View {
           .foregroundStyle(.primary)
           .textSelection(.enabled)
           .fixedSize(horizontal: false, vertical: true)
-        Button("Ergebnis kopieren") { copy(rerunResult, feedback: "Ergebnis") }
+        Button("ergebnis kopieren") { copy(rerunResult, feedback: "ergebnis") }
           .font(.system(size: 10, weight: .medium))
           .buttonStyle(PopoverActionButtonStyle(.secondary))
           .accessibilityLabel("Neues Ergebnis in die Zwischenablage")

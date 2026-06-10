@@ -81,7 +81,7 @@ final class DampfAblassenWorkflow: Workflow {
     }
     // Safety cap: if the recording runs past the max duration, stop+process what we have.
     recorder.onMaxDurationReached = { [weak self] in self?.stop() }
-    phase = .running("Aufnahme läuft ...")
+    phase = .running("aufnahme läuft …")
   }
 
   func stop() {
@@ -118,7 +118,7 @@ final class DampfAblassenWorkflow: Workflow {
       return
     }
 
-    phase = .running("Wird transkribiert ...")
+    phase = .running("wird transkribiert …")
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
 
@@ -161,7 +161,7 @@ final class DampfAblassenWorkflow: Workflow {
 
         if Task.isCancelled { return }
 
-        phase = .running("Wird umformuliert ...")
+        phase = .running("wird umformuliert …")
 
         let systemPrompt = LLMService.rewriteSystemPrompt(
           rewrite,

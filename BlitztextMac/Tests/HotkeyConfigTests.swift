@@ -36,7 +36,7 @@ final class HotkeyConfigTests: XCTestCase {
       stored: [:]
     )
 
-    XCTAssertEqual(configs["email-client-a"]?.label, "Nicht gesetzt")
+    XCTAssertEqual(configs["email-client-a"]?.label, "nicht gesetzt")
     XCTAssertFalse(configs["email-client-a"]?.isEnabled ?? true)
   }
 
@@ -260,7 +260,7 @@ final class HotkeyConfigTests: XCTestCase {
         excluding: "new-mode",
         configs: ["email": current, "prompt": other]
       ),
-      "Konflikt: Cmd + J ist bereits belegt."
+      "konflikt: Cmd + J ist bereits belegt."
     )
   }
 

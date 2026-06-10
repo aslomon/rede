@@ -9,10 +9,10 @@ struct PromptsSettingsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       HStack(spacing: 8) {
-        SectionLabel(text: "Modi")
+        SectionLabel(text: "modi")
         BlitzStatusPill(
           state: appState.hasAnyRewriteEngine ? .ready : .warning,
-          label: appState.hasAnyRewriteEngine ? "Bereit" : "Modell fehlt"
+          label: appState.hasAnyRewriteEngine ? "bereit" : "modell fehlt"
         )
         Spacer()
         addModeMenu
@@ -21,12 +21,12 @@ struct PromptsSettingsView: View {
       if !appState.hasAnyRewriteEngine {
         EmptyStateCard(
           icon: "wand.and.stars",
-          title: "Noch kein Umschreib-Modell verbunden",
+          title: "noch kein umschreib-modell verbunden",
           caption:
-            "Modi formulieren Text nur um, wenn ein Umschreib-Modell bereitsteht — der OpenAI-Key "
-            + "oder ein lokales llama.cpp-Modell. Richte zuerst eine Engine ein.",
+            "modi formulieren text nur um, wenn ein umschreib-modell bereitsteht — der OpenAI-Key "
+            + "oder ein lokales llama.cpp-Modell. richte zuerst eine engine ein.",
           accent: .purple,
-          buttonLabel: "Zu Modelle",
+          buttonLabel: "zu modelle",
           action: { selectTab(1) }
         )
       }
@@ -35,9 +35,9 @@ struct PromptsSettingsView: View {
         ModeCardView(appState: appState, config: config)
       }
 
-      InfoDisclosure("Was Modi tun") {
+      InfoDisclosure("was modi tun") {
         Text(
-          "Freitext fügt nur das Diktat ein. E-Mail, Prompt und Social formulieren dein Diktat mit eigenen Anweisungen um."
+          "Freitext fügt nur das diktat ein. E-Mail, Prompt und Social formulieren dein diktat mit eigenen anweisungen um."
         )
       }
     }
@@ -61,7 +61,7 @@ struct PromptsSettingsView: View {
       Image(systemName: "plus")
     }
     .buttonStyle(PopoverIconButtonStyle(.secondary))
-    .help("Modus hinzufügen")
+    .help("modus hinzufügen")
     .accessibilityLabel("Modus hinzufügen")
   }
 }

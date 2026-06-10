@@ -16,11 +16,11 @@ struct HotkeyRecorderView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 7) {
       HStack(spacing: 8) {
-        Text("Tastenkürzel")
+        Text("tastenkürzel")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
         Spacer()
-        Toggle("Aktiv", isOn: isEnabled)
+        Toggle("aktiv", isOn: isEnabled)
           .toggleStyle(.switch)
           .controlSize(.mini)
       }
@@ -43,7 +43,7 @@ struct HotkeyRecorderView: View {
         }
         .buttonStyle(PopoverActionButtonStyle(isRecording ? .warning : .secondary))
         .disabled(!config.isEnabled)
-        .help("Tastenkombination aufnehmen")
+        .help("tastenkombination aufnehmen")
 
         // Cancel / clear — always leftmost of trailing pair
         Button {
@@ -57,7 +57,7 @@ struct HotkeyRecorderView: View {
         }
         .buttonStyle(PopoverIconButtonStyle(.quiet))
         .disabled(isRecording ? false : (!config.isConfigured || !config.isEnabled))
-        .help(isRecording ? "Aufnahme abbrechen" : "Tastenkombination löschen")
+        .help(isRecording ? "aufnahme abbrechen" : "tastenkombination löschen")
         .accessibilityLabel(isRecording ? "Aufnahme abbrechen" : "Tastenkombination löschen")
 
         // Confirm — always rightmost; invisible and disabled when not recording
@@ -68,7 +68,7 @@ struct HotkeyRecorderView: View {
         }
         .buttonStyle(PopoverIconButtonStyle(.primary))
         .disabled(!canCommitDraftCapture)
-        .help("Aufnahme übernehmen")
+        .help("aufnahme übernehmen")
         .accessibilityLabel("Aufnahme übernehmen")
         .opacity(isRecording ? 1 : 0)
         .allowsHitTesting(isRecording)
@@ -125,7 +125,7 @@ struct HotkeyRecorderView: View {
       if draftCapture.isConfigured {
         HotkeyKeycapRow(parts: draftCapture.labelParts)
       } else {
-        Text("Jetzt Tasten drücken")
+        Text("jetzt tasten drücken")
           .font(.system(size: 11, weight: .medium))
           .foregroundStyle(.secondary)
           .lineLimit(1)
@@ -134,7 +134,7 @@ struct HotkeyRecorderView: View {
     } else if config.isConfigured {
       HotkeyKeycapRow(parts: config.labelParts)
     } else {
-      Text("Kombination aufnehmen")
+      Text("kombination aufnehmen")
         .font(.system(size: 11, weight: .medium))
         .foregroundStyle(.secondary)
     }
@@ -159,7 +159,7 @@ struct HotkeyRecorderView: View {
   private var statusText: String {
     if let conflict = statusConflictLabel { return conflict }
     // Only reached when isRecording is true (showStatusBanner guard)
-    return "Aufnahme aktiv. Tastenkürzel sind solange pausiert."
+    return "aufnahme aktiv. tastenkürzel sind solange pausiert."
   }
 
   private var statusIcon: String {

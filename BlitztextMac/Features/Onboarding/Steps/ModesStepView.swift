@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Step 5: pre-fill the example system prompts for the E-Mail and Prompt modes, and pick the emoji
+/// Step: pre-fill the example system prompts for the E-Mail and Prompt modes, and pick the emoji
 /// density for the Social mode. Prompt edits live in the view model and are persisted on advance.
 struct ModesStepView: View {
   @Bindable var appState: AppState
@@ -13,15 +13,15 @@ struct ModesStepView: View {
       OnboardingStepHeader(
         systemImage: "text.badge.checkmark",
         accent: .purple,
-        title: "Modi anpassen",
-        subtitle: "Die drei Modi sind vorbereitet. Details kannst du später jederzeit ändern."
+        title: "modi anpassen",
+        subtitle: "die drei modi sind vorbereitet. details kannst du später jederzeit ändern."
       )
 
       promptCard(
         accent: .purple,
         modeSymbol: WorkflowType.textImprover.systemImageForOnboarding,
         title: "E-Mail",
-        helpText: "Was rede aus deinem Diktat machen soll.",
+        helpText: "was rede aus deinem diktat machen soll.",
         text: $viewModel.emailPrompt,
         isEditing: $isEditingEmail
       ) {
@@ -32,7 +32,7 @@ struct ModesStepView: View {
         accent: .orange,
         modeSymbol: WorkflowType.dampfAblassen.systemImageForOnboarding,
         title: "Prompt",
-        helpText: "Für KI-Coding-Agenten wie Claude Code oder Codex.",
+        helpText: "für KI-coding-agenten wie Claude Code oder Codex.",
         text: $viewModel.promptPrompt,
         isEditing: $isEditingPrompt
       ) {
@@ -63,7 +63,7 @@ struct ModesStepView: View {
             .accessibilityHidden(true)
           SectionLabel(text: title)
           Spacer()
-          BlitzStatusPill(state: .ready, label: "Preset")
+          BlitzStatusPill(state: .ready, label: "preset")
         }
 
         Text(helpText)
@@ -74,11 +74,11 @@ struct ModesStepView: View {
           Button {
             withAnimation(.easeInOut(duration: 0.16)) { isEditing.wrappedValue.toggle() }
           } label: {
-            Label(isEditing.wrappedValue ? "Fertig" : "Anpassen", systemImage: "pencil")
+            Label(isEditing.wrappedValue ? "fertig" : "anpassen", systemImage: "pencil")
           }
           .buttonStyle(PopoverActionButtonStyle(isEditing.wrappedValue ? .primary : .secondary))
 
-          Button("Beispiel") { onRestore() }
+          Button("beispiel") { onRestore() }
             .font(.system(size: 10, weight: .medium))
             .buttonStyle(PopoverActionButtonStyle(.quiet))
         }
@@ -114,7 +114,7 @@ struct ModesStepView: View {
           SectionLabel(text: "Social")
         }
 
-        Text("Wie viele Emojis soll der Social-Modus einstreuen?")
+        Text("wie viele emojis soll der Social-Modus einstreuen?")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
 

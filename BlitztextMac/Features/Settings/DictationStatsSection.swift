@@ -15,8 +15,8 @@ struct DictationStatsSection: View {
     // Plain heading + content (NOT a carded SettingsSection): the stat tiles are already a card, so
     // a box here was a box-in-box. Matches the popover section style.
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "Deine Diktate")
-      Text("Aus dem lokalen Archiv berechnet. Keine neue Aufzeichnung, kein Datenfluss.")
+      SectionLabel(text: "deine diktate")
+      Text("aus dem lokalen archiv berechnet. keine neue aufzeichnung, kein datenfluss.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
@@ -36,7 +36,7 @@ struct DictationStatsSection: View {
   // MARK: - Empty state
 
   private var emptyState: some View {
-    Text("Noch keine Diktate aufgezeichnet — aktiviere das Archiv.")
+    Text("noch keine diktate aufgezeichnet — aktiviere das archiv.")
       .font(.system(size: 11))
       .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
@@ -50,16 +50,16 @@ struct DictationStatsSection: View {
   private var statTiles: some View {
     Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
       GridRow {
-        statTile("waveform", "Läufe gesamt", "\(stats.totalRuns)")
+        statTile("waveform", "läufe gesamt", "\(stats.totalRuns)")
         statTile(
-          "text.word.spacing", "Wörter diktiert", DictationStatsFormat.count(stats.totalWords))
+          "text.word.spacing", "wörter diktiert", DictationStatsFormat.count(stats.totalWords))
       }
       GridRow {
         statTile(
-          "hourglass", "Zeit gespart",
+          "hourglass", "zeit gespart",
           "≈ \(DictationStatsFormat.duration(stats.estimatedTypingSecondsSaved))")
         statTile(
-          "mic", "Aufnahmezeit",
+          "mic", "aufnahmezeit",
           DictationStatsFormat.duration(stats.totalRecordingSeconds))
       }
     }
@@ -89,7 +89,7 @@ struct DictationStatsSection: View {
   /// (DESIGN.md: blue/green/purple/orange/cyan per mode), replacing the flat dot-separated Text.
   private var modeBreakdown: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Nach Modus")
+      Text("nach modus")
         .font(.system(size: 10, weight: .semibold))
         .foregroundStyle(.secondary)
       FlowLayout(spacing: 6) {

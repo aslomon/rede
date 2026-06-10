@@ -29,7 +29,7 @@ final class ArchiveWindowController {
   private func makeWindow() -> NSWindow {
     let hosting = NSHostingController(rootView: ArchiveWindowView(appState: appState))
     let window = NSWindow(contentViewController: hosting)
-    window.title = "Transkriptions-Archiv"
+    window.title = "rede archiv"
     // Transparent, full-size-content title bar so the content runs to the top with no separator line;
     // the traffic lights float over the content (matches the onboarding window).
     window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]

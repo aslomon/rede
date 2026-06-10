@@ -199,7 +199,7 @@ struct InfoDisclosure<Content: View>: View {
 
   @State private var isOpen = false
 
-  init(_ label: String = "Details", @ViewBuilder content: () -> Content) {
+  init(_ label: String = "details", @ViewBuilder content: () -> Content) {
     self.label = label
     self.content = content()
   }

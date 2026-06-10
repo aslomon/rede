@@ -72,7 +72,7 @@ final class EmojiTextWorkflow: Workflow {
     }
     // Safety cap: if the recording runs past the max duration, stop+process what we have.
     recorder.onMaxDurationReached = { [weak self] in self?.stop() }
-    phase = .running("Aufnahme l\u{00E4}uft ...")
+    phase = .running("aufnahme läuft …")
   }
 
   func stop() {
@@ -109,7 +109,7 @@ final class EmojiTextWorkflow: Workflow {
       return
     }
 
-    phase = .running("Wird transkribiert ...")
+    phase = .running("wird transkribiert …")
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
 
@@ -152,7 +152,7 @@ final class EmojiTextWorkflow: Workflow {
 
         if Task.isCancelled { return }
 
-        phase = .running("Emojis werden eingef\u{00FC}gt ...")
+        phase = .running("emojis werden eingefügt …")
 
         let systemPrompt = LLMService.emojiSystemPrompt(rewrite, customTerms: rewriteTerms)
         let outcome = try await provider.rewrite(

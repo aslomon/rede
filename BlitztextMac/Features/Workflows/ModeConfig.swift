@@ -63,8 +63,8 @@ enum RewriteBackend: String, Codable, Sendable, CaseIterable, Identifiable {
 
   var displayName: String {
     switch self {
-    case .openai: return "Online (OpenAI)"
-    case .local: return "Lokal"
+    case .openai: return "online (OpenAI)"
+    case .local: return "lokal"
     }
   }
 
@@ -89,9 +89,9 @@ enum ReplyContextMode: String, Codable, Sendable, CaseIterable, Identifiable {
 
   var displayName: String {
     switch self {
-    case .off: return "Aus"
-    case .replyUsingContext: return "Als Kontext (Antwort)"
-    case .editSelection: return "Auswahl bearbeiten"
+    case .off: return "aus"
+    case .replyUsingContext: return "als kontext (antwort)"
+    case .editSelection: return "auswahl bearbeiten"
     }
   }
 }
@@ -105,9 +105,9 @@ enum SemanticEmailEnrichmentLevel: String, Codable, Sendable, CaseIterable, Iden
 
   var displayName: String {
     switch self {
-    case .light: return "Wenig"
-    case .medium: return "Mittel"
-    case .strong: return "Viel"
+    case .light: return "wenig"
+    case .medium: return "mittel"
+    case .strong: return "viel"
     }
   }
 

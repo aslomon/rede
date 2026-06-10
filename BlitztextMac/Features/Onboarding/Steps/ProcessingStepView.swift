@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Step 3: choose where transcription and rewriting happen. Online (OpenAI) reveals the key entry;
-/// "Sicherer lokaler Modus" flips the offline master and shows a green offline assurance.
+/// Step: choose where transcription and rewriting happen. Online (OpenAI) reveals the key entry;
+/// "sicherer lokaler modus" flips the offline master and shows a green offline assurance.
 struct ProcessingStepView: View {
   @Bindable var appState: AppState
+  @Environment(\.colorScheme) private var colorScheme
 
   private var isLocal: Bool { appState.appSettings.secureLocalModeEnabled }
 
@@ -12,8 +13,8 @@ struct ProcessingStepView: View {
       OnboardingStepHeader(
         systemImage: "cpu",
         accent: .blue,
-        title: "Verarbeitung",
-        subtitle: "Wähle Online-Leistung oder lokalen Datenschutz."
+        title: "verarbeitung",
+        subtitle: "wähle online-leistung oder lokalen datenschutz."
       )
 
       VStack(spacing: 10) {
@@ -21,9 +22,10 @@ struct ProcessingStepView: View {
           selected: !isLocal,
           icon: "cloud",
           accent: .blue,
-          title: "Online (OpenAI)",
+          pillState: .online,
+          title: "online (OpenAI)",
           detail:
-            "Schnell und stark. Audio und Text gehen an die OpenAI API. Eigener API Key nötig."
+            "schnell und stark. audio und text gehen an die OpenAI-API. eigener API-Key nötig."
         ) {
           appState.appSettings.secureLocalModeEnabled = false
         }
@@ -32,8 +34,9 @@ struct ProcessingStepView: View {
           selected: isLocal,
           icon: "lock.shield.fill",
           accent: .green,
-          title: "Sicherer lokaler Modus",
-          detail: "Alles bleibt auf diesem Mac. Kein Server, keine Cloud. Lokale Modelle nötig."
+          pillState: .local,
+          title: "sicherer lokaler modus",
+          detail: "alles bleibt auf diesem Mac. kein server, keine cloud. lokale modelle nötig."
         ) {
           appState.enableSecureLocalMode()
         }
@@ -53,6 +56,7 @@ struct ProcessingStepView: View {
     selected: Bool,
     icon: String,
     accent: Color,
+    pillState: BlitzStatusPill.State,
     title: String,
     detail: String,
     action: @escaping () -> Void
@@ -73,10 +77,7 @@ struct ProcessingStepView: View {
               .font(.system(size: 12.5, weight: .semibold))
               .foregroundStyle(.primary)
             if selected {
-              BlitzStatusPill(
-                state: title == "Sicherer lokaler Modus" ? .local : .online,
-                label: "Gewählt"
-              )
+              BlitzStatusPill(state: pillState, label: "gewählt")
             }
           }
           Text(detail)
@@ -89,13 +90,24 @@ struct ProcessingStepView: View {
       }
       .padding(12)
       .frame(maxWidth: .infinity, alignment: .leading)
+      // MenuBarTokens fills keep the selected state legible in dark mode (raw accent.opacity
+      // collapsed to near-invisible there).
       .background(
         RoundedRectangle(cornerRadius: OnboardingChrome.cardCornerRadius)
-          .fill(accent.opacity(selected ? 0.08 : 0.02))
+          .fill(
+            selected
+              ? MenuBarTokens.tintFill(accent, colorScheme: colorScheme)
+              : MenuBarTokens.cardFill(colorScheme: colorScheme).opacity(0.4)
+          )
       )
       .overlay(
         RoundedRectangle(cornerRadius: OnboardingChrome.cardCornerRadius)
-          .strokeBorder(accent.opacity(selected ? 0.35 : 0.1), lineWidth: selected ? 1 : 0.5)
+          .strokeBorder(
+            selected
+              ? MenuBarTokens.tintStroke(accent, colorScheme: colorScheme)
+              : MenuBarTokens.cardStroke(colorScheme: colorScheme),
+            lineWidth: selected ? 1 : 0.5
+          )
       )
     }
     .buttonStyle(.plain)
@@ -109,7 +121,7 @@ struct ProcessingStepView: View {
         .foregroundStyle(.green)
         .frame(width: 16, height: 16)
       Text(
-        "Offline aktiv: Deine Aufnahmen verlassen diesen Mac nicht. Im nächsten Schritt lädst du das lokale Whisper-Modell."
+        "offline aktiv: deine aufnahmen verlassen diesen Mac nicht. im nächsten schritt lädst du das lokale Whisper-Modell."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)

@@ -7,7 +7,7 @@ extension RecordingPillView {
         Image(systemName: "square.split.2x1")
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(accentColor)
-        Text("Version wählen")
+        Text("version wählen")
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(.primary)
         Spacer(minLength: 8)
@@ -51,7 +51,7 @@ extension RecordingPillView {
         Button {
           onChooseVariant(variant.id)
         } label: {
-          Text("Einfügen")
+          Text("einfügen")
             .font(.system(size: 11, weight: .medium))
             .foregroundStyle(.white)
             .padding(.horizontal, 12)
@@ -63,7 +63,7 @@ extension RecordingPillView {
         Button {
           onCopyVariant(variant.id)
         } label: {
-          Text("Kopieren")
+          Text("kopieren")
             .font(.system(size: 11, weight: .medium))
             .foregroundStyle(accentColor)
             .padding(.horizontal, 10)

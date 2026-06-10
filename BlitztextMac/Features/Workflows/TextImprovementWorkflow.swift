@@ -99,7 +99,7 @@ final class TextImprovementWorkflow: Workflow {
     }
     // Safety cap: if the recording runs past the max duration, stop+process what we have.
     recorder.onMaxDurationReached = { [weak self] in self?.stop() }
-    phase = .running("Aufnahme läuft ...")
+    phase = .running("aufnahme läuft …")
   }
 
   func stop() {
@@ -136,7 +136,7 @@ final class TextImprovementWorkflow: Workflow {
       return
     }
 
-    phase = .running("Wird transkribiert ...")
+    phase = .running("wird transkribiert …")
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
 
@@ -179,7 +179,7 @@ final class TextImprovementWorkflow: Workflow {
 
         if Task.isCancelled { return }
 
-        phase = .running("Text wird verbessert ...")
+        phase = .running("text wird verbessert …")
 
         let emailMemoryMatches = await emailMemoryLoader?(cleanedRawText) ?? []
         let emailMemoryContext =

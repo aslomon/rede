@@ -12,10 +12,10 @@ struct CleanupSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Sauber Entfernen")
+      SectionLabel(text: "sauber entfernen")
 
       Text(
-        "Vor dem Löschen rede erst auf diesem Mac bereinigen. So verschwinden Anmeldestart und lokale Daten sauber aus dem Weg."
+        "vor dem löschen rede erst auf diesem Mac bereinigen. so verschwinden anmeldestart und lokale daten sauber aus dem weg."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -24,7 +24,7 @@ struct CleanupSection: View {
       if showCleanupOptions {
         confirmControls
       } else {
-        Button("Entfernung vorbereiten") {
+        Button("entfernung vorbereiten") {
           showCleanupOptions = true
         }
         .buttonStyle(PopoverActionButtonStyle(.danger))
@@ -49,25 +49,25 @@ struct CleanupSection: View {
   private var confirmControls: some View {
     VStack(alignment: .leading, spacing: 8) {
       Toggle(
-        "Zugangsdaten und Einstellungen dieses Macs löschen", isOn: $deleteLocalDataOnCleanup
+        "zugangsdaten und einstellungen dieses Macs löschen", isOn: $deleteLocalDataOnCleanup
       )
       .toggleStyle(.switch)
       .controlSize(.small)
 
       Text(
-        "Danach rede beenden und die App aus /Applications löschen. Bereits verwaiste alte Login-Items können in den Systemeinstellungen einmalig manuell entfernt werden."
+        "danach rede beenden und die app aus /Applications löschen. bereits verwaiste alte login-items können in den systemeinstellungen einmalig manuell entfernt werden."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
 
       HStack(spacing: 8) {
-        Button("Abbrechen") {
+        Button("abbrechen") {
           showCleanupOptions = false
         }
         .buttonStyle(PopoverActionButtonStyle(.secondary))
 
-        Button("Jetzt bereinigen") {
+        Button("jetzt bereinigen") {
           runCleanup()
         }
         .buttonStyle(PopoverActionButtonStyle(.danger))
@@ -90,8 +90,8 @@ struct CleanupSection: View {
     if report.failedItems.isEmpty {
       cleanupStatusText =
         deleteLocalDataOnCleanup
-        ? "Anmeldestart und lokale Daten wurden bereinigt. Jetzt rede beenden und aus /Applications löschen."
-        : "Anmeldestart wurde deaktiviert. Jetzt rede beenden und aus /Applications löschen."
+        ? "anmeldestart und lokale daten wurden bereinigt. jetzt rede beenden und aus /Applications löschen."
+        : "anmeldestart wurde deaktiviert. jetzt rede beenden und aus /Applications löschen."
       showCleanupOptions = false
 
       let urlsToReveal =
@@ -105,7 +105,7 @@ struct CleanupSection: View {
     let failureSummary = report.failedItems
       .map { "\($0.url.lastPathComponent): \($0.errorDescription)" }
       .joined(separator: "\n")
-    cleanupErrorText = "Nicht alles konnte bereinigt werden:\n\(failureSummary)"
+    cleanupErrorText = "nicht alles konnte bereinigt werden:\n\(failureSummary)"
   }
 
   private func revealInFinder(urls: [URL]) {

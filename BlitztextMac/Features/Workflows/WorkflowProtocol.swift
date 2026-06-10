@@ -37,11 +37,11 @@ enum WorkflowType: String, CaseIterable, Identifiable, Codable {
 
   var subtitle: String {
     switch self {
-    case .transcription: return "Sprache rein. Text raus."
-    case .localTranscription: return "Nur lokal. Kein Server."
-    case .textImprover: return "Geschrieben sprechen."
-    case .dampfAblassen: return "Frust rein. Entspannt raus."
-    case .emojiText: return "Text rein. Emojis dazu."
+    case .transcription: return "sprache rein. text raus."
+    case .localTranscription: return "nur lokal. kein server."
+    case .textImprover: return "geschrieben sprechen."
+    case .dampfAblassen: return "frust rein. entspannt raus."
+    case .emojiText: return "text rein. emojis dazu."
     }
   }
 
@@ -493,9 +493,9 @@ struct EmojiTextSettings: Codable, Sendable {
 
     var displayName: String {
       switch self {
-      case .wenig: return "Wenig"
-      case .mittel: return "Mittel"
-      case .viel: return "Viel"
+      case .wenig: return "wenig"
+      case .mittel: return "mittel"
+      case .viel: return "viel"
       }
     }
   }
@@ -517,9 +517,9 @@ struct TextImprovementSettings: Codable, Sendable {
 
     var displayName: String {
       switch self {
-      case .formal: return "Formell"
-      case .neutral: return "Neutral"
-      case .casual: return "Locker"
+      case .formal: return "formell"
+      case .neutral: return "neutral"
+      case .casual: return "locker"
       }
     }
   }

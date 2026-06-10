@@ -52,8 +52,8 @@ struct DictationReplacementRow: View {
     .contentShape(Circle().scale(1.6))
     .help(
       replacement.wholeWord
-        ? "Nur ganzes Wort ersetzen (aktiv) — tippen zum Deaktivieren"
-        : "Auch als Teilwort ersetzen — tippen für Ganzes-Wort-Modus"
+        ? "nur ganzes wort ersetzen (aktiv) — tippen zum deaktivieren"
+        : "auch als teilwort ersetzen — tippen für ganzes-wort-modus"
     )
     .accessibilityLabel("Nur ganzes Wort ersetzen")
     .accessibilityValue(replacement.wholeWord ? "aktiv" : "inaktiv")

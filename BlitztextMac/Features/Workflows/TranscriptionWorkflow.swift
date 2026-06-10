@@ -62,7 +62,7 @@ final class TranscriptionWorkflow: Workflow {
     // Safety cap: if the recording runs past the max duration, stop+transcribe what we have
     // instead of letting it grow unbounded. `stop()` runs the normal transcription path.
     recorder.onMaxDurationReached = { [weak self] in self?.stop() }
-    phase = .running("Aufnahme läuft ...")
+    phase = .running("aufnahme läuft …")
   }
 
   func stop() {
@@ -101,7 +101,7 @@ final class TranscriptionWorkflow: Workflow {
       return
     }
 
-    phase = .running(backend == .local ? "Wird lokal transkribiert ..." : "Wird transkribiert ...")
+    phase = .running(backend == .local ? "wird lokal transkribiert …" : "wird transkribiert …")
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
     let requestLanguage = language

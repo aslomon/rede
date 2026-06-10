@@ -10,15 +10,15 @@ enum HotkeyMode: String, Codable, Sendable, CaseIterable, Identifiable {
 
   var displayName: String {
     switch self {
-    case .hold: return "Halten"
-    case .toggle: return "Drücken"
+    case .hold: return "halten"
+    case .toggle: return "umschalten"
     }
   }
 
   var description: String {
     switch self {
-    case .hold: return "Tasten halten zum Aufnehmen, loslassen zum Stoppen"
-    case .toggle: return "Einmal drücken zum Starten, nochmal oder Escape zum Stoppen"
+    case .hold: return "tasten halten zum aufnehmen, loslassen zum stoppen."
+    case .toggle: return "einmal drücken zum starten, nochmal oder Esc zum stoppen."
     }
   }
 }

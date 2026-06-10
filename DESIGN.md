@@ -17,7 +17,9 @@ einfügen.
   - **Ink `#0E0B1A`** — fast-schwarzer Markengrund (Icon, dunkle Akzentflächen).
 - Typo-Charakter: **SF Rounded** für die gesamte Popover-/Window-UI (`.fontDesign(.rounded)` am
   Root) — jung, freundlich, ohne Font-Bundling. Monospace-Runs (Hotkeys, Pfade) setzen
-  `.monospaced` explizit und bleiben unberührt.
+  `.monospaced` explizit und bleiben unberührt. Gilt für ALLE Fenster-Roots: Popover
+  (`MenuBarView`), Onboarding (`OnboardingWizardView`), Archiv-Fenster (`ArchiveWindowView`),
+  Lokale Modelle (`LocalModelsView`).
 - Icon-Motiv: weiße Sprechblase (Tail unten links) mit einer **Acid-Lime Voice-Waveform** auf
   Electric-Violet-Rundquadrat. Deterministisch aus `scripts/generate-icons.swift`.
 
@@ -84,10 +86,17 @@ einfügen.
   deutsche, 200+ englische und app-spezifische Noise-Wörter gefiltert. In Modi gibt es nur einen
   per-mode Toggle `Memory nutzen`; E-Mail zeigt zusätzlich den 3er-Segmented Picker
   (`Wenig/Mittel/Viel`). Keine langen Memory-Erklärungen in der Moduskarte.
-- **Eigene Identität**: Onboarding fragt einmal nach dem eigenen Namen. Derselbe Wert steht im
-  Vokabular-Tab und wird lokal als feste Schreibperspektive (`Ich schreibe als ...`) sowie als
-  Spracherkennungs-Hinweis verwendet. Das ist kein E-Mail-Memory, sondern Basis-Kontext für alle
-  Rewrite-Modi; E-Mail-Kontext kann damit Absender/Empfänger sauberer aus `Von`/`An` ableiten.
+- **Eigene Identität**: Onboarding fragt einmal nach dem eigenen Namen — direkt auf dem
+  Welcome-Schritt (die einzige Entscheidung dort). Derselbe Wert steht im Vokabular-Tab und wird
+  lokal als feste Schreibperspektive (`Ich schreibe als ...`) sowie als Spracherkennungs-Hinweis
+  verwendet. Das ist kein E-Mail-Memory, sondern Basis-Kontext für alle Rewrite-Modi;
+  E-Mail-Kontext kann damit Absender/Empfänger sauberer aus `Von`/`An` ableiten.
+- **Onboarding-Journey (9 Schritte)**: start (Intro + Name) → speicherort → rechte →
+  verarbeitung → modelle → modi → hotkeys (Halten/Umschalten-Entscheidung + read-only
+  Keycap-Liste der Modus-Hotkeys) → extras (Opt-ins: Autostart, Töne, Archiv & Memory) →
+  fertig (Recap inkl. Hotkey-Modus und Extras). Sidebar-Rail trägt die `Wordmark`; die primäre
+  Footer-CTA nutzt `GlassProminentButtonStyle`. Bearbeitung einzelner Hotkey-Kombinationen bleibt
+  in der Modus-Karte (Prompts-Tab) — das Onboarding zeigt sie nur.
 - **Varianten-Karte in der Pille**: zwei gleich gewichtete Textkarten, je `Einfügen` und
   `Kopieren`. Keine automatische Paste, solange die Karte sichtbar ist.
 - **Verfügbarkeits-Badges**: vorhandene Icons `checkmark.circle.fill` (grün) /
@@ -204,7 +213,11 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
 - Lange Erklärungen: ausschließlich hinter `InfoDisclosure`. Kein dauerhafter Erklärungstext.
 - `setupNudgeBanner`: nur auf Tab 0 (Prompts), nicht tabs-übergreifend.
 - `workflowHeader`: Modus-Name auf `.semibold` 13pt, Akzentfarbe auf Icon.
-- Systemeinstellungen-Reihenfolge: Bedienungshilfen → Installation & Start → Tastenkürzel → Feedback → Einrichtung → Updates → Über & Lizenzen → Sauber Entfernen.
+- Systemeinstellungen-Reihenfolge: Bedienungshilfen → Installation & Start → Tastenkürzel →
+  Diktat → Akustisches Feedback → Einrichtung → Updates → Über & Lizenzen → Sauber Entfernen.
+  Die Tastenkürzel-Sektion trägt EINE `SectionLabel`-Überschrift, dann die
+  Halten/Umschalten-Entscheidung mit Erklärzeile, dann die read-only Modus-Tabelle plus
+  Querverweis „ändern … im tab prompts" — kein doppelter Recorder im System-Tab.
 
 ### In-App-Copy bleibt Deutsch — durchgängig kleingeschrieben
 
@@ -215,7 +228,11 @@ Englisch.
 
 - **Konsequente Kleinschreibung** der gesamten nutzersichtbaren UI-Copy — auch Substantive und
   Satzanfänge (Teil der Wortmarke-Logik „rede."). Ausnahmen: feststehende Eigennamen/Akronyme
-  (OpenAI, GGUF, Whisper, macOS, ⌘V, Mac), die ihre Schreibweise behalten.
+  (OpenAI, GGUF, Whisper, macOS, ⌘V, Mac), die ihre Schreibweise behalten — auch als Teil von
+  Komposita (Whisper-Modell, E-Mail-Memory, OpenAI-Key, Hugging-Face-Katalog). Modus-Namen
+  (Diktat, E-Mail, Prompt, Social) gelten als Eigennamen der Modi und bleiben großgeschrieben.
+  Fehler-/Diagnosetexte (`LocalizedError`) dürfen normale Satz-Großschreibung behalten —
+  Klarheit schlägt Branding.
 - Lockerer, junger Ton mit dosiertem Gen-Z-Einschlag — aber funktionale Labels bleiben eindeutig.
   Gut: „läuft", „sitzt.", „lass uns reden", „läuft … ich hör zu". Status-/Erfolgs-/Onboarding-Copy
   darf Charakter zeigen; Fehlertexte und sicherheits-/datenschutzrelevante Hinweise bleiben klar

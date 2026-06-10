@@ -108,9 +108,9 @@ final class UpdateService: NSObject {
       version = "?"
     }
     if let build, !build.isEmpty, build != version {
-      return "Version \(version) (Build \(build))"
+      return "version \(version) (build \(build))"
     }
-    return "Version \(version)"
+    return "version \(version)"
   }
 
   nonisolated static func lastCheckDisplayText(
@@ -118,12 +118,12 @@ final class UpdateService: NSObject {
     now: Date = Date(),
     calendar: Calendar = Calendar.current
   ) -> String {
-    guard let date else { return "Noch nie nach Updates gesucht." }
-    if calendar.isDate(date, inSameDayAs: now) { return "Zuletzt geprüft: heute." }
+    guard let date else { return "noch nie nach updates gesucht." }
+    if calendar.isDate(date, inSameDayAs: now) { return "zuletzt geprüft: heute." }
     if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
       calendar.isDate(date, inSameDayAs: yesterday)
     {
-      return "Zuletzt geprüft: gestern."
+      return "zuletzt geprüft: gestern."
     }
     let days =
       calendar.dateComponents(
@@ -131,15 +131,15 @@ final class UpdateService: NSObject {
         from: calendar.startOfDay(for: date),
         to: calendar.startOfDay(for: now)
       ).day ?? 0
-    // A future timestamp (clock skew) must never render as "vor -N Tagen".
-    guard days > 0 else { return "Zuletzt geprüft: heute." }
-    return "Zuletzt geprüft: vor \(days) Tagen."
+    // A future timestamp (clock skew) must never render as "vor -N tagen".
+    guard days > 0 else { return "zuletzt geprüft: heute." }
+    return "zuletzt geprüft: vor \(days) tagen."
   }
 
   /// Quiet popover hint label for a pending gentle reminder; nil when no update waits.
   nonisolated static func updateHintText(forVersion version: String?) -> String? {
     guard let version, !version.isEmpty else { return nil }
-    return "Update auf \(version) verfügbar"
+    return "update auf \(version) verfügbar"
   }
 }
 

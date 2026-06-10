@@ -8,7 +8,6 @@ import SwiftUI
 struct LocalModelsView: View {
   @Bindable var appState: AppState
   @Bindable var manager: LocalModelManager
-  @Environment(\.colorScheme) private var colorScheme
   @State private var customURL = ""
 
   var body: some View {
@@ -18,7 +17,7 @@ struct LocalModelsView: View {
 
         // Hardware facts first — the per-model RAM fit is based on them.
         VStack(alignment: .leading, spacing: 8) {
-          SectionLabel(text: "Dieser Mac")
+          SectionLabel(text: "dieser Mac")
           systemCard
         }
 
@@ -45,6 +44,8 @@ struct LocalModelsView: View {
       .padding(.bottom, 16)
     }
     .frame(minWidth: 540, minHeight: 580)
+    // rede voice: SF Rounded for the whole window, matching the popover/onboarding roots.
+    .fontDesign(.rounded)
     .task { await manager.refresh() }
   }
 
@@ -55,10 +56,10 @@ struct LocalModelsView: View {
       VStack(alignment: .leading, spacing: 2) {
         HStack(spacing: 8) {
           BrandMark(size: 18)
-          Text("Lokale Modelle")
+          Text("lokale modelle")
             .font(.system(size: 16, weight: .semibold))
         }
-        Text("Transkription, Sprachmodell und Embedding — laden, neu laden, entfernen.")
+        Text("transkription, sprachmodell und embedding — laden, neu laden, entfernen.")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
       }
@@ -66,7 +67,7 @@ struct LocalModelsView: View {
       Button {
         Task { await manager.refresh() }
       } label: {
-        Label("Aktualisieren", systemImage: "arrow.clockwise")
+        Label("aktualisieren", systemImage: "arrow.clockwise")
           .font(.system(size: 11, weight: .medium))
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
@@ -78,9 +79,9 @@ struct LocalModelsView: View {
 
   private var systemCard: some View {
     HStack(spacing: 18) {
-      systemStat("cpu", "Chip", manager.system.chipName)
-      systemStat("memorychip", "Arbeitsspeicher", manager.system.formattedRAM)
-      systemStat("internaldrive", "Frei auf Disk", manager.system.formattedFreeDisk)
+      systemStat("cpu", "chip", manager.system.chipName)
+      systemStat("memorychip", "arbeitsspeicher", manager.system.formattedRAM)
+      systemStat("internaldrive", "frei auf disk", manager.system.formattedFreeDisk)
     }
     .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -103,7 +104,7 @@ struct LocalModelsView: View {
 
   private var llamaCppSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "Sprachmodell · Umschreiben")
+      SectionLabel(text: "sprachmodell · umschreiben")
 
       if manager.llamaCppInstalled.isEmpty {
         Text("GGUF-Modelle laufen direkt über den gebündelten lokalen llama.cpp-Helper.")
@@ -149,7 +150,7 @@ struct LocalModelsView: View {
     }
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
-        Text("Aus dem Hugging-Face-Katalog (ggml-org)")
+        Text("aus dem Hugging-Face-Katalog (ggml-org)")
           .font(.system(size: 11, weight: .semibold))
         Spacer()
         if manager.isFetchingHuggingFace {
@@ -167,8 +168,8 @@ struct LocalModelsView: View {
       if models.isEmpty {
         Text(
           manager.isFetchingHuggingFace
-            ? "Lädt aktuelle Modelle …"
-            : "Keine zusätzlichen Modelle gefunden (oder offline)."
+            ? "lädt aktuelle modelle …"
+            : "keine zusätzlichen modelle gefunden (oder offline)."
         )
         .font(.system(size: 10)).foregroundStyle(.secondary)
       }
@@ -182,19 +183,19 @@ struct LocalModelsView: View {
   /// Manually add any GGUF model by direct URL and download it straight away.
   private var customModelField: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("Eigenes Modell per URL")
+      Text("eigenes modell per URL")
         .font(.system(size: 11, weight: .semibold))
       HStack(spacing: 8) {
         TextField("https://…/modell.gguf", text: $customURL)
           .textFieldStyle(.roundedBorder)
           .font(.system(size: 11.5))
           .onSubmit(loadCustomURL)
-        Button("Laden", action: loadCustomURL)
+        Button("laden", action: loadCustomURL)
           .buttonStyle(PopoverActionButtonStyle(.primary))
           .font(.system(size: 11.5, weight: .medium))
           .disabled(customURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       }
-      Text("Direkter Link zu einer .gguf-Datei (z. B. von Hugging Face). Ohne Prüfsumme.")
+      Text("direkter link zu einer .gguf-datei (z. B. von Hugging Face). ohne prüfsumme.")
         .font(.system(size: 10)).foregroundStyle(.secondary)
     }
   }
@@ -207,7 +208,7 @@ struct LocalModelsView: View {
   }
 
   private var catalogDisclosureTitle: String {
-    manager.llamaCppInstalled.isEmpty ? "Alle Modelle anzeigen" : "Weitere Modelle laden"
+    manager.llamaCppInstalled.isEmpty ? "alle modelle anzeigen" : "weitere modelle laden"
   }
 
   private var notInstalledChatModels: [LlamaCppModelCatalog.Model] {
@@ -229,38 +230,38 @@ struct LocalModelsView: View {
       }
       Spacer()
       if isActive(llamaCppModel: model) {
-        BlitzStatusPill(state: .ready, label: "Aktiv")
+        BlitzStatusPill(state: .ready, label: "aktiv")
         Button {
           appState.appSettings.selectedLocalLLM = LocalLLMSelection()
         } label: {
-          Text("Deaktivieren").font(.system(size: 10.5, weight: .medium))
+          Text("deaktivieren").font(.system(size: 10.5, weight: .medium))
         }
         .buttonStyle(PopoverActionButtonStyle(.secondary))
       } else {
         Button {
           selectLlamaCpp(model)
         } label: {
-          Label("Aktivieren", systemImage: "checkmark.circle")
+          Label("aktivieren", systemImage: "checkmark.circle")
         }
         .buttonStyle(PopoverActionButtonStyle(.primary))
       }
       Text(SystemCapabilities.formatGB(model.downloadGB))
         .font(.system(size: 11, weight: .medium))
         .foregroundStyle(.secondary)
-      Button {
-        if isActive(llamaCppModel: model) {
-          appState.appSettings.selectedLocalLLM = LocalLLMSelection()
+      DeleteModelButton(
+        displayName: model.displayName,
+        freedSizeText: SystemCapabilities.formatGB(model.downloadGB),
+        onDelete: {
+          if isActive(llamaCppModel: model) {
+            appState.appSettings.selectedLocalLLM = LocalLLMSelection()
+          }
+          manager.deleteLlamaCpp(model)
         }
-        manager.deleteLlamaCpp(model)
-      } label: {
-        Image(systemName: "trash")
-      }
-      .buttonStyle(PopoverActionButtonStyle(.danger))
+      )
     }
     .padding(10)
-    .background(
-      RoundedRectangle(cornerRadius: 8).fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
-    )
+    // DESIGN.md model-row pattern: rows sit on .liquidGlassCard(cornerRadius: 8).
+    .liquidGlassCard(cornerRadius: 8)
   }
 
   private func llamaCppCatalogRow(_ model: LlamaCppModelCatalog.Model) -> some View {
@@ -277,7 +278,7 @@ struct LocalModelsView: View {
             Text(model.displayName)
               .font(.system(size: 12.5, weight: .semibold))
             if isRecommended(model) {
-              Text("Empfohlen")
+              Text("empfohlen")
                 .font(.system(size: 9, weight: .semibold))
                 .padding(.horizontal, 5)
                 .padding(.vertical, 1)
@@ -298,12 +299,12 @@ struct LocalModelsView: View {
         Spacer()
         if installed {
           if isActive(llamaCppModel: model) {
-            BlitzStatusPill(state: .ready, label: "Aktiv")
+            BlitzStatusPill(state: .ready, label: "aktiv")
           } else {
             Button {
               selectLlamaCpp(model)
             } label: {
-              Label("Nutzen", systemImage: "checkmark.circle")
+              Label("nutzen", systemImage: "checkmark.circle")
             }
             .buttonStyle(PopoverActionButtonStyle(.primary))
           }
@@ -311,14 +312,14 @@ struct LocalModelsView: View {
           Button {
             manager.cancelLlamaCppDownload(model.id)
           } label: {
-            Label("Stopp", systemImage: "xmark.circle")
+            Label("stopp", systemImage: "xmark.circle")
           }
           .buttonStyle(PopoverActionButtonStyle(.secondary))
         } else {
           Button {
             manager.downloadLlamaCpp(model)
           } label: {
-            Label("Laden", systemImage: "arrow.down.circle.fill")
+            Label("laden", systemImage: "arrow.down.circle.fill")
           }
           .buttonStyle(PopoverActionButtonStyle(.primary))
           .disabled(!manager.system.diskFits(downloadGB: model.downloadGB))
@@ -335,9 +336,8 @@ struct LocalModelsView: View {
       }
     }
     .padding(10)
-    .background(
-      RoundedRectangle(cornerRadius: 8).fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
-    )
+    // DESIGN.md model-row pattern: rows sit on .liquidGlassCard(cornerRadius: 8).
+    .liquidGlassCard(cornerRadius: 8)
   }
 
   // MARK: - Recommendation
@@ -351,7 +351,7 @@ struct LocalModelsView: View {
     return VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
         Image(systemName: "sparkles").font(.system(size: 11, weight: .semibold))
-        Text("Empfohlen für deinen Mac").font(.system(size: 11, weight: .semibold))
+        Text("empfohlen für deinen Mac").font(.system(size: 11, weight: .semibold))
       }
       .foregroundStyle(.blue)
 
@@ -361,17 +361,17 @@ struct LocalModelsView: View {
         .fixedSize(horizontal: false, vertical: true)
 
       HStack(spacing: 8) {
-        Text("\(SystemCapabilities.formatGB(model.downloadGB)) Download")
+        Text("\(SystemCapabilities.formatGB(model.downloadGB)) download")
           .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
         Spacer(minLength: 8)
         if downloading {
-          Label("Lädt …", systemImage: "arrow.down.circle")
+          Label("lädt …", systemImage: "arrow.down.circle")
             .font(.system(size: 10.5, weight: .medium)).foregroundStyle(.blue)
         } else {
           Button {
             manager.downloadLlamaCpp(model)
           } label: {
-            Label("Laden", systemImage: "arrow.down.circle.fill")
+            Label("laden", systemImage: "arrow.down.circle.fill")
               .font(.system(size: 11.5, weight: .semibold))
           }
           .buttonStyle(PopoverActionButtonStyle(.primary))
@@ -396,8 +396,8 @@ struct LocalModelsView: View {
     let downloading = manager.isDownloadingLlamaCpp(model.id)
     let state = manager.llamaCppDownloads[model.id]
     return VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Embedding · E-Mail-Memory")
-      Text("Optionales lokales Embedding-Modell für das semantische E-Mail-Gedächtnis.")
+      SectionLabel(text: "embedding · E-Mail-Memory")
+      Text("optionales lokales Embedding-Modell für das semantische E-Mail-Gedächtnis.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 8) {
@@ -409,32 +409,32 @@ struct LocalModelsView: View {
             Text(model.displayName).font(.system(size: 12, weight: .semibold))
             Text(
               installed
-                ? "Lokal · 768 Dimensionen"
+                ? "lokal · 768 dimensionen"
                 : "\(SystemCapabilities.formatGB(model.downloadGB)) · noch nicht geladen"
             )
             .font(.system(size: 10)).foregroundStyle(.secondary)
           }
           Spacer()
           if installed {
-            BlitzStatusPill(state: .ready, label: "Bereit")
-            Button {
-              manager.deleteLlamaCpp(model)
-            } label: {
-              Image(systemName: "trash")
-            }
-            .buttonStyle(PopoverActionButtonStyle(.danger))
+            // DESIGN.md: embedding models never show "nutzen" — only the Embedding pill + delete.
+            BlitzStatusPill(state: .ready, label: "embedding")
+            DeleteModelButton(
+              displayName: model.displayName,
+              freedSizeText: SystemCapabilities.formatGB(model.downloadGB),
+              onDelete: { manager.deleteLlamaCpp(model) }
+            )
           } else if downloading {
             Button {
               manager.cancelLlamaCppDownload(model.id)
             } label: {
-              Label("Stopp", systemImage: "xmark.circle")
+              Label("stopp", systemImage: "xmark.circle")
             }
             .buttonStyle(PopoverActionButtonStyle(.secondary))
           } else {
             Button {
               manager.downloadLlamaCpp(model)
             } label: {
-              Label("Laden", systemImage: "arrow.down.circle.fill")
+              Label("laden", systemImage: "arrow.down.circle.fill")
                 .font(.system(size: 11.5, weight: .semibold))
             }
             .buttonStyle(PopoverActionButtonStyle(.primary))
@@ -472,12 +472,12 @@ struct LocalModelsView: View {
       .font(.system(size: 11)).foregroundStyle(.red)
       .padding(10)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .background(RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.08)))
+      .liquidGlassInfoBanner(accent: .red, cornerRadius: 8)
   }
 
   private var footerHint: some View {
     Text(
-      "Nichts verlässt deinen Mac. Modelle werden einmalig von Hugging Face geladen und danach lokal über llama.cpp ausgeführt."
+      "nichts verlässt deinen Mac. modelle werden einmalig von Hugging Face geladen und danach lokal über llama.cpp ausgeführt."
     )
     .font(.system(size: 10)).foregroundStyle(.secondary)
     .fixedSize(horizontal: false, vertical: true)

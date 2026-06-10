@@ -16,8 +16,8 @@ struct InstallLocationStepView: View {
       OnboardingStepHeader(
         systemImage: "arrow.down.app",
         accent: isInApplications ? .green : .orange,
-        title: "Speicherort",
-        subtitle: "Eine App-Kopie in /Applications hält Start, Updates und Hotkeys sauber."
+        title: "speicherort",
+        subtitle: "eine app-kopie in /Applications hält start, updates und hotkeys sauber."
       )
 
       OnboardingCard(accent: isInApplications ? nil : .orange) {
@@ -25,7 +25,7 @@ struct InstallLocationStepView: View {
           HStack(spacing: 8) {
             BlitzStatusPill(
               state: isInApplications ? .ready : .warning,
-              label: isInApplications ? "Richtig" : "Verschieben"
+              label: isInApplications ? "sitzt" : "verschieben"
             )
             Text(headline)
               .font(.system(size: 12.5, weight: .semibold))
@@ -44,7 +44,7 @@ struct InstallLocationStepView: View {
               Button {
                 moveToApplications()
               } label: {
-                Label("Nach /Applications bewegen", systemImage: "arrow.down.app.fill")
+                Label("nach /Applications bewegen", systemImage: "arrow.down.app.fill")
               }
               .buttonStyle(PopoverActionButtonStyle(.warning))
             }
@@ -52,7 +52,7 @@ struct InstallLocationStepView: View {
             Button {
               revealInFinder(urls: [BlitztextInstallLocationService.bundleURL])
             } label: {
-              Label("Im Finder zeigen", systemImage: "finder")
+              Label("im Finder zeigen", systemImage: "finder")
             }
             .buttonStyle(PopoverActionButtonStyle(.secondary))
           }
@@ -69,14 +69,14 @@ struct InstallLocationStepView: View {
       if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
         OnboardingCard(accent: .orange) {
           VStack(alignment: .leading, spacing: 8) {
-            BlitzStatusPill(state: .warning, label: "Mehrere Kopien")
-            Text("Weitere rede-Kopien können doppelte Login-Items auslösen.")
+            BlitzStatusPill(state: .warning, label: "mehrere kopien")
+            Text("weitere rede-kopien können doppelte login-items auslösen.")
               .font(.system(size: 11))
               .foregroundStyle(.secondary)
             Button {
               revealInFinder(urls: BlitztextInstallLocationService.otherInstalledBundleURLs)
             } label: {
-              Label("Weitere Kopien zeigen", systemImage: "square.stack.3d.up")
+              Label("weitere kopien zeigen", systemImage: "square.stack.3d.up")
             }
             .buttonStyle(PopoverActionButtonStyle(.warning))
           }
@@ -86,7 +86,7 @@ struct InstallLocationStepView: View {
   }
 
   private var headline: String {
-    isInApplications ? "rede liegt am richtigen Ort." : "rede liegt noch nicht in /Applications."
+    isInApplications ? "rede liegt am richtigen ort." : "rede liegt noch nicht in /Applications."
   }
 
   private func moveToApplications() {

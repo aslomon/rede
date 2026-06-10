@@ -11,7 +11,7 @@ extension ModeCardView {
 
   var tonePicker: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Schreibstil")
+      Text("schreibstil")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       Picker("", selection: bind(\.rewrite.tone)) {
@@ -26,7 +26,7 @@ extension ModeCardView {
 
   var systemPromptEditor: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Eigene Anweisung")
+      Text("eigene anweisung")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       TextEditor(text: bind(\.rewrite.systemPrompt))
@@ -43,10 +43,10 @@ extension ModeCardView {
 
   var contextField: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Kontext")
+      Text("kontext")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
-      TextField("z.B. \"E-Mails im Bereich Unternehmensberatung\"", text: bind(\.rewrite.context))
+      TextField("z. B. \"E-Mails im bereich unternehmensberatung\"", text: bind(\.rewrite.context))
         .textFieldStyle(.roundedBorder)
         .font(.system(size: 11))
         .disabled(hasCustomPrompt)
@@ -55,7 +55,7 @@ extension ModeCardView {
 
   var replyContextPicker: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Markierten Text einbeziehen")
+      Text("markierten text einbeziehen")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       Picker("", selection: bind(\.rewrite.replyContextMode)) {
@@ -67,9 +67,9 @@ extension ModeCardView {
       .controlSize(.small)
       .pickerStyle(.menu)
       if config.rewrite.replyContextMode != .off {
-        InfoDisclosure("Kontext-Details") {
+        InfoDisclosure("kontext-details") {
           Text(
-            "Liest die aktuelle Auswahl in der App und bezieht sie als Kontext ein. Bei OpenAI-Verarbeitung wird der markierte Text mitgesendet."
+            "liest die aktuelle auswahl in der app und bezieht sie als kontext ein. bei OpenAI-Verarbeitung wird der markierte text mitgesendet."
           )
         }
       }
@@ -78,7 +78,7 @@ extension ModeCardView {
 
   var emojiDensityPicker: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Emoji-Dichte")
+      Text("emoji-dichte")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
       Picker("", selection: bind(\.rewrite.emojiDensity)) {
@@ -94,7 +94,7 @@ extension ModeCardView {
 
   @ViewBuilder
   var automaticFieldContextToggle: some View {
-    Toggle("Fensterkontext automatisch lesen", isOn: bind(\.rewrite.useAutomaticFieldContext))
+    Toggle("fensterkontext automatisch lesen", isOn: bind(\.rewrite.useAutomaticFieldContext))
       .toggleStyle(.switch)
       .controlSize(.small)
       .font(.system(size: 11))
@@ -103,7 +103,7 @@ extension ModeCardView {
   @ViewBuilder
   var unifiedMemoryControls: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Toggle("Memory nutzen", isOn: unifiedMemoryBinding)
+      Toggle("memory nutzen", isOn: unifiedMemoryBinding)
         .toggleStyle(.switch)
         .controlSize(.small)
         .font(.system(size: 11))
@@ -141,7 +141,7 @@ extension ModeCardView {
 
   @ViewBuilder
   var variantChoiceToggle: some View {
-    Toggle("Immer zwei Versionen zeigen", isOn: bind(\.rewrite.showTwoVariants))
+    Toggle("immer zwei versionen zeigen", isOn: bind(\.rewrite.showTwoVariants))
       .toggleStyle(.switch)
       .controlSize(.small)
       .font(.system(size: 11))

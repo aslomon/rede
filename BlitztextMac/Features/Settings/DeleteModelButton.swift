@@ -34,15 +34,15 @@ struct DeleteModelButton: View {
       isPresented: $confirming,
       titleVisibility: .visible
     ) {
-      Button("Entfernen", role: .destructive) { onDelete() }
-      Button("Abbrechen", role: .cancel) {}
+      Button("entfernen", role: .destructive) { onDelete() }
+      Button("abbrechen", role: .cancel) {}
     } message: {
       if let freedSizeText {
         Text(
-          "Gibt \(freedSizeText) auf der Disk frei. "
-            + "Du kannst das Modell später jederzeit neu laden.")
+          "gibt \(freedSizeText) auf der disk frei. "
+            + "du kannst das modell später jederzeit neu laden.")
       } else {
-        Text("Du kannst das Modell später jederzeit neu laden.")
+        Text("du kannst das modell später jederzeit neu laden.")
       }
     }
   }

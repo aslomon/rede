@@ -46,10 +46,10 @@ struct VocabularySettingsView: View {
             .foregroundStyle(.blue)
             .frame(minWidth: 20)
           VStack(alignment: .leading, spacing: 1) {
-            Text(count == 1 ? "Neuer Lern-Vorschlag" : "\(count) neue Lern-Vorschläge")
+            Text(count == 1 ? "neuer lern-vorschlag" : "\(count) neue lern-vorschläge")
               .font(.system(size: 11, weight: .semibold))
               .foregroundStyle(.primary)
-            Text("Im Archiv ansehen →")
+            Text("im archiv ansehen →")
               .font(.system(size: 10.5))
               .foregroundStyle(.blue)
           }
@@ -74,15 +74,15 @@ struct VocabularySettingsView: View {
 
   private var identitySection: some View {
     SettingsSection(
-      "Eigene Identität",
-      caption: "Dein Name als feste Schreibperspektive für E-Mail und Umschreiben."
+      "eigene identität",
+      caption: "dein name als feste schreibperspektive für E-Mail und umschreiben."
     ) {
-      TextField("Dein Name", text: $appState.appSettings.userDisplayName)
+      TextField("dein name", text: $appState.appSettings.userDisplayName)
         .textFieldStyle(.roundedBorder)
         .font(.system(size: 11))
 
       Text(
-        "Wird lokal gespeichert, als Schreibweise-Hinweis genutzt und im E-Mail-Modus als \u{201E}Ich schreibe als \u{2026}\u{201C} mitgegeben."
+        "wird lokal gespeichert, als schreibweise-hinweis genutzt und im E-Mail-Modus als \u{201E}Ich schreibe als \u{2026}\u{201C} mitgegeben."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -94,13 +94,13 @@ struct VocabularySettingsView: View {
 
   private var recognizeSection: some View {
     SettingsSection(
-      "Begriffe",
+      "begriffe",
       caption:
-        "Exakte Schreibweisen für Namen, Marken und Fachwörter."
+        "exakte schreibweisen für namen, marken und fachwörter."
     ) {
       let terms = appState.recognizeTerms
       if terms.isEmpty {
-        Text("Noch keine Begriffe — füge unten Namen oder Fachwörter hinzu.")
+        Text("noch keine begriffe — füge unten namen oder fachwörter hinzu.")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
@@ -118,7 +118,7 @@ struct VocabularySettingsView: View {
       }
 
       HStack(spacing: 6) {
-        TextField("Neuer Begriff", text: $newTerm)
+        TextField("neuer begriff", text: $newTerm)
           .textFieldStyle(.roundedBorder)
           .font(.system(size: 11))
           .onSubmit { addTerm() }
@@ -139,26 +139,26 @@ struct VocabularySettingsView: View {
       DictationReplacementsBlock(appState: appState)
 
       // Contextually relevant here — explains how Begriffe are used
-      InfoDisclosure("Wie Begriffe genutzt werden") {
+      InfoDisclosure("wie begriffe genutzt werden") {
         VStack(alignment: .leading, spacing: 5) {
           Text(
-            "Beim Diktieren werden sie als Whisper-Hinweis mitgegeben, damit ähnlich klingende Wörter eher richtig erkannt werden."
+            "beim diktieren werden sie als Whisper-Hinweis mitgegeben, damit ähnlich klingende wörter eher richtig erkannt werden."
           )
           Text(
-            "Beim Umschreiben werden sie dem Sprachmodell als Schreibweisen-Liste gegeben: Wenn der Begriff vorkommt, soll er exakt so geschrieben werden."
+            "beim umschreiben werden sie dem sprachmodell als schreibweisen-liste gegeben: wenn der begriff vorkommt, soll er exakt so geschrieben werden."
           )
           Text(
-            "Manuell hinzugefügte und automatisch gelernte Begriffe landen in derselben sichtbaren Liste."
+            "manuell hinzugefügte und automatisch gelernte begriffe landen in derselben sichtbaren liste."
           )
           Divider().opacity(0.4)
           Text(
-            "Memory: lernt aus deinem Archiv. Wiederkehrende Eigen- und Fachbegriffe werden automatisch normale Begriffe; bei E-Mail kann Memory zusätzlich ähnliche frühere Antworten als lokalen Hintergrund finden."
+            "memory: lernt aus deinem archiv. wiederkehrende eigen- und fachbegriffe werden automatisch normale begriffe; bei E-Mail kann memory zusätzlich ähnliche frühere antworten als lokalen hintergrund finden."
           )
           Text(
-            "Wenn ein automatisch gelernter Begriff nicht passt, entfernst du ihn aus der Begriffsliste. Danach wird er nicht erneut gelernt."
+            "wenn ein automatisch gelernter begriff nicht passt, entfernst du ihn aus der begriffsliste. danach wird er nicht erneut gelernt."
           )
           Text(
-            "Ersetzungen: feste Regeln wie gesagtes Wort A → geschriebener Text B. Sie werden direkt auf den transkribierten Text angewendet."
+            "ersetzungen: feste regeln wie gesagtes wort A → geschriebener text B. sie werden direkt auf den transkribierten text angewendet."
           )
         }
       }
@@ -170,7 +170,7 @@ struct VocabularySettingsView: View {
   private var fuzzyToggle: some View {
     VStack(alignment: .leading, spacing: 3) {
       Toggle(
-        "Begriffe automatisch korrigieren",
+        "begriffe automatisch korrigieren",
         isOn: $appState.appSettings.fuzzyCorrectionEnabled
       )
       .toggleStyle(.switch)
@@ -178,7 +178,7 @@ struct VocabularySettingsView: View {
       .font(.system(size: 11.5))
 
       Text(
-        "Korrigiert Tippfehler-nahe Schreibweisen deiner Begriffe (z. B. \u{201E}Rinert\u{201C} \u{2192} \u{201E}Rinnert\u{201C})."
+        "korrigiert tippfehler-nahe schreibweisen deiner begriffe (z. B. \u{201E}Rinert\u{201C} \u{2192} \u{201E}Rinnert\u{201C})."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -197,15 +197,15 @@ struct VocabularySettingsView: View {
 
   private var memorySection: some View {
     SettingsSection(
-      "Memory",
+      "memory",
       action: (
-        label: "Prüfen",
+        label: "prüfen",
         perform: { Task { await appState.localModelManager.refresh() } }
       )
     ) {
       // 1. Master toggle + status pill
       HStack {
-        Toggle("Aktivieren", isOn: $appState.isUnifiedMemoryEnabled)
+        Toggle("aktivieren", isOn: $appState.isUnifiedMemoryEnabled)
           .toggleStyle(.switch)
           .controlSize(.small)
         Spacer()
@@ -216,38 +216,38 @@ struct VocabularySettingsView: View {
         // 2. Suggestions nudge banner — top of expanded body, before InfoDisclosure
         improvementSuggestionsNudge
 
-        // 3. "Jetzt analysieren" directly below master toggle (primary action)
+        // 3. "jetzt analysieren" directly below master toggle (primary action)
         HStack(spacing: 8) {
           if appState.isRecomputingMemory {
             ProgressView()
               .controlSize(.small)
           }
-          Button("Jetzt analysieren") { appState.recomputeMemory() }
+          Button("jetzt analysieren") { appState.recomputeMemory() }
             .buttonStyle(PopoverActionButtonStyle(.primary))
             .disabled(appState.isRecomputingMemory || !appState.isArchiveEnabled)
         }
 
         // 4. InfoDisclosure — optional details
-        InfoDisclosure("Was Memory macht") {
+        InfoDisclosure("was memory macht") {
           VStack(alignment: .leading, spacing: 5) {
             Text(
-              "Vokabular-Memory: sucht im Archiv nach wiederkehrenden Namen und Fachbegriffen. Namen/Fremdwörter werden nach zwei Vorkommen übernommen, Fachbegriffe nach drei."
+              "vokabular-memory: sucht im archiv nach wiederkehrenden namen und fachbegriffen. namen/fremdwörter werden nach zwei vorkommen übernommen, fachbegriffe nach drei."
             )
             Text(
-              "E-Mail Memory: speichert fertige E-Mail-Antworten lokal mit Embeddings und findet beim nächsten E-Mail-Modus ähnliche frühere Antworten als Hintergrund."
+              "E-Mail-Memory: speichert fertige E-Mail-Antworten lokal mit embeddings und findet beim nächsten E-Mail-Modus ähnliche frühere antworten als hintergrund."
             )
             Text(
-              "Korrekturlernen: liest nach dem Einfügen optional nochmal den Feldinhalt, um deine manuellen Korrekturen als Vorschläge zu erkennen."
+              "korrekturlernen: liest nach dem einfügen optional nochmal den feldinhalt, um deine manuellen korrekturen als vorschläge zu erkennen."
             )
             Text(
-              "Memory aus stoppt Lernen und Kontextsuche. Bereits gelernte Begriffe bleiben als Vokabular aktiv."
+              "memory aus stoppt lernen und kontextsuche. bereits gelernte begriffe bleiben als vokabular aktiv."
             )
           }
         }
 
         emailMemoryStatusRow
 
-        Toggle("Aus Korrekturen lernen", isOn: $appState.isImprovementDetectionEnabled)
+        Toggle("aus korrekturen lernen", isOn: $appState.isImprovementDetectionEnabled)
           .toggleStyle(.switch)
           .controlSize(.small)
 
@@ -260,7 +260,7 @@ struct VocabularySettingsView: View {
   private var emailMemoryStatusRow: some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 8) {
-        Text("E-Mail Memory")
+        Text("E-Mail-Memory")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
         BlitzStatusPill(state: emailMemoryPillState, label: appState.semanticEmailMemoryStatusLabel)
@@ -321,9 +321,9 @@ struct VocabularySettingsView: View {
 
   private var clearMemoryButton: some View {
     DestructiveClearButton(
-      "Memory löschen",
+      "memory löschen",
       message:
-        "Alle automatisch gelernten Begriffe werden entfernt. Das lässt sich nicht rückgängig machen."
+        "alle automatisch gelernten begriffe werden entfernt. das lässt sich nicht rückgängig machen."
     ) {
       appState.clearMemory()
     }
@@ -331,9 +331,9 @@ struct VocabularySettingsView: View {
 
   private var clearEmailMemoryButton: some View {
     DestructiveClearButton(
-      "E-Mail Memory löschen",
+      "E-Mail-Memory löschen",
       message:
-        "Alle semantisch gespeicherten E-Mail-Texte werden entfernt. Das lässt sich nicht rückgängig machen."
+        "alle semantisch gespeicherten E-Mail-Texte werden entfernt. das lässt sich nicht rückgängig machen."
     ) {
       appState.clearEmailSemanticMemory()
     }
@@ -366,7 +366,7 @@ private struct RecognizeChip: View {
       Image(systemName: term.fromMemory ? "wand.and.stars" : "person.fill")
         .font(.system(size: 8, weight: .semibold))
         .foregroundStyle(term.fromMemory ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tertiary))
-        .help(term.fromMemory ? "Aus dem Archiv gelernt" : "Manuell hinzugefügt")
+        .help(term.fromMemory ? "aus dem archiv gelernt" : "manuell hinzugefügt")
       Text(term.text)
         .font(.system(size: 10.5))
         .foregroundStyle(.primary)
@@ -381,7 +381,7 @@ private struct RecognizeChip: View {
       }
       .buttonStyle(.plain)
       .contentShape(Circle().scale(1.6))
-      .help("Entfernen")
+      .help("entfernen")
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 4)

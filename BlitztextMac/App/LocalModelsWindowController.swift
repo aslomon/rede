@@ -33,7 +33,7 @@ final class LocalModelsWindowController {
     let hosting = NSHostingController(
       rootView: LocalModelsView(appState: appState, manager: manager))
     let window = NSWindow(contentViewController: hosting)
-    window.title = "Lokale Modelle"
+    window.title = "rede modelle"
     // Transparent, full-size-content title bar so the content runs to the top with no separator line;
     // the traffic lights float over the content (matches the onboarding window).
     window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]

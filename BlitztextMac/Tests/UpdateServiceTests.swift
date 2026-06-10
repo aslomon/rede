@@ -11,21 +11,21 @@ final class UpdateServiceTests: XCTestCase {
   func testVersionDisplayTextShowsVersionAndBuild() {
     XCTAssertEqual(
       UpdateService.versionDisplayText(shortVersion: "1.6", build: "16"),
-      "Version 1.6 (Build 16)"
+      "version 1.6 (build 16)"
     )
   }
 
   func testVersionDisplayTextOmitsBuildWhenMissingOrEqual() {
-    XCTAssertEqual(UpdateService.versionDisplayText(shortVersion: "1.6", build: nil), "Version 1.6")
-    XCTAssertEqual(UpdateService.versionDisplayText(shortVersion: "1.6", build: ""), "Version 1.6")
+    XCTAssertEqual(UpdateService.versionDisplayText(shortVersion: "1.6", build: nil), "version 1.6")
+    XCTAssertEqual(UpdateService.versionDisplayText(shortVersion: "1.6", build: ""), "version 1.6")
     XCTAssertEqual(
-      UpdateService.versionDisplayText(shortVersion: "1.6", build: "1.6"), "Version 1.6")
+      UpdateService.versionDisplayText(shortVersion: "1.6", build: "1.6"), "version 1.6")
   }
 
   func testVersionDisplayTextFallsBackWhenVersionMissing() {
-    XCTAssertEqual(UpdateService.versionDisplayText(shortVersion: nil, build: nil), "Version ?")
+    XCTAssertEqual(UpdateService.versionDisplayText(shortVersion: nil, build: nil), "version ?")
     XCTAssertEqual(
-      UpdateService.versionDisplayText(shortVersion: "", build: "7"), "Version ? (Build 7)")
+      UpdateService.versionDisplayText(shortVersion: "", build: "7"), "version ? (build 7)")
   }
 
   // MARK: - lastCheckDisplayText
@@ -48,7 +48,7 @@ final class UpdateServiceTests: XCTestCase {
   func testLastCheckDisplayTextNeverChecked() {
     XCTAssertEqual(
       UpdateService.lastCheckDisplayText(for: nil),
-      "Noch nie nach Updates gesucht."
+      "noch nie nach updates gesucht."
     )
   }
 
@@ -57,7 +57,7 @@ final class UpdateServiceTests: XCTestCase {
     let checked = utcDate(2026, 6, 10, hour: 3)
     XCTAssertEqual(
       UpdateService.lastCheckDisplayText(for: checked, now: now, calendar: utcCalendar),
-      "Zuletzt geprüft: heute."
+      "zuletzt geprüft: heute."
     )
   }
 
@@ -66,7 +66,7 @@ final class UpdateServiceTests: XCTestCase {
     let checked = utcDate(2026, 6, 9, hour: 23)
     XCTAssertEqual(
       UpdateService.lastCheckDisplayText(for: checked, now: now, calendar: utcCalendar),
-      "Zuletzt geprüft: gestern."
+      "zuletzt geprüft: gestern."
     )
   }
 
@@ -75,17 +75,17 @@ final class UpdateServiceTests: XCTestCase {
     let checked = utcDate(2026, 6, 5)
     XCTAssertEqual(
       UpdateService.lastCheckDisplayText(for: checked, now: now, calendar: utcCalendar),
-      "Zuletzt geprüft: vor 5 Tagen."
+      "zuletzt geprüft: vor 5 tagen."
     )
   }
 
-  /// A future timestamp (clock skew) must never render as "vor -N Tagen".
+  /// A future timestamp (clock skew) must never render as "vor -N tagen".
   func testLastCheckDisplayTextFutureDateClampsToToday() {
     let now = utcDate(2026, 6, 10)
     let checked = utcDate(2026, 6, 12)
     XCTAssertEqual(
       UpdateService.lastCheckDisplayText(for: checked, now: now, calendar: utcCalendar),
-      "Zuletzt geprüft: heute."
+      "zuletzt geprüft: heute."
     )
   }
 
@@ -99,7 +99,7 @@ final class UpdateServiceTests: XCTestCase {
   func testUpdateHintTextNamesVersion() {
     XCTAssertEqual(
       UpdateService.updateHintText(forVersion: "2.0"),
-      "Update auf 2.0 verfügbar"
+      "update auf 2.0 verfügbar"
     )
   }
 

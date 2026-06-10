@@ -638,25 +638,25 @@ final class AppState {
   }
 
   var semanticEmailMemoryStatusLabel: String {
-    guard appSettings.semanticEmailMemoryEnabled else { return "Aus" }
-    guard appSettings.archiveEnabled else { return "Archiv aus" }
+    guard appSettings.semanticEmailMemoryEnabled else { return "aus" }
+    guard appSettings.archiveEnabled else { return "archiv aus" }
     guard semanticEmailEmbeddingIsReady else {
-      return semanticEmailEmbeddingIsPreparing ? "Lädt" : "Modell fehlt"
+      return semanticEmailEmbeddingIsPreparing ? "lädt" : "modell fehlt"
     }
     let count = emailSemanticMemoryStore.records.count
-    return count == 1 ? "1 Eintrag" : "\(count) Einträge"
+    return count == 1 ? "1 eintrag" : "\(count) einträge"
   }
 
   var unifiedMemoryStatusLabel: String {
-    guard isUnifiedMemoryEnabled else { return "Aus" }
-    if semanticEmailEmbeddingIsPreparing { return "Lädt" }
+    guard isUnifiedMemoryEnabled else { return "aus" }
+    if semanticEmailEmbeddingIsPreparing { return "lädt" }
     if appSettings.semanticEmailMemoryEnabled, !semanticEmailEmbeddingIsReady {
-      return "Modell fehlt"
+      return "modell fehlt"
     }
     let confirmed = memoryConfirmedTerms.count
     let emails = emailSemanticMemoryStore.records.count
-    if confirmed == 0, emails == 0 { return "Bereit" }
-    return "\(confirmed) Begriffe · \(emails) E-Mails"
+    if confirmed == 0, emails == 0 { return "bereit" }
+    return "\(confirmed) begriffe · \(emails) E-Mails"
   }
 
   var effectiveHotkeyConfigs: [ModeConfig.ID: HotkeyConfig] {
@@ -668,7 +668,7 @@ final class AppState {
   }
 
   func hotkeyLabel(for modeID: ModeConfig.ID) -> String {
-    effectiveHotkeyConfigs[modeID]?.label ?? "Nicht gesetzt"
+    effectiveHotkeyConfigs[modeID]?.label ?? "nicht gesetzt"
   }
 
   func hotkeyConfig(for modeID: ModeConfig.ID) -> HotkeyConfig {
@@ -683,7 +683,7 @@ final class AppState {
     for issue in hotkeyValidationIssues {
       switch issue {
       case .duplicate(let label, let modeIDs) where modeIDs.contains(modeID):
-        return "Konflikt: \(label) wird mehrfach verwendet."
+        return "konflikt: \(label) wird mehrfach verwendet."
       default:
         continue
       }
@@ -1100,19 +1100,19 @@ final class AppState {
   private func localRewriteSubtitle() -> String {
     let selection = appSettings.selectedLocalLLM
     guard selection.isConfigured else {
-      return "Lokal über llama.cpp — noch kein Modell gewählt"
+      return "lokal über llama.cpp — noch kein modell gewählt"
     }
     let name =
       localModelManager.installedLlamaCppModel(for: selection.modelID)?.displayName
       ?? LlamaCppModelCatalog.model(for: selection.modelID)?.displayName
       ?? selection.modelID
-    return "Lokal über llama.cpp (\(name))"
+    return "lokal über llama.cpp (\(name))"
   }
 
   func workflowSubtitle(for config: ModeConfig) -> String {
     let type = config.slot
     if type == .emojiText {
-      return "Emoji-Dichte: \(config.rewrite.emojiDensity.displayName)."
+      return "emoji-dichte: \(config.rewrite.emojiDensity.displayName)."
     }
     if type == .textImprover || type == .dampfAblassen {
       switch resolvedRewriteBackend(for: config) {
@@ -1131,12 +1131,12 @@ final class AppState {
       if appSettings.secureLocalModeEnabled {
         let modelName = selectedLocalModelName
         return LocalTranscriptionService.isModelInstalled(modelName)
-          ? "Lokal: \(LocalTranscriptionModel.displayName(for: modelName))."
-          : "Lokales WhisperKit-Modell fehlt."
+          ? "lokal: \(LocalTranscriptionModel.displayName(for: modelName))."
+          : "lokales WhisperKit-Modell fehlt."
       }
-      return "Online: Whisper über OpenAI."
+      return "online: Whisper über OpenAI."
     case .localTranscription:
-      return "Nur lokal. Kein Server."
+      return "nur lokal. kein server."
     case .textImprover, .dampfAblassen, .emojiText:
       switch resolvedRewriteBackend(for: type) {
       case .local:
@@ -1169,8 +1169,8 @@ final class AppState {
 
   var localModelDownloadButtonTitle: String {
     selectedLocalModelIsInstalled
-      ? "\(LocalTranscriptionModel.displayName(for: selectedLocalModelName)) ist installiert"
-      : "\(LocalTranscriptionModel.displayName(for: selectedLocalModelName)) installieren"
+      ? "\(LocalTranscriptionModel.displayName(for: selectedLocalModelName)) ist geladen"
+      : "\(LocalTranscriptionModel.displayName(for: selectedLocalModelName)) laden"
   }
 
   // MARK: - Workflow Management
@@ -1482,7 +1482,7 @@ final class AppState {
 
     let normalizedName = LocalTranscriptionService.normalizedModelName(modelName)
     localModelDownloadProgress = 0
-    localModelDownloadStatusText = "Download startet..."
+    localModelDownloadStatusText = "download startet …"
     localModelDownloadErrorText = nil
 
     Task {
@@ -1494,7 +1494,7 @@ final class AppState {
             guard let self else { return }
             let clampedProgress = min(max(progress, 0), 1)
             self.localModelDownloadProgress = clampedProgress
-            self.localModelDownloadStatusText = "Download \(Int(clampedProgress * 100)) %"
+            self.localModelDownloadStatusText = "download \(Int(clampedProgress * 100)) %"
           }
         }
 
@@ -1506,7 +1506,7 @@ final class AppState {
         }
         localModelDownloadProgress = nil
         localModelDownloadStatusText =
-          "\(LocalTranscriptionModel.displayName(for: normalizedName)) ist installiert."
+          "\(LocalTranscriptionModel.displayName(for: normalizedName)) ist geladen."
         localModelDownloadErrorText = nil
 
         try? await LocalTranscriptionService.shared.prepare(modelName: normalizedName)

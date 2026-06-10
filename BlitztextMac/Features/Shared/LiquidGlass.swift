@@ -221,6 +221,8 @@ public struct GlassEffectContainerView<Content: View>: View {
 // macOS 14–25: PopoverActionButtonStyle(.primary) fallback.
 
 public struct GlassActionButtonStyle: ButtonStyle {
+  @Environment(\.isEnabled) private var isEnabled
+
   public init() {}
 
   public func makeBody(configuration: Configuration) -> some View {
@@ -229,7 +231,9 @@ public struct GlassActionButtonStyle: ButtonStyle {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
-        .opacity(configuration.isPressed ? 0.75 : 1)
+        // Disabled buttons must read as disabled on the glass path too (the 14–25
+        // fallback gets this from PopoverActionButtonStyle).
+        .opacity(isEnabled ? (configuration.isPressed ? 0.75 : 1) : 0.45)
         .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     } else {
       PopoverActionButtonStyle(.primary).makeBody(configuration: configuration)
@@ -245,6 +249,8 @@ public struct GlassActionButtonStyle: ButtonStyle {
 // macOS 14–25: PopoverActionButtonStyle(.primary) fallback.
 
 public struct GlassProminentButtonStyle: ButtonStyle {
+  @Environment(\.isEnabled) private var isEnabled
+
   public init() {}
 
   public func makeBody(configuration: Configuration) -> some View {
@@ -253,7 +259,9 @@ public struct GlassProminentButtonStyle: ButtonStyle {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .glassEffect(.regular.tint(Color.accentColor).interactive(), in: .rect(cornerRadius: 8))
-        .opacity(configuration.isPressed ? 0.75 : 1)
+        // Disabled buttons must read as disabled on the glass path too (the 14–25
+        // fallback gets this from PopoverActionButtonStyle).
+        .opacity(isEnabled ? (configuration.isPressed ? 0.75 : 1) : 0.45)
         .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     } else {
       PopoverActionButtonStyle(.primary).makeBody(configuration: configuration)

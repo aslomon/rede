@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-// MARK: - System Settings (Tab 3: System)
+// MARK: - System Settings (Tab 4: system)
 
 struct SystemSettingsView: View {
   @Bindable var appState: AppState
@@ -65,13 +65,12 @@ struct SystemSettingsView: View {
 
   private var installationAndStartSection: some View {
     // Plain section (SectionLabel + content), matching the other System sections.
-    // Was the only SettingsSection/GroupBox card here — the lone grey box read as inconsistent.
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Installation & Start")
+      SectionLabel(text: "installation & start")
 
       Text(
-        "Für direktes Einfügen und stabile Hotkeys: rede einmal nach /Applications legen, "
-          + "danach Mikrofon und Bedienungshilfen erlauben."
+        "für direktes einfügen und stabile hotkeys: rede einmal nach /Applications legen, "
+          + "danach mikrofon und bedienungshilfen erlauben."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -92,7 +91,7 @@ struct SystemSettingsView: View {
         .textSelection(.enabled)
 
       if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
-        Text("Weitere rede-Kopien auf diesem Mac können doppelte Login-Items auslösen.")
+        Text("weitere rede-kopien auf diesem Mac können doppelte login-items auslösen.")
           .font(.system(size: 10.5))
           .foregroundStyle(.orange)
           .fixedSize(horizontal: false, vertical: true)
@@ -114,19 +113,19 @@ struct SystemSettingsView: View {
   private var installActionButtons: some View {
     HStack(spacing: 8) {
       if BlitztextInstallLocationService.shouldOfferMoveToApplications {
-        Button("Nach /Applications bewegen") {
+        Button("nach /Applications bewegen") {
           moveToApplications()
         }
         .buttonStyle(PopoverActionButtonStyle(.warning))
       }
 
-      Button("Im Finder zeigen") {
+      Button("im Finder zeigen") {
         revealInFinder(urls: [BlitztextInstallLocationService.bundleURL])
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 
       if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
-        Button("Weitere Kopien zeigen") {
+        Button("weitere kopien zeigen") {
           revealInFinder(urls: BlitztextInstallLocationService.otherInstalledBundleURLs)
         }
         .buttonStyle(PopoverActionButtonStyle(.warning))
@@ -161,14 +160,14 @@ struct SystemSettingsView: View {
 
   private var setupSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Einrichtung")
+      SectionLabel(text: "einrichtung")
 
-      Text("Die geführte Ersteinrichtung jederzeit erneut durchlaufen.")
+      Text("die geführte ersteinrichtung jederzeit erneut durchlaufen.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
 
-      Button("Einrichtung erneut starten") {
+      Button("einrichtung erneut starten") {
         NotificationCenter.default.post(name: .openOnboardingWindow, object: nil)
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
@@ -179,7 +178,7 @@ struct SystemSettingsView: View {
 
   private var updatesSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Updates")
+      SectionLabel(text: "updates")
 
       HStack(spacing: 8) {
         Text(appState.updateService.appVersionText)
@@ -197,14 +196,14 @@ struct SystemSettingsView: View {
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
 
-      Button("Jetzt nach Updates suchen") {
+      Button("jetzt nach updates suchen") {
         appState.updateService.checkForUpdates()
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
       .disabled(!appState.updateService.canCheckForUpdates)
 
       Toggle(
-        "Automatisch täglich prüfen",
+        "automatisch täglich prüfen",
         isOn: Binding(
           get: { appState.updateService.automaticChecksEnabled },
           set: { appState.updateService.setAutomaticChecksEnabled($0) }
@@ -214,8 +213,8 @@ struct SystemSettingsView: View {
       .controlSize(.small)
 
       Text(
-        "Die Prüfung fragt nur die Update-Liste des Projekts ab — übertragen wird dabei lediglich "
-          + "die App-Version im Anfrage-Header. Keine weiteren Daten, kein Geräteprofil."
+        "die prüfung fragt nur die update-liste des projekts ab — übertragen wird dabei lediglich "
+          + "die app-version im anfrage-header. keine weiteren daten, kein geräteprofil."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -224,17 +223,15 @@ struct SystemSettingsView: View {
   }
 
   // MARK: - Tastenkürzel
-  // Modus picker promoted above hotkey table. SectionLabel used as picker label.
-  // hotkeyWarnings appear immediately below the picker.
+  // One section heading, then the hold/toggle decision with its explainer, then the read-only
+  // per-mode table. Editing a combination lives in the mode card (Prompts tab) — the caption
+  // says so instead of duplicating a recorder here.
 
   private var hotkeysSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "Tastenkürzel")
+      SectionLabel(text: "tastenkürzel")
 
-      // Modus picker first (promoted above the table per spec)
       VStack(alignment: .leading, spacing: 6) {
-        SectionLabel(text: "Modus")
-
         Picker("", selection: $appState.appSettings.hotkeyMode) {
           ForEach(HotkeyMode.allCases) { mode in
             Text(mode.displayName).tag(mode)
@@ -244,11 +241,16 @@ struct SystemSettingsView: View {
         .controlSize(.small)
         .labelsHidden()
 
+        Text(appState.appSettings.hotkeyMode.description)
+          .font(.system(size: 10.5))
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+
         // Warnings immediately below the picker
         hotkeyWarnings
       }
 
-      // Hotkey table below the picker
+      // Read-only per-mode table below the picker
       VStack(spacing: 6) {
         ForEach(appState.mainMenuModeConfigs) { config in
           HStack {
@@ -262,6 +264,11 @@ struct SystemSettingsView: View {
           }
         }
       }
+
+      Text("ändern kannst du jede kombination pro modus im tab prompts.")
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
     }
   }
 
@@ -310,9 +317,9 @@ struct SystemSettingsView: View {
 
   private var dictationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Diktat")
+      SectionLabel(text: "diktat")
 
-      Text("Maximale Aufnahmelänge")
+      Text("maximale aufnahmelänge")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
 
@@ -325,15 +332,15 @@ struct SystemSettingsView: View {
       .labelsHidden()
 
       Text(
-        "Schützt nur vor vergessenen Aufnahmen — du kannst problemlos mehrere Minuten am Stück "
-          + "diktieren. Bei der Online-Transkription bleibt das 25-MB-Limit von OpenAI bestehen."
+        "schützt nur vor vergessenen aufnahmen — du kannst problemlos mehrere minuten am stück "
+          + "diktieren. bei der online-transkription bleibt das 25-MB-Limit von OpenAI bestehen."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
 
       Toggle(
-        "Sprechpausen automatisch kürzen",
+        "sprechpausen automatisch kürzen",
         isOn: $appState.appSettings.silenceTrimmingEnabled
       )
       .toggleStyle(.switch)
@@ -341,8 +348,8 @@ struct SystemSettingsView: View {
       .padding(.top, 4)
 
       Text(
-        "Schneidet längere Gesprächspausen vor der Transkription heraus — kürzeres Audio, schnellere "
-          + "und günstigere Online-Verarbeitung. Läuft komplett auf deinem Mac; es wird nichts "
+        "schneidet längere gesprächspausen vor der transkription heraus — kürzeres audio, schnellere "
+          + "und günstigere online-verarbeitung. läuft komplett auf deinem Mac; es wird nichts "
           + "zusätzlich verschickt."
       )
       .font(.system(size: 10.5))
@@ -355,17 +362,17 @@ struct SystemSettingsView: View {
 
   private var feedbackSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "Akustisches Feedback")
+      SectionLabel(text: "akustisches feedback")
 
       Toggle(
-        "Töne bei Start, Fertig und Fehler",
+        "töne bei start, fertig und fehler",
         isOn: $appState.appSettings.soundFeedbackEnabled
       )
       .toggleStyle(.switch)
       .controlSize(.small)
 
       Text(
-        "Kurze Systemtöne als Rückmeldung — praktisch für Diktate per Hintergrund-Hotkey, ohne "
+        "kurze systemtöne als rückmeldung — praktisch für diktate per hintergrund-hotkey, ohne "
           + "hinzusehen."
       )
       .font(.system(size: 10.5))
@@ -374,16 +381,16 @@ struct SystemSettingsView: View {
 
       if appState.appSettings.soundFeedbackEnabled {
         HStack(spacing: 12) {
-          Text("Anhören:")
+          Text("anhören:")
             .font(.system(size: 10.5))
             .foregroundStyle(.secondary)
-          Button("Start") { EarconPlayer.play(.start) }
+          Button("start") { EarconPlayer.play(.start) }
             .buttonStyle(PopoverActionButtonStyle(.quiet))
             .font(.system(size: 10.5, weight: .medium))
-          Button("Fertig") { EarconPlayer.play(.done) }
+          Button("fertig") { EarconPlayer.play(.done) }
             .buttonStyle(PopoverActionButtonStyle(.quiet))
             .font(.system(size: 10.5, weight: .medium))
-          Button("Fehler") { EarconPlayer.play(.error) }
+          Button("fehler") { EarconPlayer.play(.error) }
             .buttonStyle(PopoverActionButtonStyle(.quiet))
             .font(.system(size: 10.5, weight: .medium))
         }
@@ -396,13 +403,13 @@ struct SystemSettingsView: View {
   private var installationHeadline: String {
     switch currentInstallLocation {
     case .applications:
-      return "rede liegt am richtigen Ort."
+      return "rede liegt am richtigen ort."
     case .userApplications:
       return "rede liegt noch in ~/Applications."
     case .outsideApplications:
       return "rede liegt noch nicht in /Applications."
     case .unknown:
-      return "Der Installationsort konnte nicht sicher erkannt werden."
+      return "der installationsort konnte nicht sicher erkannt werden."
     }
   }
 
@@ -410,16 +417,16 @@ struct SystemSettingsView: View {
     switch currentInstallLocation {
     case .applications:
       if BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
-        return "Für stabile Login-Items und Updates nur diese Kopie weiterverwenden."
+        return "für stabile login-items und updates nur diese kopie weiterverwenden."
       }
-      return "Diese Kopie ist korrekt. Zusätzliche Kopien solltest du später entfernen."
+      return "diese kopie ist korrekt. zusätzliche kopien solltest du später entfernen."
     case .userApplications:
-      return "Für stabile Hotkeys und Login-Items sollte rede nur aus /Applications laufen."
+      return "für stabile hotkeys und login-items sollte rede nur aus /Applications laufen."
     case .outsideApplications:
       return
-        "Verschiebe rede einmal nach /Applications, damit Anmeldestart und Hotkeys sauber bleiben."
+        "verschiebe rede einmal nach /Applications, damit anmeldestart und hotkeys sauber bleiben."
     case .unknown:
-      return "Öffne rede möglichst direkt aus /Applications."
+      return "öffne rede möglichst direkt aus /Applications."
     }
   }
 

@@ -60,6 +60,7 @@ final class RewriteBackendDecodeTests: XCTestCase {
   }
 
   func testLabelIsLokal() {
-    XCTAssertEqual(RewriteBackend.local.displayName, "Lokal")
+    // rede voice: user-visible picker labels are consistently lowercase (DESIGN.md).
+    XCTAssertEqual(RewriteBackend.local.displayName, "lokal")
   }
 }

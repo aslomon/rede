@@ -1,10 +1,10 @@
 import AppKit
 import SwiftUI
 
-/// Hosts the first-run `OnboardingWizardView` in a standalone, resizable window — the 340pt popover
-/// is far too narrow for the 6-step wizard. Mirrors `LocalModelsWindowController`. Created by
+/// Hosts the first-run `OnboardingWizardView` in a standalone, resizable window — the 410pt popover
+/// is far too narrow for the multi-step wizard. Mirrors `LocalModelsWindowController`. Created by
 /// `AppDelegate`; opened on the `.openOnboardingWindow` notification and on launch when onboarding
-/// has not been completed. Closing the window early (without "Fertig") keeps the launch nudge.
+/// has not been completed. Closing the window early (without "fertig") keeps the launch nudge.
 @MainActor
 final class OnboardingWindowController {
   private let appState: AppState

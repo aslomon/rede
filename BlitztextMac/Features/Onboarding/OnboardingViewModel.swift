@@ -8,42 +8,48 @@ import SwiftUI
 @MainActor
 final class OnboardingViewModel {
   enum OnboardingStep: Int, CaseIterable, Identifiable {
+    /// Brand intro + the user's name (writing perspective) — one decision, asked once.
     case welcome
-    case identity
     case installLocation
     case permissions
     case processing
     case models
     case modes
+    /// Hold-vs-toggle decision plus a read-only keycap overview of the default mode hotkeys.
+    case hotkeys
+    /// Small opt-in comfort toggles: launch at login, sound feedback, local archive & memory.
+    case extras
     case finish
 
     var id: Int { rawValue }
 
-    /// 1-based position for the "Schritt n von 6" indicator.
+    /// 1-based position for the "schritt n von N" indicator.
     var displayIndex: Int { rawValue + 1 }
 
     var title: String {
       switch self {
-      case .welcome: return "Start"
-      case .identity: return "Identität"
-      case .installLocation: return "Speicherort"
-      case .permissions: return "Rechte"
-      case .processing: return "Verarbeitung"
-      case .models: return "Modelle"
-      case .modes: return "Modi"
-      case .finish: return "Fertig"
+      case .welcome: return "start"
+      case .installLocation: return "speicherort"
+      case .permissions: return "rechte"
+      case .processing: return "verarbeitung"
+      case .models: return "modelle"
+      case .modes: return "modi"
+      case .hotkeys: return "hotkeys"
+      case .extras: return "extras"
+      case .finish: return "fertig"
       }
     }
 
     var systemImage: String {
       switch self {
       case .welcome: return "sparkles"
-      case .identity: return "person.text.rectangle"
       case .installLocation: return "arrow.down.app"
       case .permissions: return "hand.raised.fill"
       case .processing: return "cpu"
       case .models: return "shippingbox"
       case .modes: return "text.badge.checkmark"
+      case .hotkeys: return "keyboard"
+      case .extras: return "slider.horizontal.3"
       case .finish: return "checkmark.circle.fill"
       }
     }
@@ -51,19 +57,20 @@ final class OnboardingViewModel {
     var accent: Color {
       switch self {
       case .welcome, .processing: return .blue
-      case .identity: return .indigo
       case .installLocation, .permissions: return .orange
       case .models, .finish: return .green
       case .modes: return .purple
+      case .hotkeys: return .indigo
+      case .extras: return .cyan
       }
     }
 
     var primaryActionLabel: String {
       switch self {
-      case .processing: return "Auswahl prüfen"
-      case .models: return "Modelle prüfen"
-      case .finish: return "Fertig"
-      default: return "Weiter"
+      case .processing: return "auswahl prüfen"
+      case .models: return "modelle prüfen"
+      case .finish: return "fertig"
+      default: return "weiter"
       }
     }
   }
@@ -112,12 +119,13 @@ final class OnboardingViewModel {
   var isLastStep: Bool { step == .finish }
 
   /// Soft gating: only the steps that would otherwise leave the app unusable block the primary
-  /// button. Permissions are intentionally soft-warned (always advanceable).
+  /// button. Permissions are intentionally soft-warned (always advanceable). The welcome step asks
+  /// for the name (writing perspective) and blocks until it is non-empty.
   func canAdvance(_ appState: AppState) -> Bool {
     switch step {
-    case .welcome, .installLocation, .permissions, .modes, .finish:
+    case .installLocation, .permissions, .modes, .hotkeys, .extras, .finish:
       return true
-    case .identity:
+    case .welcome:
       return !appState.appSettings.userDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
         .isEmpty
     case .processing:
@@ -140,7 +148,7 @@ final class OnboardingViewModel {
     appState.updateMode(.dampfAblassen) { $0.rewrite.systemPrompt = prompt }
   }
 
-  /// Resets a draft back to the curated `ModeDefaults` example (the "Beispiel wiederherstellen" link).
+  /// Resets a draft back to the curated `ModeDefaults` example (the "beispiel" link).
   func restoreExample(for type: WorkflowType) {
     let example = ModeConfig.defaultRewrite(for: type).systemPrompt
     switch type {

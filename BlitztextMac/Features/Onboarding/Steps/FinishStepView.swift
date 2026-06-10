@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Step 6: a recap of what got configured. The primary "Fertig" and secondary "Zu den Einstellungen"
-/// buttons live in the shared footer (change 4). This step owns only the recap content.
+/// Final step: a recap of what got configured. The primary "fertig" and secondary "zu den
+/// einstellungen" buttons live in the shared footer (change 4). This step owns only the recap.
 struct FinishStepView: View {
   @Bindable var appState: AppState
-  /// Invoked by the footer's "Zu den Einstellungen": finishes onboarding, closes the wizard, opens
+  /// Invoked by the footer's "zu den einstellungen": finishes onboarding, closes the wizard, opens
   /// the popover settings. Wired by the wizard root so this step stays free of window plumbing.
   let onOpenSettings: () -> Void
+
+  @State private var launchAtLoginService = LaunchAtLoginService()
 
   private var micGranted: Bool { MicrophonePermissionService.currentStatus.isGranted }
 
@@ -17,16 +19,16 @@ struct FinishStepView: View {
       OnboardingCard {
         VStack(alignment: .leading, spacing: 10) {
           OnboardingRecapRow(
-            title: "Mikrofon",
-            detail: micGranted ? "Erlaubt" : "Noch nicht erteilt — kannst du später nachholen.",
+            title: "mikrofon",
+            detail: micGranted ? "erlaubt" : "noch nicht erteilt — kannst du später nachholen.",
             isPositive: micGranted)
           OnboardingRecapRow(
-            title: "Bedienungshilfen",
+            title: "bedienungshilfen",
             detail: appState.accessibilityPermissionGranted
-              ? "Erkannt — direktes Einfügen ist frei." : "Noch nicht erkannt.",
+              ? "erkannt — direktes einfügen ist frei." : "noch nicht erkannt.",
             isPositive: appState.accessibilityPermissionGranted)
           OnboardingRecapRow(
-            title: "Verarbeitung",
+            title: "verarbeitung",
             detail: processingDetail,
             isPositive: processingReady)
           OnboardingRecapRow(
@@ -34,17 +36,24 @@ struct FinishStepView: View {
             detail: whisperDetail,
             isPositive: whisperReady)
           OnboardingRecapRow(
-            title: "Modi",
-            detail: "E-Mail, Prompt und Social mit Beispiel-Prompts vorbereitet.",
+            title: "modi & hotkeys",
+            detail: modesDetail,
             isPositive: true)
+          OnboardingRecapRow(
+            title: "extras",
+            detail: extrasDetail,
+            isPositive: launchAtLoginService.isEnabled
+              || appState.appSettings.soundFeedbackEnabled
+              || appState.isUnifiedMemoryEnabled)
         }
       }
 
       // discoverCard collapsed behind InfoDisclosure (change 12)
-      InfoDisclosure("Was du später entdecken kannst") {
+      InfoDisclosure("was du später entdecken kannst") {
         discoverContent
       }
     }
+    .onAppear { launchAtLoginService.refresh() }
   }
 
   // MARK: - Success header
@@ -66,10 +75,10 @@ struct FinishStepView: View {
       .frame(width: 44, height: 44)
 
       VStack(alignment: .leading, spacing: 3) {
-        Text("Fast geschafft")
+        Text("sitzt.")
           .font(.system(size: 15, weight: .semibold))
           .foregroundStyle(.primary)
-        Text("Hier ist deine Einrichtung im Überblick. Mit \u{201E}Fertig\u{201C} legst du los.")
+        Text("hier ist deine einrichtung im überblick. mit \u{201E}fertig\u{201C} legst du los.")
           .font(.system(size: 11.5))
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
@@ -85,13 +94,13 @@ struct FinishStepView: View {
     VStack(alignment: .leading, spacing: 8) {
       discoverRow(
         "archivebox",
-        "Lokales Archiv & Diktier-Statistik — opt-in, alles bleibt auf deinem Mac.")
+        "lokales archiv & diktier-statistik — opt-in, alles bleibt auf deinem Mac.")
       discoverRow(
         "wand.and.stars",
-        "Lernt aus deinen Korrekturen und schlägt feste Wörterbuch-Wörter vor.")
+        "lernt aus deinen korrekturen und schlägt feste wörterbuch-wörter vor.")
       discoverRow(
-        "speaker.wave.2",
-        "Optionale Töne bei Start, Fertig und Fehler — fürs Diktieren ohne Hinsehen.")
+        "character.cursor.ibeam",
+        "eigene begriffe und ersetzungen für namen, marken und fachwörter — im tab vokabular.")
     }
   }
 
@@ -118,10 +127,10 @@ struct FinishStepView: View {
 
   private var processingDetail: String {
     if isLocal {
-      return "Sicherer lokaler Modus — alles bleibt auf diesem Mac."
+      return "sicherer lokaler modus — alles bleibt auf diesem Mac."
     }
     return KeychainService.isConfigured
-      ? "Online über OpenAI — API Key hinterlegt." : "Online gewählt, aber kein API Key."
+      ? "online über OpenAI — API-Key hinterlegt." : "online gewählt, aber kein API-Key."
   }
 
   private var whisperReady: Bool {
@@ -129,9 +138,23 @@ struct FinishStepView: View {
   }
 
   private var whisperDetail: String {
-    if !isLocal { return "Online über OpenAI Whisper." }
+    if !isLocal { return "online über OpenAI Whisper." }
     return appState.selectedLocalModelIsInstalled
       ? "\u{201E}\(appState.selectedLocalModelDisplayName)\u{201C} ist geladen."
-      : "Lokales Modell fehlt noch."
+      : "lokales modell fehlt noch."
+  }
+
+  private var modesDetail: String {
+    let trigger = appState.appSettings.hotkeyMode == .hold ? "halten" : "umschalten"
+    return "E-Mail, Prompt und Social vorbereitet — hotkeys im \(trigger)-modus."
+  }
+
+  private var extrasDetail: String {
+    var active: [String] = []
+    if launchAtLoginService.isEnabled { active.append("autostart") }
+    if appState.appSettings.soundFeedbackEnabled { active.append("töne") }
+    if appState.isUnifiedMemoryEnabled { active.append("archiv & memory") }
+    guard !active.isEmpty else { return "keine extras aktiviert — geht jederzeit im system-tab." }
+    return active.joined(separator: " · ")
   }
 }
