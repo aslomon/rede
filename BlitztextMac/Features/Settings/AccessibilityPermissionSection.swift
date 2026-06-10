@@ -30,10 +30,18 @@ struct AccessibilityPermissionSection: View {
           .foregroundStyle(.primary)
 
           if !isGranted {
+            // The remove-and-re-add path must be reachable here too, not only via the
+            // stale-grant banner: a FRESH install (hadAccessibilityGrant == false) hits the
+            // same dead end when macOS shows the toggle as on for an outdated entry.
             InfoDisclosure("Hilfe") {
-              Text(
-                "Öffne Bedienungshilfen und aktiviere rede. Falls rede schon aktiv ist, einmal aus- und wieder einschalten."
-              )
+              VStack(alignment: .leading, spacing: 4) {
+                Text("Öffne Bedienungshilfen und aktiviere rede.")
+                Text(
+                  "Sieht der Schalter schon aktiv aus, wird aber nicht erkannt: den "
+                    + "rede-Eintrag mit dem Minus (−) entfernen und neu hinzufügen. Das "
+                    + "passiert vor allem nach Updates oder Neubauten der App."
+                )
+              }
             }
           }
         }

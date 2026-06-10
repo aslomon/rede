@@ -88,9 +88,19 @@ sign_app_bundle() {
 
     if [ "$CODESIGN_MODE" = "stable" ]; then
         echo "🔏 Signiere mit stabiler lokaler Identitaet (\"$CODESIGN_IDENTITY_NAME\"). Bedienungshilfen-Freigaben ueberleben Rebuilds."
+        # The app embeds Sparkle.framework (a dynamic framework). Hardened-runtime library
+        # validation only accepts libraries with the SAME real Team ID — the self-signed local
+        # identity has none, so dyld would abort the launch ("mapped file has no Team ID").
+        # Local dev builds therefore sign with disable-library-validation; a notarized
+        # Developer ID release keeps library validation (shared Team ID satisfies it).
+        local dev_entitlements
+        dev_entitlements="$(mktemp -t rede-dev-entitlements)"
+        cp "$ENTITLEMENTS_PATH" "$dev_entitlements"
+        /usr/libexec/PlistBuddy -c "Add :com.apple.security.cs.disable-library-validation bool true" "$dev_entitlements" >/dev/null 2>&1 || true
         codesign --force --options runtime \
-            --entitlements "$ENTITLEMENTS_PATH" \
+            --entitlements "$dev_entitlements" \
             --sign "$CODESIGN_IDENTITY_NAME" "$target" 2>&1
+        rm -f "$dev_entitlements"
     else
         echo "🔏 Signiere lokale Development-App ad-hoc. Dieses Artefakt ist nicht notarisiert."
         echo "   Tipp: Fuehre einmalig scripts/create-dev-cert.sh aus, damit Bedienungshilfen-Freigaben Rebuilds ueberleben."
