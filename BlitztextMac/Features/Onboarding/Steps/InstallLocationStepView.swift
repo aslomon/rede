@@ -70,7 +70,7 @@ struct InstallLocationStepView: View {
         OnboardingCard(accent: .orange) {
           VStack(alignment: .leading, spacing: 8) {
             BlitzStatusPill(state: .warning, label: "Mehrere Kopien")
-            Text("Weitere Blitztext-Kopien können doppelte Login-Items auslösen.")
+            Text("Weitere rede-Kopien können doppelte Login-Items auslösen.")
               .font(.system(size: 11))
               .foregroundStyle(.secondary)
             Button {
@@ -86,7 +86,7 @@ struct InstallLocationStepView: View {
   }
 
   private var headline: String {
-    isInApplications ? "Blitztext liegt am richtigen Ort." : "Blitztext liegt noch nicht in /Applications."
+    isInApplications ? "rede liegt am richtigen Ort." : "rede liegt noch nicht in /Applications."
   }
 
   private func moveToApplications() {

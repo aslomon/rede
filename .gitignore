@@ -15,6 +15,7 @@ build/
 
 # Local app artifacts
 Blitztext.app
+rede.app
 dist/
 models/
 *.mlmodel

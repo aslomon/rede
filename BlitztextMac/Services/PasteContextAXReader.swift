@@ -4,7 +4,7 @@ import ApplicationServices
 /// Reads the focused window title + focused-element role of a target app via the Accessibility
 /// API. Best-effort and fully guarded: when Accessibility is off (or the app exposes nothing),
 /// every field is nil. Reuses the existing Accessibility grant; never blocks the paste path —
-/// callers invoke it only at target-capture time, before Blitztext activates.
+/// callers invoke it only at target-capture time, before rede activates.
 @MainActor
 enum PasteContextAXReader {
   /// Upper bound on the focused field value we re-read for MEM-2. A focused-element value can be an

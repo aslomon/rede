@@ -19,15 +19,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blitztext benötigt Mikrofon-Zugriff für die Sprach-Transkription.</string>
+	<string>rede benötigt Mikrofon-Zugriff für die Sprach-Transkription.</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>SUFeedURL</key>
-	<string>https://aslomon.github.io/blitztext-app/appcast.xml</string>
+	<string>https://aslomon.github.io/rede-app/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>uxbTr5Ww1nTZsj5PLe1qdsBTGn0N2v7+MwPjYZJwHRI=</string>
+	<string>2f1gkx8oQJ+c9Z7hvLCS/83VAQK5rDcbghdVVAKjxlM=</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUScheduledCheckInterval</key>

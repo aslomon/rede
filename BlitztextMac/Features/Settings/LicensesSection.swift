@@ -61,9 +61,9 @@ struct LicensesSection: View {
 
   static let notices: [Notice] = [
     Notice(
-      name: "Blitztext",
-      detail: "Copyright (c) 2026 Blitztext contributors — MIT License. "
-        + "Diese App basiert auf dem Open-Source-Projekt Blitztext."
+      name: "rede",
+      detail: "Copyright (c) 2026 rede contributors — MIT License. "
+        + "Diese App basiert auf dem Open-Source-Projekt rede."
     ),
     Notice(
       name: "WhisperKit / Argmax OSS",

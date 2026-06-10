@@ -3,7 +3,7 @@ import Foundation
 import OSLog
 
 private let silenceTrimmerLogger = Logger(
-  subsystem: "app.blitztext.mac", category: "SilenceTrimmer")
+  subsystem: "app.rede.mac", category: "SilenceTrimmer")
 
 /// Cuts long speech pauses out of a finished recording so the audio handed to transcription is
 /// shorter — faster/cheaper online uploads, less dead air for Whisper to hallucinate into. Fully
@@ -237,7 +237,7 @@ enum SilenceTrimmer {
     guard cursor.seconds > 0 else { return nil }
 
     let outputURL = FileManager.default.temporaryDirectory
-      .appendingPathComponent("blitztext-trimmed-\(UUID().uuidString).m4a")
+      .appendingPathComponent("rede-trimmed-\(UUID().uuidString).m4a")
     guard
       let exportSession = AVAssetExportSession(
         asset: composition, presetName: AVAssetExportPresetAppleM4A)
@@ -258,7 +258,7 @@ enum SilenceTrimmer {
 
   private static var trimError: NSError {
     NSError(
-      domain: "app.blitztext.mac.SilenceTrimmer", code: -1,
+      domain: "app.rede.mac.SilenceTrimmer", code: -1,
       userInfo: [NSLocalizedDescriptionKey: "Audio konnte nicht gekürzt werden."])
   }
 }

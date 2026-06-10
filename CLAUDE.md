@@ -1,3 +1,7 @@
+> **Herkunft:** Dieses Repository ist der eigenstaendige Spin-off "rede" des Open-Source-Projekts
+> Blitztext (MIT, (c) Blitztext contributors). Interne Typ-/Verzeichnisnamen behalten bewusst das
+> Blitztext-Praefix, damit Upstream-Merges guenstig bleiben. Nutzersichtbares Branding ist "rede".
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

@@ -2,7 +2,7 @@ import Foundation
 
 /// Pure, on-device, deterministic fuzzy correction of the user's KNOWN terms (confirmed Memory
 /// terms + Eigennamen). It snaps a CLEAR near-miss spelling Whisper produced — e.g. "Rinert" →
-/// "Rinnert", "Blitztex" → "Blitztext" — to the canonical term, preserving the term's casing.
+/// "Rinnert", "Blitztex" → "rede" — to the canonical term, preserving the term's casing.
 ///
 /// CONSERVATIVE BY DESIGN. A false positive corrupts the user's text, so the bias is firmly toward
 /// NOT correcting. The matcher only fires when a word (or 2-word span) is an unambiguous near-miss

@@ -16,7 +16,7 @@ actor LlamaCppRuntimeService {
     var errorDescription: String? {
       switch self {
       case .helperMissing:
-        return "Der llama.cpp-Helfer ist noch nicht in Blitztext gebündelt."
+        return "Der llama.cpp-Helfer ist noch nicht in rede gebündelt."
       case .helperNotExecutable:
         return "Der llama.cpp-Helfer ist nicht ausführbar."
       case .modelUnknown(let modelID):
@@ -24,7 +24,7 @@ actor LlamaCppRuntimeService {
       case .modelNotInstalled(let modelID):
         return "Das lokale Modell „\(modelID)“ ist noch nicht installiert."
       case .portOwnershipMismatch:
-        return "Der lokale llama.cpp-Port gehört nicht zum gestarteten Blitztext-Helper."
+        return "Der lokale llama.cpp-Port gehört nicht zum gestarteten rede-Helper."
       case .startupTimedOut:
         return "llama.cpp konnte das Modell nicht rechtzeitig starten."
       case .processLaunchFailed(let message):

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# create-dev-cert.sh — Stabile lokale Code-Signing-Identitaet fuer Blitztext
+# create-dev-cert.sh — Stabile lokale Code-Signing-Identitaet fuer rede
 #
 # Problem: build.sh signiert standardmaessig ad-hoc (`codesign --sign -`). Jeder
 # Rebuild erzeugt einen neuen CDHash. macOS-TCC hat die Bedienungshilfen-/Mikrofon-/
@@ -10,7 +10,7 @@ set -euo pipefail
 # Systemeinstellungen noch "an" aussieht.
 #
 # Loesung: ein einmal erzeugtes, selbst-signiertes Code-Signing-Zertifikat
-# "Blitztext Local Dev" gibt jedem Build einen STABILEN Code-Requirement. Damit
+# "rede Local Dev" gibt jedem Build einen STABILEN Code-Requirement. Damit
 # ueberleben die Freigaben kuenftige Rebuilds.
 #
 # Dieses Skript ist idempotent: existiert die Identitaet bereits, passiert nichts.
@@ -19,7 +19,7 @@ set -euo pipefail
 #
 # KEIN bezahlter Apple-Developer-Account noetig.
 
-IDENTITY_NAME="Blitztext Local Dev"
+IDENTITY_NAME="rede Local Dev"
 LOGIN_KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 if [ ! -f "$LOGIN_KEYCHAIN" ]; then
     # Aelterer Pfad ohne -db-Suffix als Fallback.
@@ -29,7 +29,7 @@ SYSTEM_KEYCHAIN="/Library/Keychains/System.keychain"
 
 print_header() {
     echo ""
-    echo "=== Blitztext: Lokale Code-Signing-Identitaet einrichten ==="
+    echo "=== rede: Lokale Code-Signing-Identitaet einrichten ==="
     echo ""
 }
 
@@ -78,9 +78,9 @@ ensure_keychain_search_list() {
 
 identity_can_sign() {
     local test_dir
-    test_dir="$(mktemp -d -t blitztext-codesign-test)"
+    test_dir="$(mktemp -d -t rede-codesign-test)"
     local test_file="$test_dir/codesign-test"
-    printf 'blitztext' > "$test_file"
+    printf 'rede' > "$test_file"
 
     if codesign --force --sign "$IDENTITY_NAME" "$test_file" >/dev/null 2>&1; then
         rm -rf "$test_dir"
@@ -108,11 +108,11 @@ finish_success() {
     echo "Erfolg! Die Identitaet \"$IDENTITY_NAME\" ist eingerichtet und einsatzbereit."
     echo ""
     echo "Naechste Schritte:"
-    echo "  1. Baue Blitztext neu mit:   ./build.sh"
+    echo "  1. Baue rede neu mit:   ./build.sh"
     echo "     (build.sh erkennt die Identitaet automatisch und signiert damit stabil)"
     echo "  2. EINMALIG: oeffne Systemeinstellungen > Datenschutz & Sicherheit >"
     echo "     Bedienungshilfen. Entferne dort einen evtl. vorhandenen alten"
-    echo "     \"Blitztext\"-Eintrag mit dem Minus (-) und fuege Blitztext neu hinzu"
+    echo "     \"rede\"-Eintrag mit dem Minus (-) und fuege rede neu hinzu"
     echo "     bzw. aktiviere den Schalter erneut. Dasselbe ggf. fuer Mikrofon und"
     echo "     Eingabeueberwachung."
     echo "  3. Ab jetzt ueberleben diese Freigaben kuenftige Rebuilds."
@@ -125,7 +125,7 @@ ensure_keychain_search_list
 
 if identity_can_sign; then
     echo "Die Identitaet \"$IDENTITY_NAME\" ist bereits vorhanden und kann signieren."
-    echo "Es ist nichts zu tun. Baue Blitztext einfach mit ./build.sh und die"
+    echo "Es ist nichts zu tun. Baue rede einfach mit ./build.sh und die"
     echo "Bedienungshilfen-Freigabe ueberlebt kuenftige Rebuilds."
     echo ""
     exit 0
@@ -136,7 +136,7 @@ if security find-certificate -c "$IDENTITY_NAME" "$LOGIN_KEYCHAIN" >/dev/null 2>
     echo "Setze jetzt den Trust fuer Code Signing. macOS kann dafuer dein Keychain-Passwort abfragen."
     echo ""
 
-    REPAIR_DIR="$(mktemp -d -t blitztext-dev-cert-repair)"
+    REPAIR_DIR="$(mktemp -d -t rede-dev-cert-repair)"
     trap 'rm -rf "$REPAIR_DIR"' EXIT
     EXISTING_CERT_FILE="$REPAIR_DIR/existing-cert.pem"
     security find-certificate -c "$IDENTITY_NAME" -p "$LOGIN_KEYCHAIN" > "$EXISTING_CERT_FILE"
@@ -161,7 +161,7 @@ echo "macOS fragt gleich einmalig nach deinem Keychain-Passwort — das ist norm
 echo ""
 
 # Temporaeres Arbeitsverzeichnis, das in jedem Fall aufgeraeumt wird.
-WORK_DIR="$(mktemp -d -t blitztext-dev-cert)"
+WORK_DIR="$(mktemp -d -t rede-dev-cert)"
 cleanup() {
     rm -rf "$WORK_DIR"
 }
@@ -174,7 +174,7 @@ CONFIG_FILE="$WORK_DIR/openssl.cnf"
 # Zufaelliges Wegwerf-Passwort fuer den pkcs12-Container (nur fuer den Import).
 P12_PASSWORD="$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 24 || true)"
 if [ -z "$P12_PASSWORD" ]; then
-    P12_PASSWORD="blitztext-dev-$$"
+    P12_PASSWORD="rede-dev-$$"
 fi
 
 # OpenSSL-Konfiguration: WICHTIG ist extendedKeyUsage = critical, codeSigning.

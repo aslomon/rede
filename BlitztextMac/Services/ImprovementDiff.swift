@@ -1,7 +1,7 @@
 import Foundation
 
 /// Pure, side-effect-free matcher for the "Verbesserungs-Erkennung" (MEM-2). Given the text
-/// Blitztext inserted and the field's CURRENT value (re-read later via AX), it decides whether the
+/// rede inserted and the field's CURRENT value (re-read later via AX), it decides whether the
 /// user edited our text in place — and if so, recovers the edited version.
 ///
 /// Conservative by design: it only reports an edit when an edited region is CLEARLY the same
@@ -27,7 +27,7 @@ enum ImprovementDiff {
   /// `nil` (from `observe`) means "can't locate our insertion" — never recorded.
   ///
   /// - Parameters:
-  ///   - inserted: the exact text Blitztext pasted.
+  ///   - inserted: the exact text rede pasted.
   ///   - fieldValue: the field's current full value, re-read later via AX.
   static func observe(inserted: String, fieldValue: String) -> (changed: Bool, finalText: String)? {
     let insertedTrimmed = inserted.trimmingCharacters(in: .whitespacesAndNewlines)

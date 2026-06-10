@@ -3,7 +3,7 @@ import AppKit
 /// A deep, value-type copy of every item currently on an `NSPasteboard`.
 ///
 /// Used by the auto-paste flow to preserve whatever the user already had on the clipboard:
-/// Blitztext overwrites the pasteboard with the dictated text, simulates Cmd+V, and then —
+/// rede overwrites the pasteboard with the dictated text, simulates Cmd+V, and then —
 /// once the target app has consumed our text — restores this snapshot so the user's previous
 /// clipboard (and any sensitive transcript) does not linger.
 ///

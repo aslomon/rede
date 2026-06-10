@@ -4,7 +4,7 @@ import SwiftUI
 
 /// Bedienungshilfen-Status + Freigabe-Hilfe. Zeigt einen expliziten "erkannt / nicht erkannt"-
 /// Status und — wenn die Freigabe nach einem Update als veraltet erkannt wird — gezielte Hinweise
-/// zum einmaligen Entfernen und neu Hinzufuegen des Blitztext-Eintrags.
+/// zum einmaligen Entfernen und neu Hinzufuegen des rede-Eintrags.
 struct AccessibilityPermissionSection: View {
   @Bindable var appState: AppState
 
@@ -32,7 +32,7 @@ struct AccessibilityPermissionSection: View {
           if !isGranted {
             InfoDisclosure("Hilfe") {
               Text(
-                "Öffne Bedienungshilfen und aktiviere Blitztext. Falls Blitztext schon aktiv ist, einmal aus- und wieder einschalten."
+                "Öffne Bedienungshilfen und aktiviere rede. Falls rede schon aktiv ist, einmal aus- und wieder einschalten."
               )
             }
           }
@@ -80,7 +80,7 @@ struct AccessibilityPermissionSection: View {
     }
   }
 
-  /// Targeted copy for the stale-grant case: after an update macOS may still show Blitztext as
+  /// Targeted copy for the stale-grant case: after an update macOS may still show rede as
   /// enabled but no longer recognize it. The fix is to remove the entry with the minus and re-add.
   /// Uses .liquidGlassInfoBanner(accent: .orange) for consistent banner styling.
   private var staleGrantHint: some View {
@@ -97,7 +97,7 @@ struct AccessibilityPermissionSection: View {
             .foregroundStyle(.primary)
 
           Text(
-            "Nach einem Update kann macOS Blitztext unter Bedienungshilfen noch als aktiviert anzeigen, ohne es wirklich zu erkennen. So behebst du das einmalig:"
+            "Nach einem Update kann macOS rede unter Bedienungshilfen noch als aktiviert anzeigen, ohne es wirklich zu erkennen. So behebst du das einmalig:"
           )
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
@@ -110,11 +110,11 @@ struct AccessibilityPermissionSection: View {
         staleStep(
           number: "2",
           text:
-            "Den vorhandenen Blitztext-Eintrag in der Liste auswählen und mit dem Minus (−) entfernen."
+            "Den vorhandenen rede-Eintrag in der Liste auswählen und mit dem Minus (−) entfernen."
         )
         staleStep(
           number: "3",
-          text: "Blitztext erneut hinzufügen bzw. den Schalter wieder einschalten.")
+          text: "rede erneut hinzufügen bzw. den Schalter wieder einschalten.")
       }
       .padding(.leading, 24)
     }

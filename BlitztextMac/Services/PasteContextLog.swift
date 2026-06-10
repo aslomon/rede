@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import Observation
 
-private let contextLogger = Logger(subsystem: "app.blitztext.mac", category: "ContextLog")
+private let contextLogger = Logger(subsystem: "app.rede.mac", category: "ContextLog")
 
 // MARK: - Category
 

@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import Observation
 
-private let memoryLogger = Logger(subsystem: "app.blitztext.mac", category: "Memory")
+private let memoryLogger = Logger(subsystem: "app.rede.mac", category: "Memory")
 
 // MARK: - Memory model
 

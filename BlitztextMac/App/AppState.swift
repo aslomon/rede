@@ -3,9 +3,9 @@ import Observation
 import SwiftUI
 import os
 
-private let statusLogger = Logger(subsystem: "app.blitztext.mac", category: "WorkflowStatus")
+private let statusLogger = Logger(subsystem: "app.rede.mac", category: "WorkflowStatus")
 private let contextCaptureLogger = Logger(
-  subsystem: "app.blitztext.mac", category: "ContextCapture")
+  subsystem: "app.rede.mac", category: "ContextCapture")
 
 enum PopoverPage: Equatable {
   case main
@@ -69,11 +69,11 @@ final class AppState {
   private var activeModeID: ModeConfig.ID?
   private var activePasteTarget: PasteTarget?
   private var lastPopoverPasteTarget: PasteTarget?
-  /// Selection snapshot taken when the popover opens — BEFORE Blitztext activates and steals focus.
-  /// Reused for `.manual` starts so reply/edit context isn't read from Blitztext's own window.
+  /// Selection snapshot taken when the popover opens — BEFORE rede activates and steals focus.
+  /// Reused for `.manual` starts so reply/edit context isn't read from rede's own window.
   private var pendingPopoverSelection: SelectionContext?
   /// Automatic field-context snapshot taken next to `pendingPopoverSelection`, before the popover
-  /// activates Blitztext. In-memory only; it is consumed by the next manual rewrite run.
+  /// activates rede. In-memory only; it is consumed by the next manual rewrite run.
   private var pendingPopoverAutomaticContext: AutomaticRewriteContext?
   private var menuBarStatusResetTask: Task<Void, Never>?
   private var workflowCleanupTask: Task<Void, Never>?
@@ -1176,7 +1176,7 @@ final class AppState {
   // MARK: - Workflow Management
 
   /// Starts a workflow from a tap inside the popover. Keeps `source: .manual` so the paste target
-  /// captured when the popover opened (the app that was frontmost before Blitztext took focus) is
+  /// captured when the popover opened (the app that was frontmost before rede took focus) is
   /// preserved, then dismisses the popover so ONLY the floating pill indicates recording.
   func startWorkflowFromPopover(_ type: WorkflowType) {
     startModeFromPopover(type.rawValue)
@@ -1355,7 +1355,7 @@ final class AppState {
   }
 
   /// Captures the user's text selection for reply/edit modes, only when that mode opts in.
-  /// For `.manual` (popover) starts the live frontmost app is Blitztext itself, so we use the
+  /// For `.manual` (popover) starts the live frontmost app is rede itself, so we use the
   /// snapshot taken in `prepareForPopoverPresentation` before activation. Hotkey starts prefer the
   /// captured target PID too, because some apps/focus states can race the system-wide AX focus.
   private func captureSelectionContext(for config: ModeConfig, source: WorkflowLaunchSource)
@@ -1618,7 +1618,7 @@ final class AppState {
     refreshAccessibilityPermission()
     lastPopoverPasteTarget = captureCurrentFrontmostApp()
     // Snapshot the selection now, while the user's app is still frontmost (showPopover activates
-    // Blitztext right after this). Only when any E-Mail mode wants reply/edit context.
+    // rede right after this). Only when any E-Mail mode wants reply/edit context.
     pendingPopoverSelection =
       orderedModeConfigs.contains {
         $0.slot == .textImprover && $0.rewrite.replyContextMode != .off
@@ -1746,7 +1746,7 @@ final class AppState {
 
   /// True when Accessibility was granted before but is no longer recognized — the classic
   /// stale-grant case after an unsigned/ad-hoc rebuild changes the CDHash. The UI uses this
-  /// to surface the "remove + re-add the Blitztext entry" guidance.
+  /// to surface the "remove + re-add the rede entry" guidance.
   var accessibilityLikelyStale: Bool {
     appSettings.hadAccessibilityGrant && !AccessibilityPermissionService.currentStatus()
   }
@@ -2294,7 +2294,7 @@ final class AppState {
     guard app.processIdentifier != ownPid else { return nil }
 
     // Office-Memory metadata: read the window title + focused-element role NOW, while the target
-    // is still frontmost and BEFORE Blitztext activates. Best-effort; all nil if Accessibility off.
+    // is still frontmost and BEFORE rede activates. Best-effort; all nil if Accessibility off.
     let context = PasteContextAXReader.read(pid: app.processIdentifier)
     return PasteTarget(
       bundleIdentifier: app.bundleIdentifier,
@@ -2333,7 +2333,7 @@ private struct PasteTarget {
   let bundleIdentifier: String?
   let processIdentifier: pid_t
   let application: NSRunningApplication
-  /// Office-Memory metadata, read via AX at target-capture time (before Blitztext activates) so
+  /// Office-Memory metadata, read via AX at target-capture time (before rede activates) so
   /// the actual Cmd+V paste stays latency-free. All nil when Accessibility is off / unavailable.
   let appName: String?
   let windowTitle: String?
@@ -2343,7 +2343,7 @@ private struct PasteTarget {
   let isSecureField: Bool
 }
 
-/// Staged candidate for the MEM-2 deferred AX re-read: the text Blitztext inserted plus the target
+/// Staged candidate for the MEM-2 deferred AX re-read: the text rede inserted plus the target
 /// it landed in. Built only when improvement detection is opted in; armed on the paste success path.
 private struct ImprovementSnapshot {
   let insertedText: String

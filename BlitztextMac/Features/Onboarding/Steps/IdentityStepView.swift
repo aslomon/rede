@@ -11,7 +11,7 @@ struct IdentityStepView: View {
         accent: .indigo,
         title: "Deine Schreibperspektive",
         subtitle:
-          "Blitztext nutzt deinen Namen als \u{201E}Ich schreibe als \u{2026}\u{201C}-Kontext in E-Mail- und Rewrite-Prompts. Bleibt lokal in deinen Einstellungen."
+          "rede nutzt deinen Namen als \u{201E}Ich schreibe als \u{2026}\u{201C}-Kontext in E-Mail- und Rewrite-Prompts. Bleibt lokal in deinen Einstellungen."
       )
 
       OnboardingCard(accent: .indigo) {

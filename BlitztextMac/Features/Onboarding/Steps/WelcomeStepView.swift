@@ -8,7 +8,7 @@ struct WelcomeStepView: View {
       OnboardingStepHeader(
         systemImage: "sparkles",
         accent: .blue,
-        title: "Willkommen bei Blitztext",
+        title: "Willkommen bei rede",
         subtitle: "Einmal einrichten. Danach sprechen, loslassen, Text sitzt im Feld."
       )
 

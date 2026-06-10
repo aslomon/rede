@@ -91,9 +91,9 @@ struct PermissionsStepView: View {
       return "Aufnehmen ist freigegeben."
     case .denied:
       return
-        "macOS hat das Mikrofon blockiert. Erlaube Blitztext in den Systemeinstellungen unter Datenschutz → Mikrofon."
+        "macOS hat das Mikrofon blockiert. Erlaube rede in den Systemeinstellungen unter Datenschutz → Mikrofon."
     case .notDetermined:
-      return "Blitztext braucht das Mikrofon zum Aufnehmen deiner Stimme."
+      return "rede braucht das Mikrofon zum Aufnehmen deiner Stimme."
     }
   }
 

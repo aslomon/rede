@@ -36,7 +36,7 @@ final class UpdateService: NSObject {
   /// works (computed passthroughs would not notify SwiftUI). Kept in sync via `refresh()`.
   private(set) var automaticChecksEnabled = false
 
-  private let logger = Logger(subsystem: "app.blitztext.mac", category: "Updates")
+  private let logger = Logger(subsystem: "app.rede.mac", category: "Updates")
 
   #if SPARKLE_ENABLED
     private var updaterController: SPUStandardUpdaterController?
@@ -165,7 +165,7 @@ final class UpdateService: NSObject {
 
   // MARK: - SPUStandardUserDriverDelegate (gentle reminders)
 
-  /// Blitztext is an `LSUIElement` menu bar app: scheduled update alerts must not steal focus
+  /// rede is an `LSUIElement` menu bar app: scheduled update alerts must not steal focus
   /// while the user dictates. Sparkle's gentle-reminders flow lets us surface a quiet hint in the
   /// popover instead; the standard Sparkle UI only appears for user-initiated checks (or once the
   /// user clicks the hint).

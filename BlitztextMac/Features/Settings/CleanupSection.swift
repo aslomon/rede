@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// "Sauber Entfernen": prepares this Mac for deleting Blitztext — removes the login item and,
+/// "Sauber Entfernen": prepares this Mac for deleting rede — removes the login item and,
 /// optionally, local data. Self-contained confirm flow so the System tab stays small.
 struct CleanupSection: View {
   @State private var launchAtLoginService = LaunchAtLoginService()
@@ -15,7 +15,7 @@ struct CleanupSection: View {
       SectionLabel(text: "Sauber Entfernen")
 
       Text(
-        "Vor dem Löschen Blitztext erst auf diesem Mac bereinigen. So verschwinden Anmeldestart und lokale Daten sauber aus dem Weg."
+        "Vor dem Löschen rede erst auf diesem Mac bereinigen. So verschwinden Anmeldestart und lokale Daten sauber aus dem Weg."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -55,7 +55,7 @@ struct CleanupSection: View {
       .controlSize(.small)
 
       Text(
-        "Danach Blitztext beenden und die App aus /Applications löschen. Bereits verwaiste alte Login-Items können in den Systemeinstellungen einmalig manuell entfernt werden."
+        "Danach rede beenden und die App aus /Applications löschen. Bereits verwaiste alte Login-Items können in den Systemeinstellungen einmalig manuell entfernt werden."
       )
       .font(.system(size: 10.5))
       .foregroundStyle(.secondary)
@@ -90,8 +90,8 @@ struct CleanupSection: View {
     if report.failedItems.isEmpty {
       cleanupStatusText =
         deleteLocalDataOnCleanup
-        ? "Anmeldestart und lokale Daten wurden bereinigt. Jetzt Blitztext beenden und aus /Applications löschen."
-        : "Anmeldestart wurde deaktiviert. Jetzt Blitztext beenden und aus /Applications löschen."
+        ? "Anmeldestart und lokale Daten wurden bereinigt. Jetzt rede beenden und aus /Applications löschen."
+        : "Anmeldestart wurde deaktiviert. Jetzt rede beenden und aus /Applications löschen."
       showCleanupOptions = false
 
       let urlsToReveal =

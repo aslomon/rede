@@ -17,11 +17,11 @@ enum WorkflowType: String, CaseIterable, Identifiable, Codable {
 
   var displayName: String {
     switch self {
-    case .transcription: return "Blitztext"
-    case .localTranscription: return "Blitztext Lokal"
-    case .textImprover: return "Blitztext+"
-    case .dampfAblassen: return "Blitztext $%&!"
-    case .emojiText: return "Blitztext :)"
+    case .transcription: return "rede"
+    case .localTranscription: return "rede Lokal"
+    case .textImprover: return "rede+"
+    case .dampfAblassen: return "rede $%&!"
+    case .emojiText: return "rede :)"
     }
   }
 
@@ -262,7 +262,7 @@ struct AppSettings: Codable, Sendable {
   /// Phase 4b: inject the confirmed Memory block into rewrite prompts (global master).
   /// Per-mode `RewriteConfig.useMemoryContext` must ALSO be on. Default OFF.
   var memoryContextEnabled: Bool = false
-  /// MEM-2 (experimental): after Blitztext pastes, re-read the field later via AX to learn from
+  /// MEM-2 (experimental): after rede pastes, re-read the field later via AX to learn from
   /// the user's manual corrections (before → after). PRIVACY-SENSITIVE → opt-in, default OFF,
   /// on-device only. A superset of the archive opt-in: only effective while `archiveEnabled`.
   var improvementDetectionEnabled: Bool = false
@@ -272,7 +272,7 @@ struct AppSettings: Codable, Sendable {
   var selectedEmbeddingModelName: String = LlamaCppEmbeddingProvider.defaultModelID
   /// Phase 1 (signing): set true once Accessibility trust was ever observed. Drives the
   /// stale-grant hint: if previously granted but now `AXIsProcessTrusted()` is false (e.g.
-  /// after a rebuild changed the CDHash), macOS may still show Blitztext enabled while not
+  /// after a rebuild changed the CDHash), macOS may still show rede enabled while not
   /// recognizing it. Persisted so the hint survives relaunches.
   var hadAccessibilityGrant: Bool = false
   /// On-device dictation dictionary: deterministic literal replacements + spoken-punctuation

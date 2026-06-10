@@ -65,7 +65,7 @@ struct AutomaticRewriteContext: Sendable {
 
 // MARK: - User identity context
 
-/// Stable local identity of the person using Blitztext. In-memory prompt context only; persisted in
+/// Stable local identity of the person using rede. In-memory prompt context only; persisted in
 /// `AppSettings.userDisplayName` so E-Mail/Prompt modes know from whose perspective they write.
 struct UserIdentityContext: Sendable, Equatable {
   var displayName: String
@@ -91,7 +91,7 @@ protocol RewriteProvider: Sendable {
 struct OpenAIRewriteProvider: RewriteProvider {
   let modelID: String
 
-  private static let logger = Logger(subsystem: "app.blitztext.mac", category: "RewriteProvider")
+  private static let logger = Logger(subsystem: "app.rede.mac", category: "RewriteProvider")
 
   private static let chatCompletionsURL = URL(string: "https://api.openai.com/v1/chat/completions")!
 

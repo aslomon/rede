@@ -12,14 +12,14 @@
         {
           "blend-mode": "normal",
           "glass": false,
-          "image-name": "blitztext-bars.svg",
-          "name": "Blitztext bars",
+          "image-name": "rede-mark.svg",
+          "name": "rede mark",
           "opacity": 1,
           "position": {
-            "scale": 0.92,
+            "scale": 1.0,
             "translation-in-points": [
               0,
-              4
+              0
             ]
           }
         }

@@ -61,7 +61,7 @@ struct SettingsContentView: View {
   /// so guidance no longer needs to hijack the landing tab to System (which hid the other tabs).
   private var defaultTabSelection: Int { 0 }
 
-  /// Empty-state nudge: while Blitztext is unconfigured, point the user at the guided wizard.
+  /// Empty-state nudge: while rede is unconfigured, point the user at the guided wizard.
   private var setupNudgeBanner: some View {
     HStack(alignment: .top, spacing: 10) {
       Image(systemName: "sparkles")
@@ -70,7 +70,7 @@ struct SettingsContentView: View {
         .frame(width: 18, height: 18)
 
       VStack(alignment: .leading, spacing: 3) {
-        Text("Richte Blitztext ein")
+        Text("Richte rede ein")
           .font(.system(size: 11.5, weight: .semibold))
           .foregroundStyle(.primary)
         Text(

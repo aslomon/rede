@@ -2,11 +2,11 @@ import Foundation
 import OSLog
 import Observation
 
-private let improvementLogger = Logger(subsystem: "app.blitztext.mac", category: "ImprovementLog")
+private let improvementLogger = Logger(subsystem: "app.rede.mac", category: "ImprovementLog")
 
 // MARK: - Observation
 
-/// A single learnable "Verbesserung" (MEM-2): what Blitztext inserted vs. what the user left in the
+/// A single learnable "Verbesserung" (MEM-2): what rede inserted vs. what the user left in the
 /// field after editing. PRIVACY-SENSITIVE — recorded only with the opt-in improvement detection on
 /// (a superset of the archive opt-in), stored on-device (0600), never sent anywhere. Holds the
 /// before/after text so the overview can show the correction; not yet fed into any prompt.

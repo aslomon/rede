@@ -116,7 +116,7 @@ struct LlamaCppServerClient: Sendable {
       case .cannotConnectToHost, .cannotFindHost, .notConnectedToInternet, .timedOut,
         .networkConnectionLost, .dnsLookupFailed:
         throw LLMError.localModelUnavailable(
-          "llama.cpp ist lokal nicht erreichbar. Starte Blitztext neu oder prüfe das lokale Modell."
+          "llama.cpp ist lokal nicht erreichbar. Starte rede neu oder prüfe das lokale Modell."
         )
       default:
         throw LLMError.networkError(urlError.localizedDescription)

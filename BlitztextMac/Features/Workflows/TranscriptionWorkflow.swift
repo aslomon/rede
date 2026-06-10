@@ -3,7 +3,7 @@ import Foundation
 import OSLog
 import Observation
 
-private let transcriptionLogger = Logger(subsystem: "app.blitztext.mac", category: "Transcription")
+private let transcriptionLogger = Logger(subsystem: "app.rede.mac", category: "Transcription")
 
 private func elapsedMilliseconds(since start: Date, until end: Date = Date()) -> Int {
   Int((end.timeIntervalSince(start) * 1000).rounded())

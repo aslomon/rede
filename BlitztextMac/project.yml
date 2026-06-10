@@ -1,6 +1,6 @@
 name: BlitztextMac
 options:
-  bundleIdPrefix: app.blitztext
+  bundleIdPrefix: app.rede
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "16.0"
@@ -11,8 +11,8 @@ settings:
     SWIFT_VERSION: "5.10"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     ONLY_ACTIVE_ARCH: NO
-    MARKETING_VERSION: "1.6"
-    CURRENT_PROJECT_VERSION: "16"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
   configs:
     # SPARKLE_ENABLED gates all updater code; a Mac App Store variant builds without it
     # (stores forbid self-updating apps). DEBUG must stay explicit for the Debug config.
@@ -46,8 +46,9 @@ targets:
           - BlitztextMac.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.blitztext.mac
-        PRODUCT_NAME: Blitztext
+        PRODUCT_BUNDLE_IDENTIFIER: app.rede.mac
+        PRODUCT_NAME: rede
+        PRODUCT_MODULE_NAME: Blitztext
         INFOPLIST_FILE: Resources/Info.plist
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -78,15 +79,15 @@ targets:
         link: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.blitztext.mac.tests
+        PRODUCT_BUNDLE_IDENTIFIER: app.rede.mac.tests
         GENERATE_INFOPLIST_FILE: true
         SWIFT_VERSION: "5.10"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
-        # The app target overrides PRODUCT_NAME to "Blitztext", so the bundle is
-        # Blitztext.app with binary .../MacOS/Blitztext. XcodeGen's auto-wired
+        # The app target overrides PRODUCT_NAME to "rede", so the bundle is
+        # rede.app with binary .../MacOS/rede. XcodeGen's auto-wired
         # TEST_HOST/BUNDLE_LOADER use the target name (BlitztextMac) and miss this,
         # so we point them at the real product name explicitly.
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Blitztext.app/Contents/MacOS/Blitztext"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/rede.app/Contents/MacOS/rede"
         BUNDLE_LOADER: "$(TEST_HOST)"
 
 schemes:

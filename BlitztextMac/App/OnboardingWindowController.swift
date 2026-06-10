@@ -45,7 +45,7 @@ final class OnboardingWindowController {
     )
     let hosting = NSHostingController(rootView: rootView)
     let window = NSWindow(contentViewController: hosting)
-    window.title = "Blitztext einrichten"
+    window.title = "rede einrichten"
     // Modern macOS look: transparent, full-size-content title bar so the glass surface runs to the
     // very top edge and the traffic lights float over the content, instead of an opaque title band
     // sitting above every step.

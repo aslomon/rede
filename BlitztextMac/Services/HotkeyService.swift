@@ -99,7 +99,7 @@ final class HotkeyService {
       )
     else {
       // No Accessibility trust yet → fall back to a LOCAL keyDown monitor (covers only the case where
-      // a Blitztext window is key). Once Accessibility is granted + the app relaunched, the tap is used.
+      // a rede window is key). Once Accessibility is granted + the app relaunched, the tap is used.
       keyFallbackMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) {
         [weak self] event in
         Task { @MainActor in

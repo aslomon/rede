@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Blitztext macOS App - Build & Run
+# rede macOS App - Build & Run
 # Voraussetzungen: Full Xcode with Command Line Tools, xcodegen
 
 RUN_AFTER=false
@@ -47,7 +47,7 @@ for arg in "$@"; do
     esac
 done
 
-CODESIGN_IDENTITY_NAME="Blitztext Local Dev"
+CODESIGN_IDENTITY_NAME="rede Local Dev"
 # Absolute path is set after PROJECT_DIR is known (see below).
 ENTITLEMENTS_PATH=""
 # Resolved once by resolve_codesign_identity(): "stable" or "adhoc".
@@ -64,9 +64,9 @@ resolve_codesign_identity() {
     fi
 
     local test_dir
-    test_dir="$(mktemp -d -t blitztext-codesign-test)"
+    test_dir="$(mktemp -d -t rede-codesign-test)"
     local test_file="$test_dir/codesign-test"
-    printf 'blitztext' > "$test_file"
+    printf 'rede' > "$test_file"
 
     if codesign --force --sign "$CODESIGN_IDENTITY_NAME" "$test_file" >/dev/null 2>&1; then
         CODESIGN_MODE="stable"
@@ -336,8 +336,8 @@ else
 fi
 
 # Bauen
-echo "🔨 Baue Blitztext ..."
-# ENABLE_DEBUG_DYLIB=NO: Xcode 16 splits Debug builds into a launcher + Blitztext.debug.dylib.
+echo "🔨 Baue rede ..."
+# ENABLE_DEBUG_DYLIB=NO: Xcode 16 splits Debug builds into a launcher + rede.debug.dylib.
 # Our standalone re-sign (sign_app_bundle) signs the bundle non-deep, so the nested debug dylib
 # keeps its original signature → mismatched Team IDs → dyld aborts at launch. Forcing a single
 # merged binary (as Release already is) keeps `--debug` builds launchable outside Xcode. No-op for
@@ -354,7 +354,7 @@ xcodebuild \
     clean build
 
 # App finden
-APP_PATH="$DERIVED_DATA_PATH/Build/Products/$BUILD_CONFIGURATION/Blitztext.app"
+APP_PATH="$DERIVED_DATA_PATH/Build/Products/$BUILD_CONFIGURATION/rede.app"
 
 if [ ! -d "$APP_PATH" ]; then
     echo "❌ Build fehlgeschlagen – keine App gefunden."
@@ -377,7 +377,7 @@ cp -f "$PROJECT_DIR/Resources/menubar_icon@2x.png" "$RESOURCES_DIR/" 2>/dev/null
 stage_llamacpp_helper "$APP_PATH"
 
 # In Projektordner kopieren
-DEST="$SCRIPT_DIR/Blitztext.app"
+DEST="$SCRIPT_DIR/rede.app"
 rm -rf "$DEST"
 cp -R "$APP_PATH" "$DEST"
 resolve_codesign_identity
@@ -388,7 +388,7 @@ RUN_TARGET="$DEST"
 
 if [ "$INSTALL_APP" = true ]; then
     APPS_DIR="/Applications"
-    INSTALL_DEST="$APPS_DIR/Blitztext.app"
+    INSTALL_DEST="$APPS_DIR/rede.app"
     if [ ! -w "$APPS_DIR" ]; then
         echo "❌ /Applications ist nicht beschreibbar."
         echo "   Fuehre den Befehl mit passenden Rechten erneut aus oder ziehe die App manuell nach /Applications."
@@ -416,12 +416,12 @@ echo "Naechste Schritte:"
 echo "1. App starten"
 echo "2. Mikrofon erlauben"
 echo "3. Fuer direktes Einfuegen zusaetzlich Bedienungshilfen erlauben"
-echo "4. In Blitztext deinen eigenen OpenAI API Key eintragen"
+echo "4. In rede deinen eigenen OpenAI API Key eintragen"
 echo "5. Loslegen und bei Bedarf im Code weiterbauen"
 echo ""
 
 # Optional: direkt starten
 if [ "$RUN_AFTER" = true ]; then
-    echo "🚀 Starte Blitztext ..."
+    echo "🚀 Starte rede ..."
     open "$RUN_TARGET"
 fi

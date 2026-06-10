@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import Observation
 
-private let emailMemoryLogger = Logger(subsystem: "app.blitztext.mac", category: "EmailMemory")
+private let emailMemoryLogger = Logger(subsystem: "app.rede.mac", category: "EmailMemory")
 
 struct EmailSemanticMemoryRecord: Codable, Identifiable, Sendable, Equatable {
   let id: UUID

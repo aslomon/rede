@@ -4,7 +4,7 @@ import OSLog
 import Observation
 
 private let coordinatorLogger = Logger(
-  subsystem: "app.blitztext.mac", category: "MemoryCoordinator")
+  subsystem: "app.rede.mac", category: "MemoryCoordinator")
 
 /// Drives the two-speed Memory cadence (docs/MEMORY-spezifikation.md):
 /// - per-run incremental fold off the main actor (`Task.detached(.utility)`), never blocking,

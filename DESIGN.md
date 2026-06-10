@@ -1,6 +1,17 @@
-# Blitztext — Design System
+# rede — Design System
 
-Visuelle Sprache der bestehenden Menüleisten-App. Neue UI muss sich hier einfügen.
+Visuelle Sprache der Menüleisten-App **rede** (Spin-off des Blitztext-Designsystems; interne
+Komponentennamen behalten das Blitz-Präfix für günstige Upstream-Merges). Neue UI muss sich hier
+einfügen.
+
+## Marke
+
+- Wortmarke: **rede**, immer klein geschrieben — auch am Satzanfang (wie „iPhone").
+- Brand-Akzent: **Coral `#FF5C4D`** (sRGB 1.00/0.36/0.30). Nur für Branding-Flächen (App-Icon,
+  künftige Landing-/Store-Assets) — NICHT als zusätzlicher UI-Akzent; die Modus-Akzente unten
+  bleiben unverändert.
+- Icon-Motiv: Sprechblase mit drei Sprechbalken (mittlerer Balken Coral) auf schwarzem Grund —
+  gleiche reduzierte Stilsprache wie das Blitztext-Original, anderes Mark.
 
 ## Tonalität
 
@@ -193,11 +204,14 @@ Alle Labels, Buttons, Captions, Tooltips in Deutsch (du-Form, knapp). Code, Komm
 
 ## App- und Menüleisten-Icons
 
-- App-Icon: alte schwarze Originalfläche mit linksbündigem Blitztext-Balkenmark. Das Mark darf
-  größer skaliert werden, um unnötigen transparenten/ungenutzten Rand zu reduzieren. Keine diagonal
-  versetzten Balken, keine neuen Zusatzsymbole, keine lauten Illustrationen.
-- macOS 26 Icon: `AppIcon.icon` ist die primäre Liquid-Glass-Quelle. Der schwarze Hintergrund liegt
-  als Icon-Composer-Fill an, die weißen Balken als separates SVG-Layer; `AppIcon.icns` bleibt nur
-  Fallback für ältere macOS-Darstellungen.
-- Menüleisten-Icon: Idle bleibt das einfache Template-Icon. Während Aufnahme/Verarbeitung keine
-  mode-spezifischen Badge-Symbole; nur das normale Zeichen plus kleiner pulsierender Statuspunkt.
+- App-Icon: schwarze Rundquadrat-Fläche mit dem **rede-Mark**: weiße Sprechblase (Tail unten
+  links) mit drei abgerundeten Sprechbalken — oben/unten schwarz gestanzt, Mitte Coral
+  (`#FF5C4D`). Keine Zusatzsymbole, keine lauten Illustrationen, keine Verläufe im Mark.
+- Quelle: `scripts/generate-icons.swift` rendert Iconset, `AppIcon.icns` und Menüleisten-PNGs
+  deterministisch — Icon-Änderungen passieren im Skript, nicht in Bild-Editoren.
+- macOS 26 Icon: `AppIcon.icon` ist die primäre Liquid-Glass-Quelle. Der schwarze Hintergrund
+  liegt als Icon-Composer-Fill an, das rede-Mark als SVG-Layer (`rede-mark.svg`);
+  `AppIcon.icns` bleibt Fallback für ältere macOS-Darstellungen.
+- Menüleisten-Icon: Idle ist das monochrome Template des rede-Marks (Sprechblase, Balken
+  transparent gestanzt). Während Aufnahme/Verarbeitung keine mode-spezifischen Badge-Symbole;
+  nur das normale Zeichen plus kleiner pulsierender Statuspunkt.

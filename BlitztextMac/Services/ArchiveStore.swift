@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import Observation
 
-private let archiveLogger = Logger(subsystem: "app.blitztext.mac", category: "Archive")
+private let archiveLogger = Logger(subsystem: "app.rede.mac", category: "Archive")
 
 // MARK: - Archive entry
 

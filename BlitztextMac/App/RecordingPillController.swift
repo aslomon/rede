@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import os
 
-private let pillLogger = Logger(subsystem: "app.blitztext.mac", category: "RecordingPill")
+private let pillLogger = Logger(subsystem: "app.rede.mac", category: "RecordingPill")
 
 /// Drives the floating recording pill. Created by `AppDelegate`, it shows a borderless,
 /// non-activating panel at the top-center of the active screen while a workflow is RECORDING

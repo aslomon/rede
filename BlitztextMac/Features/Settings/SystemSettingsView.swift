@@ -70,7 +70,7 @@ struct SystemSettingsView: View {
       SectionLabel(text: "Installation & Start")
 
       Text(
-        "Für direktes Einfügen und stabile Hotkeys: Blitztext einmal nach /Applications legen, "
+        "Für direktes Einfügen und stabile Hotkeys: rede einmal nach /Applications legen, "
           + "danach Mikrofon und Bedienungshilfen erlauben."
       )
       .font(.system(size: 10.5))
@@ -92,7 +92,7 @@ struct SystemSettingsView: View {
         .textSelection(.enabled)
 
       if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
-        Text("Weitere Blitztext-Kopien auf diesem Mac können doppelte Login-Items auslösen.")
+        Text("Weitere rede-Kopien auf diesem Mac können doppelte Login-Items auslösen.")
           .font(.system(size: 10.5))
           .foregroundStyle(.orange)
           .fixedSize(horizontal: false, vertical: true)
@@ -137,7 +137,7 @@ struct SystemSettingsView: View {
   private var launchAtLoginRow: some View {
     VStack(alignment: .leading, spacing: 6) {
       Toggle(
-        "Blitztext automatisch starten",
+        "rede automatisch starten",
         isOn: Binding(
           get: { launchAtLoginService.isEnabled },
           set: { launchAtLoginService.setEnabled($0) }
@@ -396,11 +396,11 @@ struct SystemSettingsView: View {
   private var installationHeadline: String {
     switch currentInstallLocation {
     case .applications:
-      return "Blitztext liegt am richtigen Ort."
+      return "rede liegt am richtigen Ort."
     case .userApplications:
-      return "Blitztext liegt noch in ~/Applications."
+      return "rede liegt noch in ~/Applications."
     case .outsideApplications:
-      return "Blitztext liegt noch nicht in /Applications."
+      return "rede liegt noch nicht in /Applications."
     case .unknown:
       return "Der Installationsort konnte nicht sicher erkannt werden."
     }
@@ -414,12 +414,12 @@ struct SystemSettingsView: View {
       }
       return "Diese Kopie ist korrekt. Zusätzliche Kopien solltest du später entfernen."
     case .userApplications:
-      return "Für stabile Hotkeys und Login-Items sollte Blitztext nur aus /Applications laufen."
+      return "Für stabile Hotkeys und Login-Items sollte rede nur aus /Applications laufen."
     case .outsideApplications:
       return
-        "Verschiebe Blitztext einmal nach /Applications, damit Anmeldestart und Hotkeys sauber bleiben."
+        "Verschiebe rede einmal nach /Applications, damit Anmeldestart und Hotkeys sauber bleiben."
     case .unknown:
-      return "Öffne Blitztext möglichst direkt aus /Applications."
+      return "Öffne rede möglichst direkt aus /Applications."
     }
   }
 

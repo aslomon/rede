@@ -162,8 +162,8 @@ private struct ImprovementRow: View {
   }
 
   private var beforeAfter: some View {
-    // "Eingefügt" = the text Blitztext pasted; "Korrektur" = what the user changed it to. Clearer
-    // than the ambiguous "Vorher/Nachher" (it was unclear which side was Blitztext's output).
+    // "Eingefügt" = the text rede pasted; "Korrektur" = what the user changed it to. Clearer
+    // than the ambiguous "Vorher/Nachher" (it was unclear which side was rede's output).
     VStack(alignment: .leading, spacing: 2) {
       diffLine(label: "Eingefügt", text: observation.inserted, accent: .secondary)
       diffLine(label: "Korrektur", text: observation.finalText, accent: .primary)

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- rede mark: speech bubble + tail (white) carrying three speech bars; middle bar = accent. -->
+  <rect x="164" y="205" width="696" height="471" rx="118" fill="#FFFFFF"/>
+  <path d="M 307 558 L 502 558 L 261 860 Z" fill="#FFFFFF"/>
+  <rect x="266" y="269" width="471" height="64" rx="32" fill="#0A0A0D"/>
+  <rect x="266" y="377" width="348" height="64" rx="32" fill="#FF5C4D"/>
+  <rect x="266" y="485" width="410" height="64" rx="32" fill="#0A0A0D"/>
+</svg>

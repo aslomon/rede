@@ -24,7 +24,7 @@ struct LlamaCppModelStore: Sendable {
       case .unsafeFileName(let fileName):
         return "Unsicherer Modell-Dateiname: \(fileName)"
       case .outsideModelDirectory:
-        return "Der Modellpfad liegt außerhalb des Blitztext-Modellordners."
+        return "Der Modellpfad liegt außerhalb des rede-Modellordners."
       case .notInstalled(let id):
         return "Das lokale Modell „\(id)“ ist nicht installiert."
       }

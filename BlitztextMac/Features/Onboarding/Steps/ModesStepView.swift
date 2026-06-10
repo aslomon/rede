@@ -21,7 +21,7 @@ struct ModesStepView: View {
         accent: .purple,
         modeSymbol: WorkflowType.textImprover.systemImageForOnboarding,
         title: "E-Mail",
-        helpText: "Was Blitztext aus deinem Diktat machen soll.",
+        helpText: "Was rede aus deinem Diktat machen soll.",
         text: $viewModel.emailPrompt,
         isEditing: $isEditingEmail
       ) {

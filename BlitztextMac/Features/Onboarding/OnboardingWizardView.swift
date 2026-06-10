@@ -58,7 +58,7 @@ struct OnboardingWizardView: View {
     VStack(alignment: .leading, spacing: 0) {
       HStack(spacing: 8) {
         BrandMark(size: 20)
-        Text("Blitztext")
+        Text("rede")
           .font(.system(size: 15, weight: .semibold))
           .foregroundStyle(.primary)
       }

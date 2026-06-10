@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tab "Modelle": the engines that power Blitztext \u{2014} "Online" (the OpenAI API key) and "Lokal" (the
+/// Tab "Modelle": the engines that power rede \u{2014} "Online" (the OpenAI API key) and "Lokal" (the
 /// local Whisper transcription engine, the local llama.cpp rewrite model and the secure-local master
 /// switch). Memory, vocabulary and learned terms live in the Vokabular tab.
 struct ModelsSettingsView: View {
@@ -145,7 +145,7 @@ struct ModelsSettingsView: View {
           caption:
             "Die Transkriptions-Engine läuft über WhisperKit lokal auf diesem Mac. "
             + "Das Modell wird auf dem Gerät gespeichert. "
-            + "Lade ein Modell, damit Blitztext Sprache lokal in Text umwandeln kann.",
+            + "Lade ein Modell, damit rede Sprache lokal in Text umwandeln kann.",
           accent: .blue,
           buttonLabel: "Modell laden",
           action: { appState.installSelectedLocalModel() }

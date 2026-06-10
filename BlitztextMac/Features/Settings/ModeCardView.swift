@@ -162,7 +162,7 @@ struct ModeCardView: View {
       if appState.canDeleteMode(id: modeID) {
         DestructiveClearButton(
           "Löschen",
-          message: "Dieser eigene Modus wird dauerhaft aus Blitztext entfernt."
+          message: "Dieser eigene Modus wird dauerhaft aus rede entfernt."
         ) {
           appState.deleteMode(id: modeID)
         }

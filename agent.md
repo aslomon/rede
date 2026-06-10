@@ -1,3 +1,7 @@
+> **Herkunft:** Dieses Repository ist der eigenstaendige Spin-off "rede" des Open-Source-Projekts
+> Blitztext (MIT, (c) Blitztext contributors). Interne Typ-/Verzeichnisnamen behalten bewusst das
+> Blitztext-Praefix, damit Upstream-Merges guenstig bleiben. Nutzersichtbares Branding ist "rede".
+
 # Agent Guide
 
 This repository is a native macOS menu bar app, not a web app. Treat the local code and docs as the source of truth, and do not apply generic Next.js or backend conventions unless the project is explicitly expanded in that direction.
