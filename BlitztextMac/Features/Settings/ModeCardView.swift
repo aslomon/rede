@@ -61,7 +61,11 @@ struct ModeCardView: View {
   }
 
   var body: some View {
-    GroupBox {
+    // One unified settings card (same surface as every other section): header row inside the
+    // card — the earlier GroupBox(label:) floated the header above its box.
+    VStack(alignment: .leading, spacing: 10) {
+      header
+
       // Opacity applied to body only — header remains fully legible when mode is disabled (WCAG 4.5:1)
       Group {
         if showEditor {
@@ -71,9 +75,8 @@ struct ModeCardView: View {
         }
       }
       .opacity(config.isEnabled ? 1 : 0.78)
-    } label: {
-      header
     }
+    .settingsGroupBackground()
     .onAppear {
       // A freshly created mode opens straight into its editor so the user can rename/configure it.
       if appState.newlyCreatedModeID == modeID {
@@ -150,6 +153,13 @@ struct ModeCardView: View {
   }
 
   private var editorFooter: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Divider().opacity(0.4)
+      footerRow
+    }
+  }
+
+  private var footerRow: some View {
     HStack {
       moveControls
       Spacer()
@@ -294,7 +304,7 @@ struct ModeCardView: View {
   // MARK: - Header
 
   private var header: some View {
-    HStack {
+    HStack(spacing: 8) {
       // Mode icon uses accent colour for per-mode visual identity (spec change 5)
       Image(systemName: type.icon)
         .font(.system(size: 12, weight: .semibold))
@@ -302,10 +312,9 @@ struct ModeCardView: View {
       Text(appState.displayName(for: config))
         .font(.system(size: 12.5, weight: .semibold))
         .foregroundStyle(.primary)
-      Text(appState.hotkeyLabel(for: modeID))
-        .font(.system(size: 9.5, design: .monospaced))
-        .foregroundStyle(.quaternary)
-      Spacer()
+        .lineLimit(1)
+      hotkeyKeycaps
+      Spacer(minLength: 8)
       // Pencil opens editor; checkmark closes it. Pencil only activates when not already editing (spec change 7)
       Button {
         withAnimation(.easeInOut(duration: 0.16)) {
@@ -321,10 +330,31 @@ struct ModeCardView: View {
       .buttonStyle(PopoverIconButtonStyle(showEditor ? .primary : .quiet))
       .help(showEditor ? "bearbeitung schließen" : "modus bearbeiten")
       .accessibilityLabel(showEditor ? "Bearbeitung schließen" : "Modus bearbeiten")
-      Toggle("Aktiv", isOn: bind(\.isEnabled))
+      Toggle("aktiv", isOn: bind(\.isEnabled))
         .toggleStyle(.switch)
         .controlSize(.mini)
         .labelsHidden()
+    }
+  }
+
+  /// The mode's hotkey as quiet mini keycaps (the old 9.5pt `.quaternary` text was near-invisible).
+  /// Hidden entirely while no combination is configured — the editor is the place to set one.
+  @ViewBuilder
+  private var hotkeyKeycaps: some View {
+    let hotkey = appState.hotkeyConfig(for: modeID)
+    if hotkey.isConfigured && hotkey.isEnabled {
+      HStack(spacing: 3) {
+        ForEach(Array(hotkey.labelParts.enumerated()), id: \.offset) { _, part in
+          Text(part)
+            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .liquidGlassKeycap()
+        }
+      }
+      .fixedSize()
+      .accessibilityHidden(true)
     }
   }
 

@@ -18,7 +18,6 @@ struct VocabularySettingsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       memorySection
-      Divider().opacity(0.5)
       identitySection
       recognizeSection
     }

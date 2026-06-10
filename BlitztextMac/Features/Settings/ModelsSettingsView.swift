@@ -1,16 +1,20 @@
 import SwiftUI
 
-/// Tab "Modelle": the engines that power rede \u{2014} "Online" (the OpenAI API key) and "Lokal" (the
-/// local Whisper transcription engine, the local llama.cpp rewrite model and the secure-local master
-/// switch). Memory, vocabulary and learned terms live in the Vokabular tab.
+/// Tab "modelle": the engines that power rede as a FLAT card list — processing choice, the OpenAI
+/// key, the local Whisper transcription engine and the local llama.cpp rewrite model. Status pills
+/// live in the card headers (DESIGN.md); the card not matching the chosen processing path is
+/// dimmed but stays configurable (e.g. to enter the OpenAI key ahead of time). Memory, vocabulary
+/// and learned terms live in the Vokabular tab.
 struct ModelsSettingsView: View {
   @Bindable var appState: AppState
   /// Reserved for cross-tab navigation from empty-state CTAs (kept for parity with Prompts tab).
   let selectTab: (Int) -> Void
 
-  /// Bumped by the "Prüfen" icon button to force a fresh disk read of the installed WhisperKit models.
-  /// The disk scan is synchronous, so re-reading inside a recomputed `body` reflects reality.
+  /// Bumped by the "prüfen" header action to force a fresh disk read of the installed WhisperKit
+  /// models. The disk scan is synchronous, so re-reading inside a recomputed `body` reflects reality.
   @State private var transcriptionRecheckToken = 0
+
+  private var isLocal: Bool { appState.appSettings.secureLocalModeEnabled }
 
   private var installedLocalModels: [LocalTranscriptionModel] {
     _ = transcriptionRecheckToken
@@ -41,28 +45,28 @@ struct ModelsSettingsView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
-      // spec #1: no top-level dual-status HStack \u{2014} pills live in section headers
-      modeSelector
-      Divider().opacity(0.5)
-      // The non-selected processing mode is dimmed so the active choice is obvious (still
-      // configurable, e.g. to enter your OpenAI key ahead of time).
-      onlineBand
-        .opacity(appState.appSettings.secureLocalModeEnabled ? 0.4 : 1)
-      Divider().opacity(0.5)
-      localBand
-        .opacity(appState.appSettings.secureLocalModeEnabled ? 1 : 0.4)
+      processingCard
+
+      // The card not matching the chosen processing path is dimmed so the active choice is
+      // obvious — still interactive on purpose.
+      openAICard
+        .opacity(isLocal ? 0.45 : 1)
+
+      whisperCard
+        .opacity(isLocal ? 1 : 0.45)
+
+      // Never dimmed: the local rewrite model powers per-mode "lokal" rewriting in BOTH
+      // processing paths (a mode can rewrite locally while transcription runs online).
+      localLLMCard
     }
     .padding(16)
-    .animation(.easeInOut(duration: 0.2), value: appState.appSettings.secureLocalModeEnabled)
+    .animation(.easeInOut(duration: 0.2), value: isLocal)
   }
 
-  // MARK: - Processing mode (Online OpenAI vs. secure local)
-  // A clear either/or at the top, now that the popover's bottom engine bar is gone. Drives the same
-  // secureLocalModeEnabled flag and keeps installing the local model when switching to local.
+  // MARK: - Processing mode (online OpenAI vs. secure local)
 
-  private var modeSelector: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "verarbeitung")
+  private var processingCard: some View {
+    SettingsSection("verarbeitung") {
       Picker("", selection: $appState.appSettings.secureLocalModeEnabled) {
         Text("online · OpenAI").tag(false)
         Text("lokal · sicher").tag(true)
@@ -75,8 +79,9 @@ struct ModelsSettingsView: View {
           appState.installSelectedLocalModel()
         }
       }
+      // Data-flow note stays permanently visible (DESIGN.md: sensible Hinweise als Caption).
       Text(
-        appState.appSettings.secureLocalModeEnabled
+        isLocal
           ? "alles bleibt auf deinem Mac: Whisper + lokales llama.cpp-Modell. keine online-dienste."
           : "nutzt die OpenAI-API mit deinem eigenen key. leistungsfähiger, aber audio/text gehen online."
       )
@@ -86,50 +91,26 @@ struct ModelsSettingsView: View {
     }
   }
 
-  // MARK: - Online band (OpenAI)
-  // spec #1: trailing BlitzStatusPill in section header
-  // spec #2: explanatory paragraph removed; moved inside OpenAIKeySection's InfoDisclosure
+  // MARK: - OpenAI key
 
-  private var onlineBand: some View {
-    ModelsSectionWithPill(
-      "online",
-      pill: BlitzStatusPill(
-        state: appState.hasOpenAIKey ? .online : .warning,
-        label: appState.hasOpenAIKey ? "online bereit" : "OpenAI fehlt"
-      )
-    ) {
-      if !appState.hasOpenAIKey {
-        SettingsStatusBadge(.warning, label: "OpenAI nicht eingerichtet")
-      }
-      OpenAIKeySection(appState: appState)
-    }
-  }
-
-  // MARK: - Local band (Whisper + llama.cpp + secure-local switch)
-  // spec #1: trailing BlitzStatusPill in section header
-  // spec #4: Whisper first, llama.cpp second, secure-local toggle at the bottom
-
-  private var localBand: some View {
-    ModelsSectionWithPill(
-      "lokal",
-      pill: BlitzStatusPill(
-        state: appState.hasAnyTranscriptionEngine ? .local : .download,
-        label: appState.hasAnyTranscriptionEngine ? "Whisper lokal" : "Whisper laden"
-      )
-    ) {
-      localTranscriptionSection
-      localLLMSection
-    }
+  private var openAICard: some View {
+    OpenAIKeySection(appState: appState, showsStatusPill: true)
+      .settingsGroupBackground()
   }
 
   // MARK: - Lokale Transkription (Whisper)
-  // spec #3: single caption line always visible; full paragraph only in EmptyStateCard
 
-  private var localTranscriptionSection: some View {
+  private var whisperCard: some View {
     SettingsSection(
       "lokale transkription (Whisper)",
       action: appState.isDownloadingLocalModel
-        ? nil : (label: "prüfen", perform: { transcriptionRecheckToken += 1 })
+        ? nil : (label: "prüfen", perform: { transcriptionRecheckToken += 1 }),
+      trailing: {
+        BlitzStatusPill(
+          state: appState.hasAnyTranscriptionEngine ? .local : .download,
+          label: appState.hasAnyTranscriptionEngine ? "Whisper lokal" : "Whisper laden"
+        )
+      }
     ) {
       // Short caption always visible (spec #3)
       Text("lokale sprache-zu-text-engine (WhisperKit). daten bleiben auf dem gerät.")
@@ -176,7 +157,7 @@ struct ModelsSettingsView: View {
     }
   }
 
-  /// Bridge from the compact Modelle tab to the full "Lokale Modelle" window, where every local model
+  /// Bridge from the compact Modelle tab to the full "lokale modelle" window, where every local model
   /// type (Whisper, llama.cpp LLM, embedding) can be loaded, re-downloaded and deleted in one place.
   private var manageAllModelsButton: some View {
     Button {
@@ -241,7 +222,7 @@ struct ModelsSettingsView: View {
       HStack(spacing: 10) {
         // Show the install button only when something is actually downloadable. When the model is
         // already installed, the state row above ("… ist geladen") says so — a disabled
-        // "… ist installiert" button was a redundant fake button.
+        // "… ist geladen" button was a redundant fake button.
         if !appState.selectedLocalModelIsInstalled {
           Button(appState.localModelDownloadButtonTitle) {
             appState.installSelectedLocalModel()
@@ -262,46 +243,12 @@ struct ModelsSettingsView: View {
 
   // MARK: - Lokales Sprachmodell (llama.cpp)
 
-  private var localLLMSection: some View {
-    SettingsSection("lokales sprachmodell") {
+  private var localLLMCard: some View {
+    SettingsSection(
+      "lokales sprachmodell",
+      caption: "formuliert texte lokal um — nutzbar in jedem modus, unabhängig vom online-modus."
+    ) {
       LocalLLMModelPicker(appState: appState)
     }
-  }
-}
-
-// MARK: - ModelsSectionWithPill
-//
-// A GroupBox variant with a trailing BlitzStatusPill in the label row.
-// Lives here (not in frozen SettingsPrimitives.swift) and is file-private to this module.
-// Uses the same visual rhythm as SettingsSection from SettingsPrimitives.
-
-private struct ModelsSectionWithPill<Pill: View, Content: View>: View {
-  let label: String
-  let pill: Pill
-  @ViewBuilder let content: Content
-
-  init(
-    _ label: String,
-    pill: Pill,
-    @ViewBuilder content: () -> Content
-  ) {
-    self.label = label
-    self.pill = pill
-    self.content = content()
-  }
-
-  var body: some View {
-    // Plain group header (label + pill). The inner SettingsSection children are themselves the
-    // cards now (heading inside), so wrapping the band in its own background produced a visible
-    // box-in-box. One container level only.
-    VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 8) {
-        SectionLabel(text: label)
-        Spacer()
-        pill
-      }
-      content
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
   }
 }

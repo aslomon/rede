@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Unified Settings Surface (polish pass)**: One section card across all five settings tabs
+  - **SettingsSection**: Now renders the shared `settingsGroupBackground` card (12pt radius) with label, optional status pill, header action and caption inside — replaces the GroupBox styling that mixed three different container looks across tabs and nested box-in-box
+  - **Mode cards (Prompts)**: Header moved inside the card (GroupBox floated it above), hotkey shown as quiet mini keycaps instead of near-invisible quaternary text, divider before the editor footer
+  - **Modelle tab flattened**: Processing → OpenAI key → Whisper → local LLM as a clean card list with pills in the card headers; removed the band headers and the duplicate status badge; the card not matching the chosen path dims to 0.45; the local LLM card is never dimmed (per-mode local rewrite works in both paths) and says so
+  - **Archiv tab**: Finally carded like every other tab, with a live status pill (aus · aktiv · N einträge)
+  - **System tab**: Long explanation paragraphs moved behind `InfoDisclosure` per the design rule (install rationale, dictation details); privacy notes stay visible as compact captions; install section gains a status pill
+  - **Vokabular tab**: Stray divider removed — cards separate themselves
+
 - **Onboarding Redesign (9 steps)**: The first-run wizard now covers every key setting in one pass
   - **Welcome + Identity merged**: The intro step asks for the user's name directly (one decision per step, no read-only marketing page)
   - **New "hotkeys" step**: Hold-vs-toggle trigger decision plus a read-only keycap overview of all mode hotkeys (editing stays in the per-mode card)

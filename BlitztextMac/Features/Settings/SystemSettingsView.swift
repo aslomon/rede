@@ -66,15 +66,14 @@ struct SystemSettingsView: View {
   private var installationAndStartSection: some View {
     // Plain section (SectionLabel + content), matching the other System sections.
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "installation & start")
-
-      Text(
-        "für direktes einfügen und stabile hotkeys: rede einmal nach /Applications legen, "
-          + "danach mikrofon und bedienungshilfen erlauben."
-      )
-      .font(.system(size: 10.5))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+      HStack(spacing: 8) {
+        SectionLabel(text: "installation & start")
+        BlitzStatusPill(
+          state: currentInstallLocation == .applications ? .ready : .warning,
+          label: currentInstallLocation == .applications ? "sitzt" : "prüfen"
+        )
+        Spacer()
+      }
 
       Text(installationHeadline)
         .font(.system(size: 11.5, weight: .semibold))
@@ -104,6 +103,16 @@ struct SystemSettingsView: View {
           .font(.system(size: 10.5))
           .foregroundStyle(.red)
           .fixedSize(horizontal: false, vertical: true)
+      }
+
+      // Status → action → optional details: the long rationale lives behind the disclosure
+      // (DESIGN.md: kein dauerhafter Erklärungstext).
+      InfoDisclosure("warum /Applications?") {
+        Text(
+          "für direktes einfügen und stabile hotkeys: rede einmal nach /Applications legen, "
+            + "danach mikrofon und bedienungshilfen erlauben. so bleiben anmeldestart, updates "
+            + "und TCC-freigaben an einer einzigen app-kopie hängen."
+        )
       }
 
       launchAtLoginRow
@@ -212,13 +221,11 @@ struct SystemSettingsView: View {
       .toggleStyle(.switch)
       .controlSize(.small)
 
-      Text(
-        "die prüfung fragt nur die update-liste des projekts ab — übertragen wird dabei lediglich "
-          + "die app-version im anfrage-header. keine weiteren daten, kein geräteprofil."
-      )
-      .font(.system(size: 10.5))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+      // Compact data-flow note (DESIGN.md: sensible Hinweise als sichtbare Caption).
+      Text("übertragen wird nur die app-version — keine weiteren daten, kein geräteprofil.")
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
     }
   }
 
@@ -331,14 +338,6 @@ struct SystemSettingsView: View {
       .pickerStyle(.segmented)
       .labelsHidden()
 
-      Text(
-        "schützt nur vor vergessenen aufnahmen — du kannst problemlos mehrere minuten am stück "
-          + "diktieren. bei der online-transkription bleibt das 25-MB-Limit von OpenAI bestehen."
-      )
-      .font(.system(size: 10.5))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
-
       Toggle(
         "sprechpausen automatisch kürzen",
         isOn: $appState.appSettings.silenceTrimmingEnabled
@@ -347,14 +346,25 @@ struct SystemSettingsView: View {
       .controlSize(.small)
       .padding(.top, 4)
 
-      Text(
-        "schneidet längere gesprächspausen vor der transkription heraus — kürzeres audio, schnellere "
-          + "und günstigere online-verarbeitung. läuft komplett auf deinem Mac; es wird nichts "
-          + "zusätzlich verschickt."
-      )
-      .font(.system(size: 10.5))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+      // Privacy-relevant one-liner stays visible; the long rationale moves behind the disclosure.
+      Text("pausen-kürzung läuft komplett auf deinem Mac — es wird nichts zusätzlich verschickt.")
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+      InfoDisclosure("wie funktioniert das?") {
+        VStack(alignment: .leading, spacing: 5) {
+          Text(
+            "die aufnahmelänge schützt nur vor vergessenen aufnahmen — du kannst problemlos "
+              + "mehrere minuten am stück diktieren. bei der online-transkription bleibt das "
+              + "25-MB-Limit von OpenAI bestehen."
+          )
+          Text(
+            "pausen-kürzung schneidet längere gesprächspausen vor der transkription heraus — "
+              + "kürzeres audio, schnellere und günstigere online-verarbeitung."
+          )
+        }
+      }
     }
   }
 

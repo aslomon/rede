@@ -2,63 +2,78 @@ import SwiftUI
 
 // MARK: - Settings primitives
 //
-// Shared building blocks for the four settings tabs (Prompts · Modelle · Archiv · System).
-// They keep grouping, empty-state guidance and status badges consistent across tabs and
-// codify the DESIGN.md conventions (SectionLabel, SubtleButtonStyle, card radii, du-form text).
+// Shared building blocks for the five settings tabs (prompts · modelle · vokabular · archiv ·
+// system). They keep grouping, empty-state guidance and status badges consistent across tabs and
+// codify the DESIGN.md conventions (SectionLabel, card radii, du-form lowercase copy).
 
-/// A native macOS settings group. Prefer SwiftUI's stock `GroupBox` so macOS 26 can provide the
-/// platform surface; custom Liquid Glass should stay at the popover/window level.
-struct SettingsSection<Content: View>: View {
+/// The ONE settings section container used across all five tabs: a quiet 12pt card
+/// (`settingsGroupBackground`) with the heading row INSIDE — `SectionLabel`, an optional trailing
+/// status pill, and an optional quiet header action. Replaces the earlier GroupBox styling so
+/// every tab reads with the same surface language as the System tab.
+struct SettingsSection<Content: View, Trailing: View>: View {
   let label: String
   let action: (label: String, perform: () -> Void)?
   let caption: String?
-  @ViewBuilder let content: Content
+  let trailing: Trailing
+  let content: Content
 
+  init(
+    _ label: String,
+    action: (label: String, perform: () -> Void)? = nil,
+    caption: String? = nil,
+    @ViewBuilder trailing: () -> Trailing,
+    @ViewBuilder content: () -> Content
+  ) {
+    self.label = label
+    self.action = action
+    self.caption = caption
+    self.trailing = trailing()
+    self.content = content()
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
+        SectionLabel(text: label)
+        // Status pill sits in the section header (DESIGN.md), right next to the label.
+        trailing
+        Spacer()
+        if let action {
+          Button(action.label) { action.perform() }
+            .buttonStyle(PopoverActionButtonStyle(.quiet))
+        }
+      }
+
+      if let caption {
+        Text(caption)
+          .font(.system(size: 10.5))
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      content
+    }
+    .settingsGroupBackground()
+  }
+}
+
+extension SettingsSection where Trailing == EmptyView {
   init(
     _ label: String,
     action: (label: String, perform: () -> Void)? = nil,
     caption: String? = nil,
     @ViewBuilder content: () -> Content
   ) {
-    self.label = label
-    self.action = action
-    self.caption = caption
-    self.content = content()
-  }
-
-  var body: some View {
-    GroupBox {
-      VStack(alignment: .leading, spacing: 10) {
-        // Heading lives INSIDE the box (not as the GroupBox label floating above it) so the section
-        // title visually belongs to its own container.
-        HStack(spacing: 8) {
-          SectionLabel(text: label)
-          Spacer()
-          if let action {
-            Button(action.label) { action.perform() }
-              .buttonStyle(PopoverActionButtonStyle(.quiet))
-          }
-        }
-
-        if let caption {
-          Text(caption)
-            .font(.system(size: 10.5))
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-
-        content
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
+    self.init(label, action: action, caption: caption, trailing: { EmptyView() }, content: content)
   }
 }
 
 // MARK: - Empty-state card
 
-/// Guidance card shown when a feature has nothing configured yet. Mirrors the visual language of
-/// `LocalLLMModelPicker.emptyStateGuidance`: an accent-tinted fill, soft accent border and an
-/// optional inline CTA. Use it to nudge the user toward the step that unblocks the feature.
+/// Guidance card shown when a feature has nothing configured yet: an accent-tinted banner with an
+/// icon + title row, a caption and an optional inline CTA. Tinted via `liquidGlassInfoBanner` so it
+/// reads as actionable guidance, not as another nested section box (the earlier GroupBox version
+/// produced box-in-box inside `SettingsSection`).
 struct EmptyStateCard: View {
   let icon: String
   let title: String
@@ -66,8 +81,6 @@ struct EmptyStateCard: View {
   let accent: Color
   let buttonLabel: String?
   let action: (() -> Void)?
-
-  @Environment(\.colorScheme) private var colorScheme
 
   init(
     icon: String,
@@ -86,85 +99,41 @@ struct EmptyStateCard: View {
   }
 
   var body: some View {
-    GroupBox {
-      VStack(alignment: .leading, spacing: 8) {
-        Text(caption)
-          .font(.system(size: 10.5))
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
-
-        if let buttonLabel, let action {
-          Button {
-            action()
-          } label: {
-            Label(buttonLabel, systemImage: "arrow.right.circle.fill")
-              .font(.system(size: 11, weight: .semibold))
-          }
-          .buttonStyle(PopoverActionButtonStyle(.secondary))
-        }
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 6) {
+        Image(systemName: icon)
+          .font(.system(size: 11, weight: .semibold))
+        Text(title)
+          .font(.system(size: 11.5, weight: .semibold))
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    } label: {
-      Label(title, systemImage: icon)
-        .font(.system(size: 11.5, weight: .semibold))
-        .foregroundStyle(accent)
-    }
-  }
-}
+      .foregroundStyle(accent)
 
-// MARK: - Status badge
-
-/// Compact availability badge reusing the project's status icons (DESIGN.md):
-/// green check = ready, blue down-arrow = pending download, orange triangle = needs attention.
-struct SettingsStatusBadge: View {
-  enum State {
-    case ready
-    case download
-    case warning
-
-    var iconName: String {
-      switch self {
-      case .ready: return "checkmark.circle.fill"
-      case .download: return "arrow.down.circle.fill"
-      case .warning: return "exclamationmark.triangle.fill"
-      }
-    }
-
-    var tint: Color {
-      switch self {
-      case .ready: return .green
-      case .download: return .blue
-      case .warning: return .orange
-      }
-    }
-  }
-
-  let state: State
-  let label: String
-
-  init(_ state: State, label: String) {
-    self.state = state
-    self.label = label
-  }
-
-  var body: some View {
-    HStack(spacing: 5) {
-      Image(systemName: state.iconName)
-        .font(.system(size: 10, weight: .semibold))
-        .foregroundStyle(state.tint)
-      Text(label)
-        .font(.system(size: 10))
+      Text(caption)
+        .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
+
+      if let buttonLabel, let action {
+        Button {
+          action()
+        } label: {
+          Label(buttonLabel, systemImage: "arrow.right.circle.fill")
+            .font(.system(size: 11, weight: .semibold))
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+      }
     }
+    .padding(10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .liquidGlassInfoBanner(accent: accent)
   }
 }
 
 // MARK: - Destructive clear button
 
-/// A single red `SubtleButtonStyle` action that confirms via the native `.confirmationDialog`
-/// (UX-6) instead of an inline "Abbrechen / Wirklich löschen" toggle. Unifies the three archive-
-/// window "Verlauf/Archiv löschen" buttons (Archiv · Kontext · Verbesserungen) so destructive
+/// A single red action that confirms via the native `.confirmationDialog`
+/// (UX-6) instead of an inline "abbrechen / wirklich löschen" toggle. Unifies the archive-
+/// window "verlauf/archiv löschen" buttons (archiv · kontext · verbesserungen) so destructive
 /// deletes look and behave identically and each carries a VoiceOver label. The dialog title is
 /// derived from `label`; `message` spells out the irreversible, on-device consequence.
 struct DestructiveClearButton: View {
@@ -198,7 +167,8 @@ struct DestructiveClearButton: View {
 
 extension View {
   /// Wraps a settings section in a subtle background "div" (DESIGN.md card fill) so each group reads
-  /// as a clearly separated block — light enough to group without a heavy box. Matches the Modelle bands.
+  /// as a clearly separated block — light enough to group without a heavy box. The single section
+  /// surface across ALL settings tabs (used directly by the System tab and via `SettingsSection`).
   func settingsGroupBackground() -> some View {
     self
       .frame(maxWidth: .infinity, alignment: .leading)

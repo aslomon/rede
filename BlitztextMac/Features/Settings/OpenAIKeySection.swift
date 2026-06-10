@@ -8,6 +8,9 @@ struct OpenAIKeySection: View {
   private static let openAIAPIKeyPattern = #"^sk-[A-Za-z0-9_-]{20,}$"#
 
   @Bindable var appState: AppState
+  /// Adds a header status pill (online bereit / OpenAI fehlt). On in the Modelle tab where the
+  /// section is a standalone card; off in onboarding where the surrounding step shows status.
+  var showsStatusPill: Bool = false
 
   private enum FieldFocus {
     case openAIAPIKey
@@ -21,8 +24,14 @@ struct OpenAIKeySection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack {
+      HStack(spacing: 8) {
         SectionLabel(text: "OpenAI API Key")
+        if showsStatusPill {
+          BlitzStatusPill(
+            state: appState.hasOpenAIKey ? .online : .warning,
+            label: appState.hasOpenAIKey ? "online bereit" : "OpenAI fehlt"
+          )
+        }
         Spacer()
         if appState.hasValue(for: .openAIAPIKey) && !editing {
           // spec #5: 'ändern' in header slot

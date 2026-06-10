@@ -53,8 +53,17 @@ einfügen.
 
 ## Komponenten
 
-- Stock SwiftUI zuerst: `GroupBox`, `Form`-artige vertikale Gruppen, native `Picker`,
+- Stock SwiftUI zuerst: `Form`-artige vertikale Gruppen, native `Picker`,
   `Toggle`, `TextField`, `TextEditor`, `.bordered` / `.borderedProminent` Buttons.
+- **Eine Sektionskarte für alle Settings-Tabs**: `settingsGroupBackground()` (12pt-Radius,
+  `primary.opacity(0.03)`-Fill, 0.06-Stroke, 12pt-Padding) ist die einzige Sektions-Fläche in den
+  fünf Tabs. `SettingsSection` rendert Label, optionale Status-Pille, optionale Header-Aktion und
+  Caption IN dieser Karte (kein `GroupBox` mehr — der erzeugte Box-in-Box-Look und floatende
+  Header). Modus-Karten (`ModeCardView`) nutzen dieselbe Karte mit dem Header in der Karte;
+  der Modus-Hotkey erscheint dort als Mini-Keycaps (`liquidGlassKeycap`, 9pt monospaced),
+  ausgeblendet solange keine Kombination gesetzt ist.
+- `EmptyStateCard`: getönte Banner-Karte (`liquidGlassInfoBanner`) mit Icon+Titel-Zeile, Caption
+  und optionaler CTA — Guidance, keine weitere Sektions-Box.
 - `SubtleButtonStyle` nur noch für sehr kleine Inline-/Chip-Aktionen, nicht für echte Buttons.
 - Neue sichtbare Action-Buttons: `PopoverActionButtonStyle(.primary/.secondary/.warning/.danger/.quiet)`.
   Echte Aktionen dürfen nicht wie nackter Text aussehen; auch kleine Aktionen bekommen Fill/Stroke
@@ -213,6 +222,13 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
 - Lange Erklärungen: ausschließlich hinter `InfoDisclosure`. Kein dauerhafter Erklärungstext.
 - `setupNudgeBanner`: nur auf Tab 0 (Prompts), nicht tabs-übergreifend.
 - `workflowHeader`: Modus-Name auf `.semibold` 13pt, Akzentfarbe auf Icon.
+- **Modelle-Tab = flache Kartenliste**: verarbeitung → OpenAI API Key → lokale transkription
+  (Whisper) → lokales sprachmodell. Status-Pills sitzen in den Karten-Headern; die zum gewählten
+  Verarbeitungspfad nicht passende Karte wird auf 0.45 gedimmt, bleibt aber bedienbar. Das lokale
+  Sprachmodell wird nie gedimmt (per-Modus-Rewrite funktioniert in beiden Pfaden). Keine
+  Band-Zwischenüberschriften mehr.
+- **Archiv-Tab**: eine `SettingsSection`-Karte mit Status-Pille (aus · aktiv · N einträge) im
+  Header.
 - Systemeinstellungen-Reihenfolge: Bedienungshilfen → Installation & Start → Tastenkürzel →
   Diktat → Akustisches Feedback → Einrichtung → Updates → Über & Lizenzen → Sauber Entfernen.
   Die Tastenkürzel-Sektion trägt EINE `SectionLabel`-Überschrift, dann die

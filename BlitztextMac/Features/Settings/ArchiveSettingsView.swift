@@ -19,10 +19,21 @@ struct ArchiveSettingsView: View {
 
   // MARK: - Archive
 
-  private var archiveSection: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "transkriptions-archiv")
+  /// Header pill mirrors the archive state at a glance: muted "aus", or the live entry count.
+  private var archivePill: BlitzStatusPill {
+    guard appState.isArchiveEnabled else {
+      return BlitzStatusPill(state: .muted, label: "aus")
+    }
+    let count = appState.archiveStore.entries.count
+    if count == 0 { return BlitzStatusPill(state: .ready, label: "aktiv") }
+    return BlitzStatusPill(state: .ready, label: count == 1 ? "1 eintrag" : "\(count) einträge")
+  }
 
+  private var archiveSection: some View {
+    SettingsSection(
+      "transkriptions-archiv",
+      trailing: { archivePill }
+    ) {
       // Status → Action: Toggle first, privacy detail behind disclosure.
       Toggle(
         "transkriptionen lokal archivieren",
