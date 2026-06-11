@@ -52,6 +52,12 @@ final class AppState {
   private(set) var localModelPreparing = false
   /// Tracks the in-flight prewarm so switching models cancels the previous one's bookkeeping.
   @ObservationIgnored private var localModelPrewarmTask: Task<Void, Never>?
+  /// True while the bundled llama.cpp server is starting + loading the selected local rewrite model
+  /// at launch, so the UI can show the local-rewrite engine is getting ready (mirrors
+  /// `localModelPreparing` for Whisper). The server is otherwise started lazily on the first
+  /// rewrite, which left local-rewrite modes cold after a restart.
+  private(set) var localRewritePreparing = false
+  @ObservationIgnored private var localRewritePrewarmTask: Task<Void, Never>?
   var onMenuBarStatusChange: ((MenuBarStatus) -> Void)?
   /// Invoked when a finished run could NOT be auto-pasted (no Accessibility right / no target /
   /// focus race lost). Carries the dictated text so the floating pill can expand and show it in a
@@ -101,6 +107,11 @@ final class AppState {
         prepareLocalModel(resolvedLocalModelName)
       } else {
         prewarmLocalTranscriptionIfNeeded()
+      }
+      // Re-warm the local rewrite server when the selected llama.cpp model changes, so a freshly
+      // picked model is loaded and ready without waiting for the first rewrite.
+      if oldValue.selectedLocalLLM != appSettings.selectedLocalLLM {
+        prewarmLocalRewriteIfNeeded()
       }
       reloadHotkeys()
       applyRecordingSettings()
@@ -180,6 +191,7 @@ final class AppState {
     refreshAccessibilityPermission()
     autoSelectFastLocalModelIfNeeded()
     prewarmLocalTranscriptionIfNeeded()
+    prewarmLocalRewriteIfNeeded()
     applyRecordingSettings()
     reloadHotkeys()
     runMemoryLaunchMaintenanceIfNeeded()
@@ -1832,6 +1844,31 @@ final class AppState {
       try? await LocalTranscriptionService.shared.prepare(modelName: normalizedName)
       guard !Task.isCancelled else { return }
       self?.localModelPreparing = false
+    }
+  }
+
+  /// Start the bundled llama.cpp server + load the selected local rewrite model off the main actor,
+  /// so local-rewrite modes are ready right after a restart instead of only once the first rewrite
+  /// (or opening the Modelle tab) starts the server lazily. No-op unless a llama.cpp model is
+  /// selected AND installed — so OpenAI-only users never spin up the server. Mirrors
+  /// `prewarmLocalTranscriptionIfNeeded()` for Whisper.
+  func prewarmLocalRewriteIfNeeded() {
+    let selection = appSettings.selectedLocalLLM
+    guard selection.isConfigured,
+      selection.runtime == .llamaCpp,
+      localModelManager.isLlamaCppInstalled(selection.modelID)
+    else {
+      localRewritePreparing = false
+      return
+    }
+    let modelID = selection.modelID
+    localRewritePrewarmTask?.cancel()
+    localRewritePreparing = true
+    localRewritePrewarmTask = Task { [weak self] in
+      // client(for:) starts (or reuses) the server and waits until the model reports ready.
+      _ = try? await LlamaCppRuntimeService.shared.client(for: modelID)
+      guard !Task.isCancelled else { return }
+      self?.localRewritePreparing = false
     }
   }
 
