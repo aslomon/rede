@@ -3,7 +3,7 @@ import SwiftUI
 /// Full transcription archive in its own resizable window. The 340pt popover only shows a
 /// condensed preview (`ArchiveSettingsView`); this window groups the four facets — Diktate (stats),
 /// Kontext (Office Memory), Verbesserungen (MEM-2) and Verlauf (the day-grouped entries) — behind a
-/// native segmented control instead of one long scroll, so each reads on its own. Hosted by
+/// RedeTabBar instead of one long scroll, so each reads on its own. Hosted by
 /// `ArchiveWindowController`; reuses `ArchiveEntryRow` and the section views.
 struct ArchiveWindowView: View {
   @Bindable var appState: AppState
@@ -17,15 +17,6 @@ struct ArchiveWindowView: View {
     case verbesserungen
 
     var id: String { rawValue }
-
-    var label: String {
-      switch self {
-      case .verlauf: return "verlauf"
-      case .diktate: return "diktate"
-      case .kontext: return "kontext"
-      case .verbesserungen: return "verbesserungen"
-      }
-    }
   }
 
   @State private var facet: Facet = .verlauf
@@ -88,26 +79,21 @@ struct ArchiveWindowView: View {
 
   // MARK: - Facet picker + content
 
+  /// Icon+label pills (RedeTabBar); the verbesserungen tab carries a live count badge so an
+  /// actionable "Vorschlag" is visible without first opening that facet.
   private var facetPicker: some View {
-    Picker("", selection: $facet) {
-      ForEach(Facet.allCases) { facet in
-        Text(facetLabel(facet)).tag(facet)
-      }
-    }
-    .pickerStyle(.segmented)
-    .controlSize(.small)
-    .labelsHidden()
+    RedeTabBar(
+      selection: $facet,
+      items: [
+        RedeTabItem(tag: Facet.verlauf, label: "verlauf", icon: "clock.arrow.circlepath"),
+        RedeTabItem(tag: Facet.diktate, label: "diktate", icon: "chart.bar"),
+        RedeTabItem(tag: Facet.kontext, label: "kontext", icon: "scope"),
+        RedeTabItem(
+          tag: Facet.verbesserungen, label: "verbesserungen", icon: "wand.and.stars",
+          badge: appState.improvementSuggestions.count),
+      ]
+    )
     .accessibilityLabel("Archiv-Ansicht")
-  }
-
-  /// Appends the pending MEM-2b suggestion count to the Verbesserungen segment so an actionable
-  /// "Vorschlag" is visible without first opening that tab.
-  private func facetLabel(_ facet: Facet) -> String {
-    if facet == .verbesserungen {
-      let count = appState.improvementSuggestions.count
-      if count > 0 { return "\(facet.label) (\(count))" }
-    }
-    return facet.label
   }
 
   @ViewBuilder

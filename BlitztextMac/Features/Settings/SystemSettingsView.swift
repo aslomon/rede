@@ -151,12 +151,14 @@ struct SystemSettingsView: View {
   private var launchAtLoginRow: some View {
     VStack(alignment: .leading, spacing: 6) {
       Toggle(
-        "rede automatisch starten",
         isOn: Binding(
           get: { launchAtLoginService.isEnabled },
           set: { launchAtLoginService.setEnabled($0) }
         )
-      )
+      ) {
+        Label("rede automatisch starten", systemImage: "power")
+          .labelStyle(QuietToggleLabelStyle())
+      }
       .toggleStyle(.switch)
       .controlSize(.small)
 
@@ -222,12 +224,14 @@ struct SystemSettingsView: View {
       .disabled(!appState.updateService.canCheckForUpdates)
 
       Toggle(
-        "automatisch täglich prüfen",
         isOn: Binding(
           get: { appState.updateService.automaticChecksEnabled },
           set: { appState.updateService.setAutomaticChecksEnabled($0) }
         )
-      )
+      ) {
+        Label("automatisch täglich prüfen", systemImage: "calendar")
+          .labelStyle(QuietToggleLabelStyle())
+      }
       .toggleStyle(.switch)
       .controlSize(.small)
 
@@ -267,18 +271,16 @@ struct SystemSettingsView: View {
         hotkeyWarnings
       }
 
-      // Read-only per-mode table below the picker
-      VStack(spacing: 6) {
+      // Read-only per-mode table below the picker (shared ModeHotkeyRow — same art as onboarding)
+      VStack(spacing: 8) {
         ForEach(appState.mainMenuModeConfigs) { config in
-          HStack {
-            Text(appState.hotkeyLabel(for: config.id))
-              .font(.system(size: 11, design: .monospaced))
-              .foregroundStyle(.secondary)
-              .frame(width: 124, alignment: .leading)
-            Text(appState.displayName(for: config))
-              .font(.system(size: 11.5, weight: .medium))
-            Spacer()
-          }
+          let hotkey = appState.hotkeyConfig(for: config.id)
+          ModeHotkeyRow(
+            icon: config.slot.icon,
+            accent: config.slot.accentColorValue,
+            name: appState.displayName(for: config),
+            hotkeyLabel: hotkey.isConfigured && hotkey.isEnabled ? hotkey.label : nil
+          )
         }
       }
 
@@ -349,10 +351,10 @@ struct SystemSettingsView: View {
       .pickerStyle(.segmented)
       .labelsHidden()
 
-      Toggle(
-        "sprechpausen automatisch kürzen",
-        isOn: $appState.appSettings.silenceTrimmingEnabled
-      )
+      Toggle(isOn: $appState.appSettings.silenceTrimmingEnabled) {
+        Label("sprechpausen automatisch kürzen", systemImage: "scissors")
+          .labelStyle(QuietToggleLabelStyle())
+      }
       .toggleStyle(.switch)
       .controlSize(.small)
       .padding(.top, 4)

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Tab & Toggle Icon Rollout (RedeTabBar)**
+  - New `RedeTabBar` component: horizontal icon+label pills with the active tab in rede-violet on a violet tint capsule; replaces the native segmented pickers for the five settings tabs (rectangle.stack/shippingbox/character.book.closed/archivebox/gearshape) and the four archive-window facets (clock.arrow.circlepath/chart.bar/scope/wand.and.stars) — the verbesserungen facet carries a live violet count badge instead of the "(n)" text suffix
+  - Toggles carry their concept icon via the new `QuietToggleLabelStyle` (scope, brain, square.split.2x1, textformat.abc.dottedunderline, wand.and.stars, power, calendar, scissors, key.fill); master toggles directly under a same-concept section header stay icon-free (documented rule)
+  - System tab hotkey table and the onboarding hotkeys step now share one `ModeHotkeyRow` (mode icon in accent + name + keycaps) instead of two diverging tables
+  - Completed the action-verb icon language: zurücksetzen/beispiel = arrow.uturn.backward, kopieren = doc.on.doc, übernehmen/verwerfen = checkmark/xmark, rerun menu items show their mode icons, mic/system-panel buttons in onboarding, custom-GGUF "laden" gets the canonical download icon; popover gear unified to `gearshape`
+  - Vokabular: E-Mail-Memory status block sits on the shared flat token row like the Modelle tab
+
 - **Modelle Tab Cleanup (installed models first-class)**
   - Installed Whisper and GGUF models now show as directly selectable rows in the tab (green check + "aktiv" pill / "nutzen" button via the shared `ModelSelectRow`) — no window round-trip to activate a model that is already on disk; `LocalLLMModelPicker` gained the same inline rows everywhere it appears (mode cards, onboarding)
   - Auto-adoption: when the persisted selection points at nothing on disk but models are installed, `adoptInstalledLocalModelsIfNeeded()` selects the first installed one (both engines; Whisper adoption skipped mid-download)

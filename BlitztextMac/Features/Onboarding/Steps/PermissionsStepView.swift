@@ -45,11 +45,17 @@ struct PermissionsStepView: View {
         // Primary grant action (only shown when not yet granted) (change 11)
         HStack(spacing: 8) {
           if micStatus == .notDetermined {
-            Button("mikrofon erlauben") { requestMicrophone() }
-              .buttonStyle(PopoverActionButtonStyle(.warning))
+            Button {
+              requestMicrophone()
+            } label: {
+              Label("mikrofon erlauben", systemImage: "mic.fill")
+            }
+            .buttonStyle(PopoverActionButtonStyle(.warning))
           } else if micStatus == .denied {
-            Button("in systemeinstellungen öffnen") {
+            Button {
               MicrophonePermissionService.openSystemSettings()
+            } label: {
+              Label("in systemeinstellungen öffnen", systemImage: "arrow.up.forward.app")
             }
             .buttonStyle(PopoverActionButtonStyle(.warning))
           }

@@ -43,7 +43,7 @@ Sektions-Header (`SectionLabel(text:icon:)` / `SettingsSection(_:icon:)`) tragen
 | Whisper/transkription | `waveform` | | identität | `person.crop.circle` |
 | sprachmodell (LLM) | `text.bubble` | | begriffe | `character.book.closed` |
 | verarbeitung | `cpu` | | ersetzungen | `arrow.left.arrow.right` |
-| OpenAI-Key | `key.fill` | | archiv | `archivebox` |
+| OpenAI-Key/zugangsdaten | `key.fill` | | archiv | `archivebox` |
 | hotkeys | `keyboard` | | statistik | `chart.bar` |
 | modi | `rectangle.stack` | | kontext | `scope` |
 | bedienungshilfen | `accessibility` | | lernen/verbessern | `wand.and.stars` |
@@ -51,12 +51,32 @@ Sektions-Header (`SectionLabel(text:icon:)` / `SettingsSection(_:icon:)`) tragen
 | töne | `speaker.wave.2` | | embedding | `point.3.connected.trianglepath.dotted` |
 | autostart | `power` | | einrichtung | `sparkles` |
 | über/lizenzen | `info.circle` | | entfernen (destruktiv) | `trash` |
+| system | `gearshape` (nie `gear`) | | verlauf | `clock.arrow.circlepath` |
+| zeitplan/täglich | `calendar` | | pausen kürzen | `scissors` |
+| autokorrektur begriffe | `textformat.abc.dottedunderline` | | varianten | `square.split.2x1` |
 
 Aktions-Verben auf Buttons (als `Label`): laden = `arrow.down.circle.fill`, prüfen/neu laden =
 `arrow.clockwise`, löschen = `trash` (alle destruktiven Aktionen inkl. `DestructiveClearButton`),
 fenster öffnen = `macwindow`, system-panel öffnen = `arrow.up.forward.app`, einfügen aus
-zwischenablage = `doc.on.clipboard`, analysieren = `sparkle.magnifyingglass`, weiter (wizard) =
-trailing `chevron.right`. Kurze Banner-CTAs („öffnen", „prüfen") und Abbrechen bleiben textonly.
+zwischenablage = `doc.on.clipboard`, kopieren in zwischenablage = `doc.on.doc`, analysieren =
+`sparkle.magnifyingglass`, zurücksetzen/auf beispiel zurück = `arrow.uturn.backward` (NICHT
+`arrow.counterclockwise` — das bleibt „erneut starten/durchlaufen"), übernehmen = `checkmark`,
+verwerfen = `xmark`, weiter (wizard) = trailing `chevron.right`. Kurze Banner-CTAs („öffnen",
+„prüfen") und Abbrechen bleiben textonly.
+
+**Schalter (Toggles)** tragen das Icon ihres Konzepts via
+`Label(...).labelStyle(QuietToggleLabelStyle())` (Icon 10.5pt `.semibold` `.secondary`,
+14pt-Slot zur Ausrichtung). Ausnahmen ohne Icon: Master-Schalter direkt unter einem Header mit
+demselben Konzept-Icon (archiv-, memory-, töne-Schalter), `labelsHidden`-Schalter, das
+Mini-„aktiv" im Hotkey-Recorder und die „ganzes wort"-Checkbox.
+
+**Navigation vs. Wertauswahl**: `RedeTabBar` (Features/Shared/RedeTabBar.swift) ist DAS Control
+für Navigation zwischen Zielen — horizontale Icon+Label-Pills, aktiver Tab in `RedeBrand.violet`
+auf violettem `tintFill`-Kapsel-Pill, optionales violettes Zähler-Badge (Archiv-Fenster:
+verbesserungen). Eingesetzt für die 5 Settings-Tabs und die 4 Archiv-Facetten. Bewusster
+Trade-off: keine Pfeiltasten-Navigation des nativen Segmented Controls (Items sind Buttons mit
+`.isSelected`-Trait). Segmented Picker bleiben für WERT-Auswahl (schreibstil, emoji-dichte,
+hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer text-only.
 
 ## Farben
 

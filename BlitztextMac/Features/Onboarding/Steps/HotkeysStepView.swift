@@ -47,7 +47,13 @@ struct HotkeysStepView: View {
 
         VStack(spacing: 8) {
           ForEach(appState.mainMenuModeConfigs) { config in
-            hotkeyRow(config)
+            let hotkey = appState.hotkeyConfig(for: config.id)
+            ModeHotkeyRow(
+              icon: config.slot.icon,
+              accent: config.slot.accentColorValue,
+              name: appState.displayName(for: config),
+              hotkeyLabel: hotkey.isConfigured ? hotkey.label : nil
+            )
           }
         }
 
@@ -57,27 +63,5 @@ struct HotkeysStepView: View {
           .fixedSize(horizontal: false, vertical: true)
       }
     }
-  }
-
-  private func hotkeyRow(_ config: ModeConfig) -> some View {
-    let hotkey = appState.hotkeyConfig(for: config.id)
-    return HStack(spacing: 8) {
-      Image(systemName: config.slot.icon)
-        .font(.system(size: 11, weight: .semibold))
-        .foregroundStyle(config.slot.accentColorValue)
-        .frame(width: 16)
-      Text(appState.displayName(for: config))
-        .font(.system(size: 12, weight: .medium))
-        .foregroundStyle(.primary)
-      Spacer(minLength: 8)
-      if hotkey.isConfigured {
-        HotkeyBadge(label: hotkey.label, enabled: true)
-      } else {
-        Text("nicht gesetzt")
-          .font(.system(size: 10.5))
-          .foregroundStyle(.tertiary)
-      }
-    }
-    .accessibilityElement(children: .combine)
   }
 }

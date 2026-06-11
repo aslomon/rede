@@ -189,9 +189,11 @@ struct LocalModelsView: View {
           .textFieldStyle(.roundedBorder)
           .font(.system(size: 11.5))
           .onSubmit(loadCustomURL)
-        Button("laden", action: loadCustomURL)
-          .buttonStyle(PopoverActionButtonStyle(.primary))
-          .disabled(customURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        Button(action: loadCustomURL) {
+          Label("laden", systemImage: "arrow.down.circle.fill")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.primary))
+        .disabled(customURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       }
       Text("direkter link zu einer .gguf-datei (z. B. von Hugging Face). ohne prüfsumme.")
         .font(.system(size: 10)).foregroundStyle(.secondary)

@@ -97,19 +97,25 @@ extension ModeCardView {
 
   @ViewBuilder
   var automaticFieldContextToggle: some View {
-    Toggle("fensterkontext automatisch lesen", isOn: bind(\.rewrite.useAutomaticFieldContext))
-      .toggleStyle(.switch)
-      .controlSize(.small)
-      .font(.system(size: 11))
+    Toggle(isOn: bind(\.rewrite.useAutomaticFieldContext)) {
+      Label("fensterkontext automatisch lesen", systemImage: "scope")
+        .labelStyle(QuietToggleLabelStyle())
+    }
+    .toggleStyle(.switch)
+    .controlSize(.small)
+    .font(.system(size: 11))
   }
 
   @ViewBuilder
   var unifiedMemoryControls: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Toggle("memory nutzen", isOn: unifiedMemoryBinding)
-        .toggleStyle(.switch)
-        .controlSize(.small)
-        .font(.system(size: 11))
+      Toggle(isOn: unifiedMemoryBinding) {
+        Label("memory nutzen", systemImage: "brain")
+          .labelStyle(QuietToggleLabelStyle())
+      }
+      .toggleStyle(.switch)
+      .controlSize(.small)
+      .font(.system(size: 11))
 
       if type == .textImprover, config.rewrite.useSemanticEmailMemory {
         Picker("", selection: bind(\.rewrite.semanticEmailEnrichmentLevel)) {
@@ -144,9 +150,12 @@ extension ModeCardView {
 
   @ViewBuilder
   var variantChoiceToggle: some View {
-    Toggle("immer zwei versionen zeigen", isOn: bind(\.rewrite.showTwoVariants))
-      .toggleStyle(.switch)
-      .controlSize(.small)
-      .font(.system(size: 11))
+    Toggle(isOn: bind(\.rewrite.showTwoVariants)) {
+      Label("immer zwei versionen zeigen", systemImage: "square.split.2x1")
+        .labelStyle(QuietToggleLabelStyle())
+    }
+    .toggleStyle(.switch)
+    .controlSize(.small)
+    .font(.system(size: 11))
   }
 }

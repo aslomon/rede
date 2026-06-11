@@ -6,18 +6,20 @@ struct SettingsContentView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      // Five-tab segmented picker (short lowercase labels fit the 410pt popover).
-      Picker("", selection: $appState.settingsTabSelection) {
-        Text("prompts").tag(0)
-        Text("modelle").tag(1)
-        Text("vokabular").tag(2)
-        Text("archiv").tag(3)
-        Text("system").tag(4)
-      }
-      .pickerStyle(.segmented)
-      .controlSize(.small)
-      .padding(.horizontal, 16)
-      .padding(.vertical, 10)
+      // Five destination tabs as icon+label pills (RedeTabBar — DESIGN.md tab pattern).
+      RedeTabBar(
+        selection: $appState.settingsTabSelection,
+        items: [
+          RedeTabItem(tag: 0, label: "prompts", icon: "rectangle.stack"),
+          RedeTabItem(tag: 1, label: "modelle", icon: "shippingbox"),
+          RedeTabItem(tag: 2, label: "vokabular", icon: "character.book.closed"),
+          RedeTabItem(tag: 3, label: "archiv", icon: "archivebox"),
+          RedeTabItem(tag: 4, label: "system", icon: "gearshape"),
+        ]
+      )
+      .padding(.horizontal, 12)
+      .padding(.top, 10)
+      .padding(.bottom, 6)
 
       ScrollView {
         VStack(spacing: 0) {
@@ -57,7 +59,7 @@ struct SettingsContentView: View {
   }
 
   /// Always land on Prompts (tab 0), the primary tab — the other three are one tap away in the
-  /// always-visible segmented picker. The `setupNudgeBanner` shows on EVERY tab while unconfigured,
+  /// always-visible tab bar. The `setupNudgeBanner` shows on EVERY tab while unconfigured,
   /// so guidance no longer needs to hijack the landing tab to System (which hid the other tabs).
   private var defaultTabSelection: Int { 0 }
 

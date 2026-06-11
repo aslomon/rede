@@ -218,12 +218,16 @@ private struct ImprovementSuggestionRow: View {
 
       Spacer(minLength: 6)
 
-      Button("übernehmen", action: onAccept)
-        .buttonStyle(PopoverActionButtonStyle(.primary))
-        .accessibilityLabel("Vorschlag übernehmen: \(suggestion.from) zu \(suggestion.to)")
-      Button("verwerfen", action: onDismiss)
-        .buttonStyle(PopoverActionButtonStyle(.secondary))
-        .accessibilityLabel("Vorschlag verwerfen: \(suggestion.from) zu \(suggestion.to)")
+      Button(action: onAccept) {
+        Label("übernehmen", systemImage: "checkmark")
+      }
+      .buttonStyle(PopoverActionButtonStyle(.primary))
+      .accessibilityLabel("Vorschlag übernehmen: \(suggestion.from) zu \(suggestion.to)")
+      Button(action: onDismiss) {
+        Label("verwerfen", systemImage: "xmark")
+      }
+      .buttonStyle(PopoverActionButtonStyle(.secondary))
+      .accessibilityLabel("Vorschlag verwerfen: \(suggestion.from) zu \(suggestion.to)")
     }
     .padding(8)
     .frame(maxWidth: .infinity, alignment: .leading)

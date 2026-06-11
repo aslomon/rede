@@ -170,10 +170,10 @@ struct VocabularySettingsView: View {
   /// back to the canonical word. Default ON; only fires on clear, unambiguous near-misses.
   private var fuzzyToggle: some View {
     VStack(alignment: .leading, spacing: 3) {
-      Toggle(
-        "begriffe automatisch korrigieren",
-        isOn: $appState.appSettings.fuzzyCorrectionEnabled
-      )
+      Toggle(isOn: $appState.appSettings.fuzzyCorrectionEnabled) {
+        Label("begriffe automatisch korrigieren", systemImage: "textformat.abc.dottedunderline")
+          .labelStyle(QuietToggleLabelStyle())
+      }
       .toggleStyle(.switch)
       .controlSize(.small)
       .font(.system(size: 11.5))
@@ -253,9 +253,12 @@ struct VocabularySettingsView: View {
 
         emailMemoryStatusRow
 
-        Toggle("aus korrekturen lernen", isOn: $appState.isImprovementDetectionEnabled)
-          .toggleStyle(.switch)
-          .controlSize(.small)
+        Toggle(isOn: $appState.isImprovementDetectionEnabled) {
+          Label("aus korrekturen lernen", systemImage: "wand.and.stars")
+            .labelStyle(QuietToggleLabelStyle())
+        }
+        .toggleStyle(.switch)
+        .controlSize(.small)
 
         // 5. Destructive buttons stacked vertically — reduces mis-tap risk
         clearMemoryControls
@@ -263,12 +266,12 @@ struct VocabularySettingsView: View {
     }
   }
 
+  /// Same row language as the Modelle tab: the e-mail memory engine as a flat token row.
   private var emailMemoryStatusRow: some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 8) {
         Text("E-Mail-Memory")
-          .font(.system(size: 11))
-          .foregroundStyle(.secondary)
+          .font(.system(size: 11.5, weight: .semibold))
         BlitzStatusPill(state: emailMemoryPillState, label: appState.semanticEmailMemoryStatusLabel)
         Spacer(minLength: 0)
       }
@@ -285,8 +288,10 @@ struct VocabularySettingsView: View {
       }
 
       embeddingProgress
-
     }
+    .padding(8)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .tokenCard(cornerRadius: 8)
   }
 
   @ViewBuilder

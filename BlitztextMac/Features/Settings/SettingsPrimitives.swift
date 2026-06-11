@@ -182,6 +182,59 @@ struct ModelSelectRow: View {
   }
 }
 
+// MARK: - Quiet toggle label
+
+/// Label style for icon-carrying toggles (rede icon language on Schalter): the concept icon
+/// renders quiet (10.5pt semibold, secondary, fixed 14pt slot so stacked toggles align); the
+/// title keeps whatever font cascades from the call site. Master toggles directly under a
+/// same-concept section header stay icon-free — see DESIGN.md.
+struct QuietToggleLabelStyle: LabelStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    HStack(spacing: 6) {
+      configuration.icon
+        .font(.system(size: 10.5, weight: .semibold))
+        .foregroundStyle(.secondary)
+        .frame(width: 14)
+      configuration.title
+    }
+  }
+}
+
+// MARK: - Mode hotkey row
+
+/// Read-only per-mode hotkey line shared by the System tab and the onboarding hotkeys step so the
+/// two tables never drift: mode icon in its accent colour, display name, keycaps right-aligned.
+/// Deliberately NOT a tokenCard — this is information, not an actionable row.
+struct ModeHotkeyRow: View {
+  let icon: String
+  let accent: Color
+  let name: String
+  /// The configured combination (e.g. "fn + Shift"); nil renders a quiet "nicht gesetzt".
+  let hotkeyLabel: String?
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Image(systemName: icon)
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(accent)
+        .frame(width: 16)
+        .accessibilityHidden(true)
+      Text(name)
+        .font(.system(size: 12, weight: .medium))
+        .foregroundStyle(.primary)
+      Spacer(minLength: 8)
+      if let hotkeyLabel {
+        HotkeyBadge(label: hotkeyLabel, enabled: true)
+      } else {
+        Text("nicht gesetzt")
+          .font(.system(size: 10.5))
+          .foregroundStyle(.tertiary)
+      }
+    }
+    .accessibilityElement(children: .combine)
+  }
+}
+
 // MARK: - Destructive clear button
 
 /// A single red action that confirms via the native `.confirmationDialog`

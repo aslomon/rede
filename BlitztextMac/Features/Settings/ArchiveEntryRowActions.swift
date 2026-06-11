@@ -44,16 +44,24 @@ struct ArchiveEntryRowActions: View {
   }
 
   private func copyButton(title: String, text: String, feedback: String) -> some View {
-    Button(title) { copy(text, feedback: feedback) }
-      .buttonStyle(PopoverActionButtonStyle(.secondary))
-      .disabled(text.isEmpty)
-      .accessibilityLabel("\(title) in die Zwischenablage")
+    Button {
+      copy(text, feedback: feedback)
+    } label: {
+      Label(title, systemImage: "doc.on.doc")
+    }
+    .buttonStyle(PopoverActionButtonStyle(.secondary))
+    .disabled(text.isEmpty)
+    .accessibilityLabel("\(title) in die Zwischenablage")
   }
 
   private var rerunMenu: some View {
     Menu {
       ForEach(rewriteModes) { mode in
-        Button(appState.displayName(for: mode)) { rerun(as: mode) }
+        Button {
+          rerun(as: mode)
+        } label: {
+          Label(appState.displayName(for: mode), systemImage: mode.slot.icon)
+        }
       }
     } label: {
       HStack(spacing: 4) {
@@ -118,9 +126,13 @@ struct ArchiveEntryRowActions: View {
           .foregroundStyle(.primary)
           .textSelection(.enabled)
           .fixedSize(horizontal: false, vertical: true)
-        Button("ergebnis kopieren") { copy(rerunResult, feedback: "ergebnis") }
-          .buttonStyle(PopoverActionButtonStyle(.secondary))
-          .accessibilityLabel("Neues Ergebnis in die Zwischenablage")
+        Button {
+          copy(rerunResult, feedback: "ergebnis")
+        } label: {
+          Label("ergebnis kopieren", systemImage: "doc.on.doc")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+        .accessibilityLabel("Neues Ergebnis in die Zwischenablage")
       }
       .padding(8)
       .frame(maxWidth: .infinity, alignment: .leading)

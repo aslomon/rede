@@ -50,9 +50,10 @@ struct CleanupSection: View {
 
   private var confirmControls: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Toggle(
-        "zugangsdaten und einstellungen dieses Macs löschen", isOn: $deleteLocalDataOnCleanup
-      )
+      Toggle(isOn: $deleteLocalDataOnCleanup) {
+        Label("zugangsdaten und einstellungen dieses Macs löschen", systemImage: "key.fill")
+          .labelStyle(QuietToggleLabelStyle())
+      }
       .toggleStyle(.switch)
       .controlSize(.small)
 
@@ -69,8 +70,10 @@ struct CleanupSection: View {
         }
         .buttonStyle(PopoverActionButtonStyle(.secondary))
 
-        Button("jetzt bereinigen") {
+        Button {
           runCleanup()
+        } label: {
+          Label("jetzt bereinigen", systemImage: "trash")
         }
         .buttonStyle(PopoverActionButtonStyle(.danger))
       }

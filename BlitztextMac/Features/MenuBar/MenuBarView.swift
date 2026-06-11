@@ -125,7 +125,8 @@ private struct MainPageView: View {
           appState.openSettings()
         } label: {
           ZStack(alignment: .topTrailing) {
-            Image(systemName: "gear")
+            // gearshape (not "gear") — one symbol per concept, matches the system tab icon.
+            Image(systemName: "gearshape")
 
             if !appState.accessibilityPermissionGranted {
               Circle()

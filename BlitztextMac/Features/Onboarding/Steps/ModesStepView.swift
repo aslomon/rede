@@ -71,8 +71,12 @@ struct ModesStepView: View {
           }
           .buttonStyle(PopoverActionButtonStyle(isEditing.wrappedValue ? .primary : .secondary))
 
-          Button("beispiel") { onRestore() }
-            .buttonStyle(PopoverActionButtonStyle(.quiet))
+          Button {
+            onRestore()
+          } label: {
+            Label("beispiel", systemImage: "arrow.uturn.backward")
+          }
+          .buttonStyle(PopoverActionButtonStyle(.quiet))
         }
 
         if isEditing.wrappedValue {

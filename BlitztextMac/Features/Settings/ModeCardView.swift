@@ -163,8 +163,10 @@ struct ModeCardView: View {
     HStack {
       moveControls
       Spacer()
-      Button("zurücksetzen") {
+      Button {
         appState.resetMode(id: modeID)
+      } label: {
+        Label("zurücksetzen", systemImage: "arrow.uturn.backward")
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 
