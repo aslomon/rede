@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// Tab "modelle": the engines that power rede as a FLAT card list — processing choice, the OpenAI
-/// key, the local Whisper transcription engine and the local llama.cpp rewrite model. Status pills
-/// live in the card headers (DESIGN.md); the card not matching the chosen processing path is
-/// dimmed but stays configurable (e.g. to enter the OpenAI key ahead of time). Memory, vocabulary
-/// and learned terms live in the Vokabular tab.
+/// key, the local Whisper transcription engine and the local llama.cpp rewrite model. Models that
+/// are already on disk show as directly selectable rows (one tap = active); downloading more lives
+/// behind a disclosure so the card stays calm. Status pills live in the card headers (DESIGN.md);
+/// the card not matching the chosen processing path is dimmed but stays configurable.
 struct ModelsSettingsView: View {
   @Bindable var appState: AppState
   /// Reserved for cross-tab navigation from empty-state CTAs (kept for parity with Prompts tab).
@@ -13,34 +13,23 @@ struct ModelsSettingsView: View {
   /// Bumped by the "prüfen" header action to force a fresh disk read of the installed WhisperKit
   /// models. The disk scan is synchronous, so re-reading inside a recomputed `body` reflects reality.
   @State private var transcriptionRecheckToken = 0
+  /// The download picker's choice among the NOT-installed Whisper models. Separate from the
+  /// active-model selection so browsing downloads never flips the engine in use.
+  @State private var whisperDownloadTarget = ""
+  /// Collapses the download row behind a quiet "+" button while installed models exist, so the
+  /// card reads as "your models" first.
+  @State private var showWhisperDownloadRow = false
 
   private var isLocal: Bool { appState.appSettings.secureLocalModeEnabled }
 
-  private var installedLocalModels: [LocalTranscriptionModel] {
+  private var installedWhisperModels: [LocalTranscriptionModel] {
     _ = transcriptionRecheckToken
     return LocalTranscriptionService.installedModels()
   }
 
-  private var localModelOptions: [LocalTranscriptionModel] {
+  private var notInstalledWhisperModels: [LocalTranscriptionModel] {
     _ = transcriptionRecheckToken
-    return LocalTranscriptionService.modelOptions()
-  }
-
-  /// Honest one-liner about the selected Whisper model: confirms it is on disk and how many models
-  /// total are installed, or states the exact download size still pending for the selection.
-  private var transcriptionStateText: String {
-    let name = appState.selectedLocalModelDisplayName
-    if appState.selectedLocalModelIsInstalled {
-      let count = installedLocalModels.count
-      return count == 1
-        ? "\u{201E}\(name)\u{201C} ist geladen (1 Whisper-Modell auf diesem Mac)."
-        : "\u{201E}\(name)\u{201C} ist geladen (\(count) Whisper-Modelle auf diesem Mac)."
-    }
-    if let size = LocalTranscriptionModel.sizeLabel(for: appState.selectedLocalModelName) {
-      return
-        "\u{201E}\(name)\u{201C} ist nicht geladen \u{2014} \(size). wird beim laden lokal gespeichert."
-    }
-    return "\u{201E}\(name)\u{201C} ist nicht geladen. wird beim laden lokal gespeichert."
+    return LocalTranscriptionService.modelOptions().filter { !$0.isInstalled }
   }
 
   var body: some View {
@@ -61,6 +50,11 @@ struct ModelsSettingsView: View {
     }
     .padding(16)
     .animation(.easeInOut(duration: 0.2), value: isLocal)
+    .task {
+      await appState.localModelManager.refresh()
+      // Downloaded models should be selected/usable without a manual pick.
+      appState.adoptInstalledLocalModelsIfNeeded()
+    }
   }
 
   // MARK: - Processing mode (online OpenAI vs. secure local)
@@ -108,36 +102,58 @@ struct ModelsSettingsView: View {
         ? nil : (label: "prüfen", perform: { transcriptionRecheckToken += 1 }),
       trailing: {
         BlitzStatusPill(
-          state: appState.hasAnyTranscriptionEngine ? .local : .download,
-          label: appState.hasAnyTranscriptionEngine ? "Whisper lokal" : "Whisper laden"
+          state: installedWhisperModels.isEmpty ? .download : .local,
+          label: installedWhisperModels.isEmpty ? "Whisper laden" : "Whisper lokal"
         )
       }
     ) {
-      // Short caption always visible (spec #3)
-      Text("lokale sprache-zu-text-engine (WhisperKit). daten bleiben auf dem gerät.")
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-
-      // Guidance only when no model is installed (spec #3) — the heading carries the concept.
-      if !appState.hasAnyTranscriptionEngine {
+      if installedWhisperModels.isEmpty {
         EmptyStateCard(
           icon: "waveform",
           title: "kein Whisper-Modell geladen",
           caption:
-            "die transkriptions-engine läuft über WhisperKit lokal auf diesem Mac. "
-            + "das modell wird auf dem gerät gespeichert. "
-            + "lade ein modell, damit rede sprache lokal in text umwandeln kann.",
-          accent: .blue,
-          buttonLabel: "modell laden",
-          action: { appState.installSelectedLocalModel() }
+            "lade ein modell, damit rede sprache lokal in text umwandeln kann — "
+            + "es wird einmalig geladen und bleibt auf diesem Mac.",
+          accent: .blue
         )
+        if !appState.isDownloadingLocalModel {
+          whisperDownloadRow
+        }
+      } else {
+        // Installed models are directly selectable (downloaded ⇒ one tap from active).
+        ForEach(installedWhisperModels) { model in
+          ModelSelectRow(
+            title: model.displayName,
+            subtitle: model.sizeLabel.map { "lokal · \($0)" } ?? "lokal",
+            isActive: appState.selectedLocalModelName == model.id,
+            select: { appState.appSettings.selectedLocalTranscriptionModelName = model.id }
+          )
+        }
+
+        // Further downloads stay tucked away so the card reads as "your models" first.
+        // (Not InfoDisclosure — that styles its content as secondary text, wrong for controls.)
+        if !notInstalledWhisperModels.isEmpty, !appState.isDownloadingLocalModel {
+          if showWhisperDownloadRow {
+            whisperDownloadRow
+          } else {
+            Button {
+              withAnimation(.easeInOut(duration: 0.15)) { showWhisperDownloadRow = true }
+            } label: {
+              Label("weiteres modell laden …", systemImage: "plus")
+            }
+            .buttonStyle(PopoverActionButtonStyle(.quiet))
+          }
+        }
       }
 
-      transcriptionStateRow
-      transcriptionModelPicker
-      transcriptionDownloadControls
-      manageAllModelsButton
+      if let progress = appState.localModelDownloadProgress {
+        VStack(alignment: .leading, spacing: 4) {
+          ProgressView(value: progress)
+          Text(appState.localModelDownloadStatusText ?? "modell wird geladen …")
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+        }
+      }
 
       if appState.localModelPreparing && !appState.isDownloadingLocalModel {
         HStack(spacing: 6) {
@@ -155,7 +171,51 @@ struct ModelsSettingsView: View {
           .foregroundStyle(.red)
           .fixedSize(horizontal: false, vertical: true)
       }
+
+      manageAllModelsButton
     }
+  }
+
+  /// One compact row: pick a not-yet-installed Whisper model and load it. Loading also makes it
+  /// the active model (`installLocalModel(named:)` selects on success).
+  private var whisperDownloadRow: some View {
+    HStack(spacing: 8) {
+      Picker("", selection: downloadTargetBinding) {
+        ForEach(notInstalledWhisperModels) { model in
+          Text(downloadOptionLabel(model)).tag(model.id)
+        }
+      }
+      .labelsHidden()
+      .controlSize(.small)
+
+      Button {
+        appState.installLocalModel(named: downloadTargetBinding.wrappedValue)
+      } label: {
+        Label("laden", systemImage: "arrow.down.circle.fill")
+      }
+      .buttonStyle(PopoverActionButtonStyle(.primary))
+      .disabled(notInstalledWhisperModels.isEmpty)
+    }
+  }
+
+  /// Keeps the download choice valid as models get installed: falls back to the first
+  /// not-installed option whenever the stored target is gone (installed or unknown).
+  private var downloadTargetBinding: Binding<String> {
+    Binding(
+      get: {
+        let options = notInstalledWhisperModels
+        if options.contains(where: { $0.id == whisperDownloadTarget }) {
+          return whisperDownloadTarget
+        }
+        return options.first?.id ?? ""
+      },
+      set: { whisperDownloadTarget = $0 }
+    )
+  }
+
+  private func downloadOptionLabel(_ model: LocalTranscriptionModel) -> String {
+    if let size = model.sizeLabel { return "\(model.displayName) · \(size)" }
+    return model.displayName
   }
 
   /// Bridge from the compact Modelle tab to the full "lokale modelle" window, where every local model
@@ -169,85 +229,29 @@ struct ModelsSettingsView: View {
     .buttonStyle(PopoverActionButtonStyle(.secondary))
   }
 
-  private var transcriptionStateRow: some View {
-    HStack(spacing: 6) {
-      Image(
-        systemName: appState.selectedLocalModelIsInstalled
-          ? "checkmark.circle.fill" : "arrow.down.circle.fill"
-      )
-      .font(.system(size: 11, weight: .semibold))
-      .foregroundStyle(appState.selectedLocalModelIsInstalled ? .green : .blue)
-      Text(transcriptionStateText)
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-      Spacer()
-    }
-  }
-
-  private var transcriptionModelPicker: some View {
-    HStack(spacing: 8) {
-      Text("Whisper-Modell")
-        .font(.system(size: 11))
-        .foregroundStyle(.secondary)
-
-      Picker(
-        "",
-        selection: Binding(
-          get: { appState.selectedLocalModelName },
-          set: { appState.appSettings.selectedLocalTranscriptionModelName = $0 }
-        )
-      ) {
-        ForEach(localModelOptions) { model in
-          Text("\(model.displayName) · \(model.installStateLabel)").tag(model.id)
-        }
-      }
-      .labelsHidden()
-      .controlSize(.small)
-      .disabled(appState.isDownloadingLocalModel)
-    }
-  }
-
-  @ViewBuilder
-  private var transcriptionDownloadControls: some View {
-    if let progress = appState.localModelDownloadProgress {
-      VStack(alignment: .leading, spacing: 4) {
-        ProgressView(value: progress)
-        Text(appState.localModelDownloadStatusText ?? "modell wird geladen …")
-          .font(.system(size: 10.5))
-          .foregroundStyle(.secondary)
-      }
-    } else {
-      HStack(spacing: 10) {
-        // Show the install button only when something is actually downloadable. When the model is
-        // already installed, the state row above ("… ist geladen") says so — a disabled
-        // "… ist geladen" button was a redundant fake button.
-        if !appState.selectedLocalModelIsInstalled {
-          Button(appState.localModelDownloadButtonTitle) {
-            appState.installSelectedLocalModel()
-          }
-          .buttonStyle(PopoverActionButtonStyle(.primary))
-        }
-
-        Link(
-          "modellseite",
-          destination: LocalTranscriptionService.modelPageURL(
-            for: appState.selectedLocalModelName)
-        )
-        .font(.system(size: 10.5, weight: .medium))
-      }
-    }
-  }
-
   // MARK: - Lokales Sprachmodell (llama.cpp)
 
   private var localLLMCard: some View {
     SettingsSection(
       "lokales sprachmodell",
       icon: "text.bubble",
-      caption: "formuliert texte lokal um — nutzbar in jedem modus, unabhängig vom online-modus."
+      caption: "formuliert texte lokal um — nutzbar in jedem modus, unabhängig vom online-modus.",
+      trailing: { llmStatusPill }
     ) {
-      LocalLLMModelPicker(appState: appState)
+      // The section header above carries the status pill; the picker renders only the rows.
+      LocalLLMModelPicker(appState: appState, showsStatusHeader: false)
     }
+  }
+
+  private var llmStatusPill: BlitzStatusPill {
+    let manager = appState.localModelManager
+    let selection = appState.appSettings.selectedLocalLLM
+    if selection.isConfigured, manager.installedLlamaCppModel(for: selection.modelID) != nil {
+      return BlitzStatusPill(state: .ready, label: "gewählt")
+    }
+    if manager.llamaCppInstalled.isEmpty {
+      return BlitzStatusPill(state: .download, label: "laden")
+    }
+    return BlitzStatusPill(state: .warning, label: "auswählen")
   }
 }

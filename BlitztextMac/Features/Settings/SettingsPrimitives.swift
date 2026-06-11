@@ -136,6 +136,52 @@ struct EmptyStateCard: View {
   }
 }
 
+// MARK: - Model select row
+
+/// Compact selectable model row for inline selection in the Modelle tab (Whisper + GGUF): a
+/// green check for the active model, name + detail, and a "nutzen" action otherwise. Mirrors the
+/// row pattern of the Lokale-Modelle window so selection looks identical everywhere.
+struct ModelSelectRow: View {
+  let title: String
+  let subtitle: String?
+  let isActive: Bool
+  let select: () -> Void
+
+  var body: some View {
+    HStack(spacing: 10) {
+      Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(isActive ? AnyShapeStyle(.green) : AnyShapeStyle(.tertiary))
+        .accessibilityHidden(true)
+
+      VStack(alignment: .leading, spacing: 1) {
+        Text(title)
+          .font(.system(size: 11.5, weight: .semibold))
+          .lineLimit(1)
+        if let subtitle {
+          Text(subtitle)
+            .font(.system(size: 10))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
+      }
+
+      Spacer(minLength: 8)
+
+      if isActive {
+        BlitzStatusPill(state: .ready, label: "aktiv")
+      } else {
+        Button("nutzen", action: select)
+          .buttonStyle(PopoverActionButtonStyle(.secondary))
+          .accessibilityLabel("\(title) nutzen")
+      }
+    }
+    .padding(8)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .tokenCard(cornerRadius: 8)
+  }
+}
+
 // MARK: - Destructive clear button
 
 /// A single red action that confirms via the native `.confirmationDialog`

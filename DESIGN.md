@@ -287,6 +287,14 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
   Verarbeitungspfad nicht passende Karte wird auf 0.45 gedimmt, bleibt aber bedienbar. Das lokale
   Sprachmodell wird nie gedimmt (per-Modus-Rewrite funktioniert in beiden Pfaden). Keine
   Band-Zwischenüberschriften mehr.
+- **Installierte Modelle sind direkt wählbar**: Bereits geladene Modelle (Whisper UND GGUF)
+  erscheinen im Modelle-Tab als `ModelSelectRow`-Reihen (grüner Check + „aktiv"-Pille bzw.
+  „nutzen"-Button) — kein Fenster-Umweg fürs Aktivieren. Downloads liegen hinter einem leisen
+  „weiteres modell laden …"-Button (eigener Download-Picker, getrennt von der aktiven Auswahl);
+  Laden eines Modells aktiviert es. **Adoption-Regel**: zeigt die persistierte Auswahl auf nichts
+  Installiertes, während andere Modelle auf der Platte liegen, übernimmt
+  `AppState.adoptInstalledLocalModelsIfNeeded()` das erste installierte (für beide Engines; bei
+  Whisper nicht während eines laufenden Downloads).
 - **Archiv-Tab**: eine `SettingsSection`-Karte mit Status-Pille (aus · aktiv · N einträge) im
   Header.
 - Systemeinstellungen-Reihenfolge: Bedienungshilfen → Installation & Start → Tastenkürzel →

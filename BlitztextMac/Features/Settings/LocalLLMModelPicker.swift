@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Inline status for the local rewrite model.
-///
-/// Selection and downloads live in the standalone "Lokale Modelle" window so there is only one
-/// place where the active model can be chosen. This view only reports the current state and opens
-/// that window. llama.cpp is the only local runtime.
+/// Inline status AND selection for the local rewrite model: every installed GGUF model shows as a
+/// selectable `ModelSelectRow` right here — no window round-trip just to activate a model that is
+/// already on disk. Downloads and deletes stay in the standalone "lokale modelle" window.
+/// llama.cpp is the only local runtime.
 struct LocalLLMModelPicker: View {
   @Bindable var appState: AppState
+  /// The compact "aktives modell" header row with the status pill. Off in the Modelle tab, where
+  /// the surrounding `SettingsSection` header carries the pill instead.
+  var showsStatusHeader: Bool = true
 
   private var manager: LocalModelManager { appState.localModelManager }
 
@@ -16,22 +18,39 @@ struct LocalLLMModelPicker: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack(spacing: 6) {
-        // Short row label — the surrounding section/card already names the feature
-        // ("lokales sprachmodell"), so repeating it here was a duplicate heading.
-        Text("aktives modell")
-          .font(.system(size: 11))
-          .foregroundStyle(.secondary)
-        Spacer()
-        statusPill
+      if showsStatusHeader {
+        HStack(spacing: 6) {
+          Text("aktives modell")
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+          Spacer()
+          statusPill
+        }
       }
 
-      inlineStatusRow
+      if manager.llamaCppInstalled.isEmpty {
+        Text("noch kein GGUF-Modell auf diesem Mac — lade eins über „modelle laden …\u{201C}.")
+          .font(.system(size: 10.5))
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      } else {
+        // Installed models are directly selectable here (downloaded ⇒ one tap from active).
+        ForEach(manager.llamaCppInstalled) { model in
+          ModelSelectRow(
+            title: model.displayName,
+            subtitle: [model.parameterSize, model.quantization].joined(separator: " · "),
+            isActive: isActive(model),
+            select: { selectModel(model) }
+          )
+        }
+      }
 
       manageRow
     }
     .task {
       await manager.refresh()
+      // Downloaded models should be usable without a manual pick.
+      appState.adoptInstalledLocalModelsIfNeeded()
     }
   }
 
@@ -46,30 +65,18 @@ struct LocalLLMModelPicker: View {
     }
   }
 
-  @ViewBuilder
-  private var inlineStatusRow: some View {
-    if let name = selectedLlamaCppModel?.displayName {
-      Text(name)
-        .font(.system(size: 12, weight: .semibold))
-        .lineLimit(1)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    } else {
-      Text(compactStatusHint)
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-  }
-
-  private var compactStatusHint: String {
-    manager.llamaCppInstalled.isEmpty
-      ? "noch kein GGUF-Modell — modelle einrichten."
-      : "kein modell gewählt — modelle verwalten."
-  }
-
   private var selectedLlamaCppModel: LlamaCppModelCatalog.Model? {
     guard selection.isConfigured else { return nil }
     return manager.installedLlamaCppModel(for: selection.modelID)
+  }
+
+  private func isActive(_ model: LlamaCppModelCatalog.Model) -> Bool {
+    selection == LocalLLMSelection(runtime: .llamaCpp, modelID: model.id)
+  }
+
+  private func selectModel(_ model: LlamaCppModelCatalog.Model) {
+    appState.appSettings.selectedLocalLLM = LocalLLMSelection(
+      runtime: .llamaCpp, modelID: model.id)
   }
 
   // MARK: - Actions

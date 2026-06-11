@@ -1475,6 +1475,24 @@ final class AppState {
       named: modelName, selectOnSuccess: selectOnSuccess, enableSecureOnSuccess: false)
   }
 
+  /// Already-downloaded models must be usable without a manual pick: when the persisted selection
+  /// points at nothing on disk but other models ARE installed, adopt the first installed one.
+  /// Covers both engines (Whisper transcription + llama.cpp rewrite). Skipped while a Whisper
+  /// download runs so a deliberately chosen pending download is not flipped midway.
+  func adoptInstalledLocalModelsIfNeeded() {
+    if !isDownloadingLocalModel, !selectedLocalModelIsInstalled,
+      let firstInstalled = LocalTranscriptionService.installedModels().first
+    {
+      appSettings.selectedLocalTranscriptionModelName = firstInstalled.id
+    }
+
+    if !appSettings.selectedLocalLLM.isConfigured,
+      let firstLLM = localModelManager.llamaCppInstalled.first
+    {
+      appSettings.selectedLocalLLM = LocalLLMSelection(runtime: .llamaCpp, modelID: firstLLM.id)
+    }
+  }
+
   private func performLocalModelDownload(
     named modelName: String, selectOnSuccess: Bool, enableSecureOnSuccess: Bool
   ) {

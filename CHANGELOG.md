@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Modelle Tab Cleanup (installed models first-class)**
+  - Installed Whisper and GGUF models now show as directly selectable rows in the tab (green check + "aktiv" pill / "nutzen" button via the shared `ModelSelectRow`) — no window round-trip to activate a model that is already on disk; `LocalLLMModelPicker` gained the same inline rows everywhere it appears (mode cards, onboarding)
+  - Auto-adoption: when the persisted selection points at nothing on disk but models are installed, `adoptInstalledLocalModelsIfNeeded()` selects the first installed one (both engines; Whisper adoption skipped mid-download)
+  - Downloads moved behind a quiet "weiteres modell laden …" button with a dedicated download picker, separate from the active selection (browsing downloads no longer flips the engine in use); loading a model activates it on success
+  - Removed the redundant state line, the mixed installed/not-installed picker and the permanent caption from the Whisper card
+
 - **Design Consistency Pass (surface hierarchy + button typography)**
   - **One surface rule**: Glass is now reserved for floating chrome (popover backdrop, pill, onboarding backdrop and elements directly on them); ALL content nested in section cards or window lists sits on the new flat token primitives `tokenCard`/`tintBanner` (`DesignTokens.swift`) — fixes glass-on-glass stacking inside cards and the two competing row looks in the archive window
   - **One button size**: PopoverActionButtonStyle/Glass styles own the type (11pt semibold); removed ~30 dead or overriding `.font(...)` modifiers that made identical buttons render at 10/10.5/11/11.5pt, plus no-op `.controlSize` calls
