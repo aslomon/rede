@@ -63,8 +63,10 @@ struct MenuBarView: View {
     // at the compact 410; the dense settings page just gets more HEIGHT so more fits before scrolling.
     .frame(width: 410)
     .frame(minHeight: appState.page == .settings ? 600 : 0, alignment: .top)
-    // Opaque backstop: fixes dark-mode transparency wash-out (macOS 26 glass / <26 material).
-    .blitztextSurface()
+    // Popover surface: the native `.popover` material so the body matches the NSPopover-drawn
+    // arrow ("Spitze") exactly — `.glassEffect` only covered the body, leaving the arrow a
+    // different shade. See PopoverBackdrop.
+    .popoverSurface()
     // rede voice: SF Rounded across the popover for a young, friendly tone. Monospaced runs
     // (hotkeys, paths) opt out explicitly with .monospaced, so they are unaffected.
     .fontDesign(.rounded)
