@@ -36,6 +36,15 @@ final class LocalModelManager {
   @ObservationIgnored private var llamaCppDownloadTasks: [String: Task<Void, Never>] = [:]
   @ObservationIgnored private let llamaCppStore = LlamaCppModelStore.default
 
+  /// Read the installed GGUF models from disk at creation time, so installed chat/embedding models
+  /// are known immediately on launch. Without this, `llamaCppInstalled` stayed empty until a model
+  /// view ran `refresh()` on appear — so local rewrite looked unavailable (and the engine wasn't
+  /// offered) right after a restart until the user opened the Modelle tab. Disk-only + cheap; the
+  /// `system` capabilities keep their `.current()` default and refresh on demand.
+  init() {
+    reloadInstalledLlamaCpp()
+  }
+
   // MARK: - Refresh
 
   /// Re-detect hardware and re-read the installed GGUF models from disk. Re-entrancy-guarded:
