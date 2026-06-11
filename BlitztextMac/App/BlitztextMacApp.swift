@@ -220,7 +220,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     guard let button = statusItem.button else { return }
     popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     appState.isPopoverShown = true
+    // Activate the app AND make the popover window key. Without makeKey(), an accessory
+    // (LSUIElement) app shows the popover non-key: the first click only focuses it (you'd have to
+    // click twice), the `.popover` material renders in its inactive shade until that click, and
+    // `.transient` dismissal on an outside click is unreliable. Making it key fixes all three.
     NSApp.activate(ignoringOtherApps: true)
+    popover.contentViewController?.view.window?.makeKey()
   }
 
   nonisolated func popoverDidClose(_ notification: Notification) {
