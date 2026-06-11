@@ -80,7 +80,6 @@ struct LocalLLMModelPicker: View {
         NotificationCenter.default.post(name: .openLocalModelsWindow, object: nil)
       } label: {
         Label(manageButtonTitle, systemImage: "macwindow")
-          .font(.system(size: 10.5, weight: .medium))
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 

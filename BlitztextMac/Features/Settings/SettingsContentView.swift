@@ -86,7 +86,6 @@ struct SettingsContentView: View {
       Button("öffnen") {
         NotificationCenter.default.post(name: .openOnboardingWindow, object: nil)
       }
-      .font(.system(size: 10.5, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.primary))
     }
     .padding(10)

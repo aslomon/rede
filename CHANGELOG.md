@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Design Consistency Pass (surface hierarchy + button typography)**
+  - **One surface rule**: Glass is now reserved for floating chrome (popover backdrop, pill, onboarding backdrop and elements directly on them); ALL content nested in section cards or window lists sits on the new flat token primitives `tokenCard`/`tintBanner` (`DesignTokens.swift`) — fixes glass-on-glass stacking inside cards and the two competing row looks in the archive window
+  - **One button size**: PopoverActionButtonStyle/Glass styles own the type (11pt semibold); removed ~30 dead or overriding `.font(...)` modifiers that made identical buttons render at 10/10.5/11/11.5pt, plus no-op `.controlSize` calls
+  - **Fixed double-styled retry button** in the popover error view (manual card label stacked on the primary fill)
+  - All list rows app-wide (archive entries, paste contexts, improvements, replacements, model rows, stat tiles) share `tokenCard(8|10)`; all nested banners (empty states, suggestions, hotkey conflicts, stale-grant hint, recommendation, rerun result) share `tintBanner`
+  - DESIGN.md: new "Flächen-Hierarchie" hard constraint + button-typography rule
+
 - **rede Icon Language**: One SF Symbol per concept across the whole app (documented in DESIGN.md)
   - **Section headers**: `SectionLabel`/`SettingsSection` gained an icon slot — every section in all five tabs, both windows and the onboarding cards now carries its quiet concept icon (brain=memory, waveform=Whisper, text.bubble=LLM, keyboard=hotkeys, archivebox=archive, accessibility, …)
   - **Action verbs on buttons**: Consistent Label icons app-wide (load, check, delete=trash incl. `DestructiveClearButton`, open window=macwindow, open system panel, paste from clipboard, analyze); wizard continue gets a trailing chevron

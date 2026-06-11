@@ -232,6 +232,8 @@ public struct GlassActionButtonStyle: ButtonStyle {
   public func makeBody(configuration: Configuration) -> some View {
     if #available(macOS 26.0, *) {
       configuration.label
+        // Same type as PopoverActionButtonStyle so button text is ONE size on every OS path.
+        .font(.system(size: 11, weight: .semibold))
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
@@ -260,6 +262,8 @@ public struct GlassProminentButtonStyle: ButtonStyle {
   public func makeBody(configuration: Configuration) -> some View {
     if #available(macOS 26.0, *) {
       configuration.label
+        // Same type as PopoverActionButtonStyle so button text is ONE size on every OS path.
+        .font(.system(size: 11, weight: .semibold))
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .glassEffect(.regular.tint(Color.accentColor).interactive(), in: .rect(cornerRadius: 8))

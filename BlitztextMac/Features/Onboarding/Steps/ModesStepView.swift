@@ -72,7 +72,6 @@ struct ModesStepView: View {
           .buttonStyle(PopoverActionButtonStyle(isEditing.wrappedValue ? .primary : .secondary))
 
           Button("beispiel") { onRestore() }
-            .font(.system(size: 10, weight: .medium))
             .buttonStyle(PopoverActionButtonStyle(.quiet))
         }
 

@@ -45,7 +45,6 @@ struct ArchiveEntryRowActions: View {
 
   private func copyButton(title: String, text: String, feedback: String) -> some View {
     Button(title) { copy(text, feedback: feedback) }
-      .font(.system(size: 10, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.secondary))
       .disabled(text.isEmpty)
       .accessibilityLabel("\(title) in die Zwischenablage")
@@ -65,7 +64,7 @@ struct ArchiveEntryRowActions: View {
             .font(.system(size: 9, weight: .semibold))
         }
         Text("neu umschreiben …")
-          .font(.system(size: 10, weight: .medium))
+          .font(.system(size: 11, weight: .semibold))
       }
       .padding(.horizontal, 10)
       .padding(.vertical, 6)
@@ -120,15 +119,12 @@ struct ArchiveEntryRowActions: View {
           .textSelection(.enabled)
           .fixedSize(horizontal: false, vertical: true)
         Button("ergebnis kopieren") { copy(rerunResult, feedback: "ergebnis") }
-          .font(.system(size: 10, weight: .medium))
           .buttonStyle(PopoverActionButtonStyle(.secondary))
           .accessibilityLabel("Neues Ergebnis in die Zwischenablage")
       }
       .padding(8)
-      .background(
-        MenuBarTokens.tintFill(.green, colorScheme: colorScheme),
-        in: RoundedRectangle(cornerRadius: 6)
-      )
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .tintBanner(.green, cornerRadius: 6)
     }
   }
 

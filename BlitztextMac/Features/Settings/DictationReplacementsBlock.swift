@@ -7,7 +7,6 @@ import SwiftUI
 struct DictationReplacementsBlock: View {
   @Bindable var appState: AppState
 
-  @Environment(\.colorScheme) private var colorScheme
 
   @State private var newFrom = ""
   @State private var newTo = ""
@@ -51,7 +50,6 @@ struct DictationReplacementsBlock: View {
         ForEach(replacements) { replacement in
           DictationReplacementRow(
             replacement: replacement,
-            colorScheme: colorScheme,
             onToggleWholeWord: { setWholeWord(replacement, $0) },
             onRemove: { removeReplacement(replacement) }
           )

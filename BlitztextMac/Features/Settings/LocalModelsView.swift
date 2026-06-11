@@ -68,7 +68,6 @@ struct LocalModelsView: View {
         Task { await manager.refresh() }
       } label: {
         Label("aktualisieren", systemImage: "arrow.clockwise")
-          .font(.system(size: 11, weight: .medium))
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
       .disabled(manager.isRefreshing)
@@ -85,7 +84,7 @@ struct LocalModelsView: View {
     }
     .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .liquidGlassCard(cornerRadius: 10)
+    .tokenCard(cornerRadius: 10)
   }
 
   private func systemStat(_ symbol: String, _ caption: String, _ value: String) -> some View {
@@ -192,7 +191,6 @@ struct LocalModelsView: View {
           .onSubmit(loadCustomURL)
         Button("laden", action: loadCustomURL)
           .buttonStyle(PopoverActionButtonStyle(.primary))
-          .font(.system(size: 11.5, weight: .medium))
           .disabled(customURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       }
       Text("direkter link zu einer .gguf-datei (z. B. von Hugging Face). ohne prüfsumme.")
@@ -234,7 +232,7 @@ struct LocalModelsView: View {
         Button {
           appState.appSettings.selectedLocalLLM = LocalLLMSelection()
         } label: {
-          Text("deaktivieren").font(.system(size: 10.5, weight: .medium))
+          Text("deaktivieren")
         }
         .buttonStyle(PopoverActionButtonStyle(.secondary))
       } else {
@@ -260,8 +258,8 @@ struct LocalModelsView: View {
       )
     }
     .padding(10)
-    // DESIGN.md model-row pattern: rows sit on .liquidGlassCard(cornerRadius: 8).
-    .liquidGlassCard(cornerRadius: 8)
+    // DESIGN.md model-row pattern: flat token rows, identical across all model types.
+    .tokenCard(cornerRadius: 8)
   }
 
   private func llamaCppCatalogRow(_ model: LlamaCppModelCatalog.Model) -> some View {
@@ -278,12 +276,7 @@ struct LocalModelsView: View {
             Text(model.displayName)
               .font(.system(size: 12.5, weight: .semibold))
             if isRecommended(model) {
-              Text("empfohlen")
-                .font(.system(size: 9, weight: .semibold))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1)
-                .background(Capsule().fill(Color.blue.opacity(0.15)))
-                .foregroundStyle(.blue)
+              BlitzStatusPill(state: .download, label: "empfohlen")
             }
           }
           Text(model.blurb)
@@ -336,8 +329,8 @@ struct LocalModelsView: View {
       }
     }
     .padding(10)
-    // DESIGN.md model-row pattern: rows sit on .liquidGlassCard(cornerRadius: 8).
-    .liquidGlassCard(cornerRadius: 8)
+    // DESIGN.md model-row pattern: flat token rows, identical across all model types.
+    .tokenCard(cornerRadius: 8)
   }
 
   // MARK: - Recommendation
@@ -372,7 +365,6 @@ struct LocalModelsView: View {
             manager.downloadLlamaCpp(model)
           } label: {
             Label("laden", systemImage: "arrow.down.circle.fill")
-              .font(.system(size: 11.5, weight: .semibold))
           }
           .buttonStyle(PopoverActionButtonStyle(.primary))
           .disabled(!manager.system.diskFits(downloadGB: model.downloadGB))
@@ -381,7 +373,7 @@ struct LocalModelsView: View {
     }
     .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .liquidGlassTintedCard(accent: .blue, cornerRadius: 10)
+    .tintBanner(.blue)
   }
 
   // MARK: - Embedding model (semantic e-mail memory)
@@ -435,7 +427,6 @@ struct LocalModelsView: View {
               manager.downloadLlamaCpp(model)
             } label: {
               Label("laden", systemImage: "arrow.down.circle.fill")
-                .font(.system(size: 11.5, weight: .semibold))
             }
             .buttonStyle(PopoverActionButtonStyle(.primary))
             .disabled(!manager.system.diskFits(downloadGB: model.downloadGB))
@@ -450,7 +441,7 @@ struct LocalModelsView: View {
         }
       }
       .padding(10)
-      .liquidGlassCard(cornerRadius: 8)
+      .tokenCard(cornerRadius: 8)
     }
   }
 
@@ -472,7 +463,7 @@ struct LocalModelsView: View {
       .font(.system(size: 11)).foregroundStyle(.red)
       .padding(10)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .liquidGlassInfoBanner(accent: .red, cornerRadius: 8)
+      .tintBanner(.red, cornerRadius: 8)
   }
 
   private var footerHint: some View {

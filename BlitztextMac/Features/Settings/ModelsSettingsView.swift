@@ -165,10 +165,8 @@ struct ModelsSettingsView: View {
       NotificationCenter.default.post(name: .openLocalModelsWindow, object: nil)
     } label: {
       Label("alle lokalen modelle verwalten", systemImage: "square.stack.3d.up")
-        .font(.system(size: 10.5, weight: .medium))
     }
     .buttonStyle(PopoverActionButtonStyle(.secondary))
-    .controlSize(.small)
   }
 
   private var transcriptionStateRow: some View {
@@ -228,7 +226,6 @@ struct ModelsSettingsView: View {
           Button(appState.localModelDownloadButtonTitle) {
             appState.installSelectedLocalModel()
           }
-          .controlSize(.small)
           .buttonStyle(PopoverActionButtonStyle(.primary))
         }
 

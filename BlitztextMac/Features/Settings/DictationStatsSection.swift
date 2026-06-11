@@ -7,7 +7,6 @@ import SwiftUI
 struct DictationStatsSection: View {
   @Bindable var appState: AppState
 
-  @Environment(\.colorScheme) private var colorScheme
 
   private var stats: DictationStats { appState.dictationStats }
 
@@ -46,7 +45,7 @@ struct DictationStatsSection: View {
 
   /// 2×2 grid rather than a single 4-wide `HStack`: at the archive window's narrow min width the
   /// four icon+caption+value tiles would clip. The grid wraps to two rows and stays scannable.
-  /// Uses .liquidGlassCard(cornerRadius: 10) in place of manual fill + overlay.
+  /// Sits on the app-wide flat tile surface (.tokenCard, DESIGN.md Flächen-Hierarchie).
   private var statTiles: some View {
     Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
       GridRow {
@@ -65,7 +64,7 @@ struct DictationStatsSection: View {
     }
     .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .liquidGlassCard(cornerRadius: 10)
+    .tokenCard(cornerRadius: 10)
   }
 
   /// Icon + value + caption tile, mirroring `LocalModelsView.systemStat`.

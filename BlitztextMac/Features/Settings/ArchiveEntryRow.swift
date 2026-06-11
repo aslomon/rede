@@ -13,7 +13,6 @@ struct ArchiveEntryRow: View {
   var showActions: Bool = false
   let onDelete: () -> Void
 
-  @Environment(\.colorScheme) private var colorScheme
   @State private var expanded = false
 
   private var displayName: String {
@@ -36,7 +35,8 @@ struct ArchiveEntryRow: View {
       }
     }
     .padding(10)
-    .liquidGlassCard(cornerRadius: 8)
+    // Flat token row — the app-wide list-row surface (DESIGN.md Flächen-Hierarchie).
+    .tokenCard(cornerRadius: 8)
   }
 
   // MARK: - Header

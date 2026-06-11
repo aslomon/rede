@@ -77,7 +77,7 @@ extension SettingsSection where Trailing == EmptyView {
 // MARK: - Empty-state card
 
 /// Guidance card shown when a feature has nothing configured yet: an accent-tinted banner with an
-/// icon + title row, a caption and an optional inline CTA. Tinted via `liquidGlassInfoBanner` so it
+/// icon + title row, a caption and an optional inline CTA. Tinted via the flat `.tintBanner` so it
 /// reads as actionable guidance, not as another nested section box (the earlier GroupBox version
 /// produced box-in-box inside `SettingsSection`).
 struct EmptyStateCard: View {
@@ -124,14 +124,15 @@ struct EmptyStateCard: View {
           action()
         } label: {
           Label(buttonLabel, systemImage: "arrow.right.circle.fill")
-            .font(.system(size: 11, weight: .semibold))
         }
         .buttonStyle(PopoverActionButtonStyle(.secondary))
       }
     }
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .liquidGlassInfoBanner(accent: accent)
+    // Flat tint surface (DESIGN.md Flächen-Hierarchie): this card nests inside SettingsSection,
+    // so it must not introduce a glass layer.
+    .tintBanner(accent)
   }
 }
 
@@ -160,7 +161,6 @@ struct DestructiveClearButton: View {
       showConfirm = true
     } label: {
       Label(label, systemImage: "trash")
-        .font(.system(size: 10, weight: .medium))
     }
     .buttonStyle(PopoverActionButtonStyle(.danger))
     .accessibilityLabel(label)

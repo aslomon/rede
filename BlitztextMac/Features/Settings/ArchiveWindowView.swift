@@ -38,8 +38,8 @@ struct ArchiveWindowView: View {
       }
       .padding(.horizontal, 16)
 
-      // Full-width ScrollView so the cards' liquidGlassCard shadow has room and is NOT clipped at
-      // the sides. The inner horizontal padding (16) keeps the cards aligned with the header above.
+      // Full-width ScrollView; the inner horizontal padding (16) keeps the cards aligned with
+      // the header above.
       ScrollView {
         selectedFacet
           .padding(.top, 2)

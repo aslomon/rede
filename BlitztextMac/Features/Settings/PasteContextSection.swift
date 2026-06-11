@@ -129,7 +129,7 @@ private struct CategoryChip: View {
 // MARK: - Recent row
 
 /// One destination: app name + window title + a small category badge + relative time.
-/// Uses .liquidGlassCard(cornerRadius: 8) in place of manual fill + overlay.
+/// Sits on the app-wide flat list-row surface (.tokenCard, DESIGN.md Flächen-Hierarchie).
 private struct PasteContextRow: View {
   let context: PasteContext
 
@@ -185,6 +185,6 @@ private struct PasteContextRow: View {
     }
     .padding(8)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .liquidGlassCard(cornerRadius: 8)
+    .tokenCard(cornerRadius: 8)
   }
 }

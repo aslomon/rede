@@ -61,7 +61,6 @@ struct OnboardingWizardView: View {
       if !viewModel.isLastStep {
         Button("später") { onClose() }
           .buttonStyle(PopoverActionButtonStyle(.quiet))
-          .font(.system(size: 11))
           .padding(.top, 14)
           .padding(.trailing, 16)
       }
@@ -147,7 +146,6 @@ struct OnboardingWizardView: View {
             back()
           } label: {
             Label("zurück", systemImage: "chevron.left")
-              .font(.system(size: 12, weight: .medium))
           }
           .buttonStyle(PopoverActionButtonStyle(.secondary))
         }
@@ -157,7 +155,6 @@ struct OnboardingWizardView: View {
         if viewModel.isLastStep {
           Button("zu den einstellungen") { openSettings() }
             .buttonStyle(PopoverActionButtonStyle(.secondary))
-            .font(.system(size: 11.5))
         }
 
         primaryButton
@@ -196,10 +193,9 @@ struct OnboardingWizardView: View {
     } label: {
       HStack(spacing: 5) {
         Text(viewModel.step.primaryActionLabel)
-          .font(.system(size: 12.5, weight: .semibold))
         if !viewModel.isLastStep {
           Image(systemName: "chevron.right")
-            .font(.system(size: 10, weight: .bold))
+            .font(.system(size: 9, weight: .bold))
         }
       }
     }

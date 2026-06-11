@@ -68,7 +68,7 @@ struct WhisperModelsSection: View {
         .disabled(appState.isDownloadingLocalModel)
     }
     .padding(10)
-    .liquidGlassCard(cornerRadius: 8)
+    .tokenCard(cornerRadius: 8)
   }
 
   @ViewBuilder
@@ -104,7 +104,6 @@ struct WhisperModelsSection: View {
         appState.installLocalModel(named: model.id)
       } label: {
         Label("laden", systemImage: "arrow.down.circle.fill")
-          .font(.system(size: 11.5, weight: .semibold))
       }
       .buttonStyle(PopoverActionButtonStyle(.primary))
     }

@@ -166,7 +166,6 @@ struct ModeCardView: View {
       Button("zurücksetzen") {
         appState.resetMode(id: modeID)
       }
-      .font(.system(size: 10, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 
       if appState.canDeleteMode(id: modeID) {

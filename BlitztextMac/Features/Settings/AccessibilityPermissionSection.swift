@@ -96,7 +96,7 @@ struct AccessibilityPermissionSection: View {
 
   /// Targeted copy for the stale-grant case: after an update macOS may still show rede as
   /// enabled but no longer recognize it. The fix is to remove the entry with the minus and re-add.
-  /// Uses .liquidGlassInfoBanner(accent: .orange) for consistent banner styling.
+  /// Uses the flat .tintBanner(.orange) — this hint nests inside cards (DESIGN.md).
   private var staleGrantHint: some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(alignment: .top, spacing: 8) {
@@ -134,7 +134,8 @@ struct AccessibilityPermissionSection: View {
     }
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .liquidGlassInfoBanner(accent: .orange)
+    // Flat tint — this section renders inside settings cards and onboarding cards (DESIGN.md).
+    .tintBanner(.orange)
   }
 
   private func staleStep(number: String, text: String) -> some View {

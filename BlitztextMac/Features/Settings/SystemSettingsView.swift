@@ -307,7 +307,8 @@ struct SystemSettingsView: View {
       }
       .padding(.horizontal, 8)
       .padding(.vertical, 7)
-      .liquidGlassInfoBanner(accent: .orange)
+      // Flat tint — nested inside the hotkeys card, so no glass layer (DESIGN.md).
+      .tintBanner(.orange, cornerRadius: 8)
     }
   }
 
@@ -406,13 +407,10 @@ struct SystemSettingsView: View {
             .foregroundStyle(.secondary)
           Button("start") { EarconPlayer.play(.start) }
             .buttonStyle(PopoverActionButtonStyle(.quiet))
-            .font(.system(size: 10.5, weight: .medium))
           Button("fertig") { EarconPlayer.play(.done) }
             .buttonStyle(PopoverActionButtonStyle(.quiet))
-            .font(.system(size: 10.5, weight: .medium))
           Button("fehler") { EarconPlayer.play(.error) }
             .buttonStyle(PopoverActionButtonStyle(.quiet))
-            .font(.system(size: 10.5, weight: .medium))
         }
       }
     }

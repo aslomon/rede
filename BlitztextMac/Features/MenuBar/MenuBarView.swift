@@ -211,7 +211,6 @@ private struct MainPageView: View {
       Button("öffnen") {
         appState.requestAccessibilityPermission()
       }
-      .font(.system(size: 10.5, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.warning))
     }
     .padding(10)
@@ -242,7 +241,6 @@ private struct MainPageView: View {
       Button("prüfen") {
         appState.openSettings(tab: 4)
       }
-      .font(.system(size: 10.5, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.warning))
     }
     .padding(10)
@@ -466,14 +464,12 @@ private struct AppFooter: View {
         Button(hint) {
           appState.updateService.checkForUpdates()
         }
-        .font(.system(size: 10, weight: .medium))
         .buttonStyle(PopoverActionButtonStyle(.primary))
       }
 
       Button("beenden") {
         NSApplication.shared.terminate(nil)
       }
-      .font(.system(size: 10, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.quiet))
     }
     .padding(.horizontal, 16)
@@ -823,20 +819,11 @@ private struct _ErrorView: View {
         .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 8)
 
+      // One styled button — the earlier manual card label stacked its own fill on top of the
+      // primary style's accent fill (double background).
       Button(action: onRetry) {
         Text("nochmal")
-          .font(.system(size: 12, weight: .medium))
-          .foregroundStyle(.primary)
           .frame(maxWidth: .infinity)
-          .padding(.vertical, 8)
-          .background(
-            RoundedRectangle(cornerRadius: 8)
-              .fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
-          )
-          .overlay(
-            RoundedRectangle(cornerRadius: 8)
-              .strokeBorder(MenuBarTokens.cardStroke(colorScheme: colorScheme), lineWidth: 0.5)
-          )
       }
       .buttonStyle(PopoverActionButtonStyle(.primary))
       .keyboardShortcut(.defaultAction)

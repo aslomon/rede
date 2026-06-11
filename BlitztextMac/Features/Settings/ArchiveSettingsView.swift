@@ -77,7 +77,6 @@ struct ArchiveSettingsView: View {
         NotificationCenter.default.post(name: .openArchiveWindow, object: nil)
       } label: {
         Label("archiv-fenster öffnen …", systemImage: "macwindow")
-          .font(.system(size: 10, weight: .medium))
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 
@@ -87,7 +86,6 @@ struct ArchiveSettingsView: View {
         showClearArchiveConfirm = true
       } label: {
         Label("archiv löschen", systemImage: "trash")
-          .font(.system(size: 10, weight: .medium))
       }
       .buttonStyle(PopoverActionButtonStyle(.danger))
         .disabled(!appState.isArchiveEnabled || appState.archiveStore.entries.isEmpty)

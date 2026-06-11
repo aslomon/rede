@@ -42,7 +42,6 @@ struct ModelsStepView: View {
           SectionLabel(text: "Whisper (sprache → text)", icon: "waveform")
           Spacer()
           Button("prüfen") { transcriptionRecheckToken += 1 }
-            .font(.system(size: 10, weight: .medium))
             .buttonStyle(PopoverActionButtonStyle(.quiet))
             .disabled(appState.isDownloadingLocalModel)
         }

@@ -134,10 +134,8 @@ struct OpenAIKeySection: View {
       } label: {
         if saved {
           Label("gespeichert", systemImage: "checkmark")
-            .font(.system(size: 12, weight: .medium))
         } else {
           Text("speichern")
-            .font(.system(size: 12, weight: .medium))
         }
       }
       .buttonStyle(PopoverActionButtonStyle(saved ? .secondary : .primary))

@@ -7,7 +7,6 @@ import SwiftUI
 /// `MenuBarTokens` so the row reads correctly in both light and dark mode.
 struct DictationReplacementRow: View {
   let replacement: DictationReplacement
-  let colorScheme: ColorScheme
   let onToggleWholeWord: (Bool) -> Void
   let onRemove: () -> Void
 
@@ -27,14 +26,7 @@ struct DictationReplacementRow: View {
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 5)
-    .background(
-      RoundedRectangle(cornerRadius: 6)
-        .fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
-    )
-    .overlay(
-      RoundedRectangle(cornerRadius: 6)
-        .strokeBorder(MenuBarTokens.cardStroke(colorScheme: colorScheme), lineWidth: 0.5)
-    )
+    .tokenCard(cornerRadius: 6)
   }
 
   /// `textformat.abc` icon at 9pt. `.tertiary` foreground when `wholeWord` is false (substring

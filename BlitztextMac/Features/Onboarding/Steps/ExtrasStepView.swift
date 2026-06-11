@@ -80,13 +80,10 @@ struct ExtrasStepView: View {
               .foregroundStyle(.secondary)
             Button("start") { EarconPlayer.play(.start) }
               .buttonStyle(PopoverActionButtonStyle(.quiet))
-              .font(.system(size: 10.5, weight: .medium))
             Button("fertig") { EarconPlayer.play(.done) }
               .buttonStyle(PopoverActionButtonStyle(.quiet))
-              .font(.system(size: 10.5, weight: .medium))
             Button("fehler") { EarconPlayer.play(.error) }
               .buttonStyle(PopoverActionButtonStyle(.quiet))
-              .font(.system(size: 10.5, weight: .medium))
           }
         }
       }

@@ -89,12 +89,16 @@ trailing `chevron.right`. Kurze Banner-CTAs („öffnen", „prüfen") und Abbre
   Header). Modus-Karten (`ModeCardView`) nutzen dieselbe Karte mit dem Header in der Karte;
   der Modus-Hotkey erscheint dort als Mini-Keycaps (`liquidGlassKeycap`, 9pt monospaced),
   ausgeblendet solange keine Kombination gesetzt ist.
-- `EmptyStateCard`: getönte Banner-Karte (`liquidGlassInfoBanner`) mit Icon+Titel-Zeile, Caption
-  und optionaler CTA — Guidance, keine weitere Sektions-Box.
+- `EmptyStateCard`: getönte Banner-Karte (`.tintBanner`, flach) mit Icon+Titel-Zeile, Caption
+  und optionaler CTA — Guidance, keine weitere Sektions-Box und kein Glass in der Karte.
 - `SubtleButtonStyle` nur noch für sehr kleine Inline-/Chip-Aktionen, nicht für echte Buttons.
 - Neue sichtbare Action-Buttons: `PopoverActionButtonStyle(.primary/.secondary/.warning/.danger/.quiet)`.
   Echte Aktionen dürfen nicht wie nackter Text aussehen; auch kleine Aktionen bekommen Fill/Stroke
   oder werden als Icon-Button (`PopoverIconButtonStyle`) gerendert.
+- **Button-Typo kommt ausschließlich vom Style** (11pt `.semibold`, auch in den Glass-Styles):
+  KEINE `.font(...)`-Modifier an Buttons oder in Button-Labels — äußere sind wirkungslos, innere
+  erzeugen abweichende Button-Größen. Custom-Chrome, das wie ein Button aussehen muss (z. B.
+  Menu-Labels), nutzt dieselben 11pt `.semibold`.
 - Status statt Erklärung: `BlitzStatusPill` für bereit/warnung/download/online/lokal/muted.
 - Längere Hinweise nur hinter `InfoDisclosure`; Settings zeigen Zustand + nächste Aktion, keine
   dauerhafte Dokumentation.
@@ -150,8 +154,8 @@ trailing `chevron.right`. Kurze Banner-CTAs („öffnen", „prüfen") und Abbre
   Umschreiben (Ollama-LLM) und Embedding. Jede Modellzeile folgt demselben Muster: grün/blau-Badge +
   Name + Größe links, rechts Aktion(en) — `Nutzen`/`Aktiv`-Pille, `arrow.clockwise`-Icon-Button für
   „Neu laden" und `DeleteModelButton` (Papierkorb mit Bestätigung). `DeleteModelButton` ist
-  Closure-basiert und für alle Modelltypen identisch. Reihen liegen auf `.liquidGlassCard(cornerRadius: 8)`,
-  je Engine eine `SectionLabel`-Gruppe. Embedding-Modelle zeigen nie „Nutzen" (das setzt nur das
+  Closure-basiert und für alle Modelltypen identisch. Reihen liegen auf `.tokenCard(cornerRadius: 8)`
+  (die app-weite Listen-Reihen-Fläche), je Engine eine `SectionLabel`-Gruppe. Embedding-Modelle zeigen nie „Nutzen" (das setzt nur das
   Sprachmodell), sondern eine `Embedding`-Pille. Jeder Modelltyp muss löschbar und neu ladbar sein.
 - **Offline-/Lokal-Hinweis**: orange Info-Banner-Muster wie `accessibilityHintBanner`.
 
@@ -168,13 +172,24 @@ trailing `chevron.right`. Kurze Banner-CTAs („öffnen", „prüfen") und Abbre
 
 ## Liquid Glass v2 — Design Direction
 
-### Geltungsbereich
+### Geltungsbereich — Flächen-Hierarchie (HARD CONSTRAINT)
 
-Liquid Glass gilt für **schwebende Surfaces**: das Popover (`MenuBarView`), die floating Recording-Pille (`RecordingPillView`), die Onboarding-Fenster-Wurzel. Dense Settings-Flächen (GroupBox-Sektionen, Formfelder, Chips innerhalb einer GroupBox) **erhalten kein Glass** — sie nutzen native SwiftUI-Controls, damit macOS 26 den Systemlook selbst rendert.
+**Glass = schwebendes Chrome. Tokens = Inhaltsflächen.** Konkret:
+
+- Liquid Glass erhalten nur Views, deren DIREKTER Parent ein schwebender Backdrop ist: das
+  Popover (`BlitztextSurface`), die Recording-Pille, die Onboarding-Fenster-Wurzel — plus die
+  direkt darauf liegenden Banner/Karten (`accessibilityHintBanner`, `setupNudgeBanner`,
+  `truncationBanner`, `OnboardingCard`) und Keycaps (`liquidGlassKeycap`).
+- ALLES, was in einer Sektionskarte (`settingsGroupBackground`/`SettingsSection`) oder in
+  Fenster-Listen steckt — Reihen, Empty-States, Warn-Banner, Vorschlags-Banner, Stat-Tiles,
+  Modell-Reihen — liegt auf den FLACHEN Token-Primitives aus `DesignTokens.swift`:
+  `.tokenCard(cornerRadius:)` (neutral, `MenuBarTokens.cardFill`) und
+  `.tintBanner(_:cornerRadius:)` (akzentuiert, `MenuBarTokens.tintFill/tintStroke`) — auf ALLEN
+  macOS-Versionen identisch.
 
 ### Regel: Glass nicht stapeln
 
-Ein Glass-Layer pro Surface-Ebene. Im Popover: `BlitztextSurface` (Fenster-Backdrop) = Layer 1. Karten wie `enginePanel` oder `accessibilityHintBanner` innerhalb des Popovers = Layer 2. Kein weiterer Glass-Layer innerhalb dieser Karten. Chips, Toggles, Picker innerhalb einer GroupBox = nullte Glass-Ebene; sie erben den Systemlook.
+Ein Glass-Layer pro Surface-Ebene. Im Popover: `BlitztextSurface` (Fenster-Backdrop) = Layer 1, direkt aufliegende Banner = Layer 2 — Schluss. Innerhalb von Sektionskarten existiert KEIN Glass (siehe Flächen-Hierarchie oben); Chips, Toggles, Picker erben den Systemlook.
 
 ### Lesbarkeit auf Glas (HARD CONSTRAINT)
 
@@ -241,7 +256,9 @@ Definiert in `BlitztextMac/Features/Shared/LiquidGlass.swift`. Alle existierende
 
 **Engine Panel / Cards im Popover**: `.liquidGlassCard()` ersetzt manuelles `RoundedRectangle.fill` + `.overlay(strokeBorder)`.
 
-**Farbige Banner** (orange Warnings, blaue Setup-Nudge): `.liquidGlassInfoBanner(accent:)` ersetzt alle manuellen `tintFill/tintStroke`-Banner-Konstruktionen.
+**Farbige Banner**: direkt auf dem Popover-Backdrop (orange Warnings, blaue Setup-Nudge) →
+`.liquidGlassInfoBanner(accent:)`. Innerhalb von Sektionskarten/Listen → `.tintBanner(_:)`
+(flach, Tokens) — siehe Flächen-Hierarchie.
 
 **Workflow-Reihen**: `GlassEffectContainerView` umschließt die `ForEach`-Liste; `.glassRowBackground(...)` gibt jedem Row den hover-morphing effect.
 

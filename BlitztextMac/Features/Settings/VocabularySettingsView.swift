@@ -60,7 +60,8 @@ struct VocabularySettingsView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .liquidGlassInfoBanner(accent: .blue)
+        // Flat tint — nested inside the memory card, so no glass layer (DESIGN.md).
+        .tintBanner(.blue)
       }
       .buttonStyle(.plain)
       .accessibilityLabel(

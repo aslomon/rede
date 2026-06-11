@@ -109,7 +109,6 @@ struct ImprovementSection: View {
 private struct ImprovementRow: View {
   let observation: ImprovementObservation
 
-  @Environment(\.colorScheme) private var colorScheme
 
   private static let relativeFormatter: RelativeDateTimeFormatter = {
     let formatter = RelativeDateTimeFormatter()
@@ -136,14 +135,7 @@ private struct ImprovementRow: View {
     }
     .padding(8)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(MenuBarTokens.cardFill(colorScheme: colorScheme))
-    )
-    .overlay(
-      RoundedRectangle(cornerRadius: 8)
-        .strokeBorder(MenuBarTokens.cardStroke(colorScheme: colorScheme), lineWidth: 0.5)
-    )
+    .tokenCard(cornerRadius: 8)
   }
 
   private var header: some View {
@@ -201,7 +193,6 @@ private struct ImprovementSuggestionRow: View {
   let onAccept: () -> Void
   let onDismiss: () -> Void
 
-  @Environment(\.colorScheme) private var colorScheme
 
   var body: some View {
     HStack(spacing: 8) {
@@ -228,23 +219,14 @@ private struct ImprovementSuggestionRow: View {
       Spacer(minLength: 6)
 
       Button("übernehmen", action: onAccept)
-        .font(.system(size: 10, weight: .medium))
         .buttonStyle(PopoverActionButtonStyle(.primary))
         .accessibilityLabel("Vorschlag übernehmen: \(suggestion.from) zu \(suggestion.to)")
       Button("verwerfen", action: onDismiss)
-        .font(.system(size: 10, weight: .medium))
         .buttonStyle(PopoverActionButtonStyle(.secondary))
         .accessibilityLabel("Vorschlag verwerfen: \(suggestion.from) zu \(suggestion.to)")
     }
     .padding(8)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(MenuBarTokens.tintFill(.blue, colorScheme: colorScheme))
-    )
-    .overlay(
-      RoundedRectangle(cornerRadius: 8)
-        .strokeBorder(MenuBarTokens.tintStroke(.blue, colorScheme: colorScheme), lineWidth: 0.5)
-    )
+    .tintBanner(.blue, cornerRadius: 8)
   }
 }
