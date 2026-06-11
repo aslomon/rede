@@ -10,13 +10,6 @@ struct ProcessingStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "cpu",
-        accent: .blue,
-        title: "verarbeitung",
-        subtitle: "wähle online-leistung oder lokalen datenschutz."
-      )
-
       VStack(spacing: 10) {
         choiceCard(
           selected: !isLocal,

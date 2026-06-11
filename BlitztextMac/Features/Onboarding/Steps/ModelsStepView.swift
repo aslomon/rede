@@ -19,14 +19,6 @@ struct ModelsStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "shippingbox",
-        accent: .green,
-        title: "lokale modelle",
-        subtitle: needsWhisper
-          ? "lade ein lokales Whisper-Modell." : "im online-modus ist hier nichts pflicht."
-      )
-
       whisperCard
 
       // Local rewrite-model card gated behind InfoDisclosure in online mode.
@@ -47,7 +39,7 @@ struct ModelsStepView: View {
     {
       VStack(alignment: .leading, spacing: 10) {
         HStack(spacing: 6) {
-          SectionLabel(text: "Whisper (sprache → text)")
+          SectionLabel(text: "Whisper (sprache → text)", icon: "waveform")
           Spacer()
           Button("prüfen") { transcriptionRecheckToken += 1 }
             .font(.system(size: 10, weight: .medium))
@@ -159,7 +151,7 @@ struct ModelsStepView: View {
   private var localRewriteCard: some View {
     OnboardingCard {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "optional – nur für lokales umformen")
+        SectionLabel(text: "optional – nur für lokales umformen", icon: "text.bubble")
         InfoDisclosure("wofür") {
           Text(
             "formuliert texte lokal um (E-Mail, Prompt, Social) über den gebündelten llama.cpp-Helper. nur nötig, wenn ein modus offline umformen soll."

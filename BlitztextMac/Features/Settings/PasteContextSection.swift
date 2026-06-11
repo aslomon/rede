@@ -12,7 +12,7 @@ struct PasteContextSection: View {
     // Plain heading + content (NOT a carded SettingsSection): in the archive window the row list is
     // already made of cards, so a box here produced a box-in-box. Matches the popover section style.
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "kontext · wo du diktierst")
+      SectionLabel(text: "kontext · wo du diktierst", icon: "scope")
       Text("lokal protokolliert (nur du), nur mit dem archiv. kein text — nur, wo du diktierst.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)

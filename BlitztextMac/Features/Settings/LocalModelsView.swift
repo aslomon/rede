@@ -17,7 +17,7 @@ struct LocalModelsView: View {
 
         // Hardware facts first — the per-model RAM fit is based on them.
         VStack(alignment: .leading, spacing: 8) {
-          SectionLabel(text: "dieser Mac")
+          SectionLabel(text: "dieser Mac", icon: "laptopcomputer")
           systemCard
         }
 
@@ -104,7 +104,7 @@ struct LocalModelsView: View {
 
   private var llamaCppSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "sprachmodell · umschreiben")
+      SectionLabel(text: "sprachmodell · umschreiben", icon: "text.bubble")
 
       if manager.llamaCppInstalled.isEmpty {
         Text("GGUF-Modelle laufen direkt über den gebündelten lokalen llama.cpp-Helper.")
@@ -396,7 +396,7 @@ struct LocalModelsView: View {
     let downloading = manager.isDownloadingLlamaCpp(model.id)
     let state = manager.llamaCppDownloads[model.id]
     return VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "embedding · E-Mail-Memory")
+      SectionLabel(text: "embedding · E-Mail-Memory", icon: "point.3.connected.trianglepath.dotted")
       Text("optionales lokales Embedding-Modell für das semantische E-Mail-Gedächtnis.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)

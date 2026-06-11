@@ -73,6 +73,46 @@ final class OnboardingViewModel {
       default: return "weiter"
       }
     }
+
+    /// Centered hero headline shown by the wizard chrome — the step views render only their
+    /// controls. rede voice: short, lowercase, may show character.
+    var headline: String {
+      switch self {
+      case .welcome: return "lass uns reden."
+      case .installLocation: return "der richtige ort."
+      case .permissions: return "zwei freigaben."
+      case .processing: return "wo soll's laufen?"
+      case .models: return "deine lokalen engines."
+      case .modes: return "deine modi."
+      case .hotkeys: return "von überall."
+      case .extras: return "noch ein feinschliff?"
+      case .finish: return "sitzt."
+      }
+    }
+
+    /// One-line supporting sentence under the headline (centered, secondary).
+    var subheadline: String {
+      switch self {
+      case .welcome:
+        return "einmal einrichten — danach: sprechen, loslassen, text sitzt im feld."
+      case .installLocation:
+        return "eine kopie in /Applications hält start, updates und hotkeys stabil."
+      case .permissions:
+        return "mikrofon nimmt auf, bedienungshilfen fügen direkt ein."
+      case .processing:
+        return "online-leistung oder alles lokal — du entscheidest."
+      case .models:
+        return "Whisper für sprache → text, optional ein modell fürs umformen."
+      case .modes:
+        return "E-Mail, Prompt und Social sind vorbereitet — pass die beispiele an."
+      case .hotkeys:
+        return "ein hotkey pro modus — halten oder umschalten."
+      case .extras:
+        return "alles optional, alles später änderbar."
+      case .finish:
+        return "dein setup im überblick — mit \u{201E}fertig\u{201C} legst du los."
+      }
+    }
   }
 
   static let stepCount = OnboardingStep.allCases.count

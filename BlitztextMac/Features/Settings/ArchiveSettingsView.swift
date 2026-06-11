@@ -32,6 +32,7 @@ struct ArchiveSettingsView: View {
   private var archiveSection: some View {
     SettingsSection(
       "transkriptions-archiv",
+      icon: "archivebox",
       trailing: { archivePill }
     ) {
       // Status → Action: Toggle first, privacy detail behind disclosure.
@@ -72,17 +73,23 @@ struct ArchiveSettingsView: View {
 
   private var bottomActionBar: some View {
     HStack {
-      Button("archiv-fenster öffnen …") {
+      Button {
         NotificationCenter.default.post(name: .openArchiveWindow, object: nil)
+      } label: {
+        Label("archiv-fenster öffnen …", systemImage: "macwindow")
+          .font(.system(size: 10, weight: .medium))
       }
-      .font(.system(size: 10, weight: .medium))
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 
       Spacer()
 
-      Button("archiv löschen") { showClearArchiveConfirm = true }
-        .font(.system(size: 10, weight: .medium))
-        .buttonStyle(PopoverActionButtonStyle(.danger))
+      Button {
+        showClearArchiveConfirm = true
+      } label: {
+        Label("archiv löschen", systemImage: "trash")
+          .font(.system(size: 10, weight: .medium))
+      }
+      .buttonStyle(PopoverActionButtonStyle(.danger))
         .disabled(!appState.isArchiveEnabled || appState.archiveStore.entries.isEmpty)
         .accessibilityLabel("Archiv löschen")
         .confirmationDialog(

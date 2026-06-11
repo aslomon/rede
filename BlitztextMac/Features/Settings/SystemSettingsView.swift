@@ -67,7 +67,7 @@ struct SystemSettingsView: View {
     // Plain section (SectionLabel + content), matching the other System sections.
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
-        SectionLabel(text: "installation & start")
+        SectionLabel(text: "installation & start", icon: "arrow.down.app")
         BlitzStatusPill(
           state: currentInstallLocation == .applications ? .ready : .warning,
           label: currentInstallLocation == .applications ? "sitzt" : "prüfen"
@@ -122,20 +122,26 @@ struct SystemSettingsView: View {
   private var installActionButtons: some View {
     HStack(spacing: 8) {
       if BlitztextInstallLocationService.shouldOfferMoveToApplications {
-        Button("nach /Applications bewegen") {
+        Button {
           moveToApplications()
+        } label: {
+          Label("nach /Applications bewegen", systemImage: "arrow.down.app.fill")
         }
         .buttonStyle(PopoverActionButtonStyle(.warning))
       }
 
-      Button("im Finder zeigen") {
+      Button {
         revealInFinder(urls: [BlitztextInstallLocationService.bundleURL])
+      } label: {
+        Label("im Finder zeigen", systemImage: "finder")
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
 
       if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
-        Button("weitere kopien zeigen") {
+        Button {
           revealInFinder(urls: BlitztextInstallLocationService.otherInstalledBundleURLs)
+        } label: {
+          Label("weitere kopien zeigen", systemImage: "square.stack.3d.up")
         }
         .buttonStyle(PopoverActionButtonStyle(.warning))
       }
@@ -169,15 +175,17 @@ struct SystemSettingsView: View {
 
   private var setupSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "einrichtung")
+      SectionLabel(text: "einrichtung", icon: "sparkles")
 
       Text("die geführte ersteinrichtung jederzeit erneut durchlaufen.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
 
-      Button("einrichtung erneut starten") {
+      Button {
         NotificationCenter.default.post(name: .openOnboardingWindow, object: nil)
+      } label: {
+        Label("einrichtung erneut starten", systemImage: "arrow.counterclockwise")
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
     }
@@ -187,7 +195,7 @@ struct SystemSettingsView: View {
 
   private var updatesSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "updates")
+      SectionLabel(text: "updates", icon: "arrow.triangle.2.circlepath")
 
       HStack(spacing: 8) {
         Text(appState.updateService.appVersionText)
@@ -205,8 +213,10 @@ struct SystemSettingsView: View {
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
 
-      Button("jetzt nach updates suchen") {
+      Button {
         appState.updateService.checkForUpdates()
+      } label: {
+        Label("jetzt nach updates suchen", systemImage: "arrow.triangle.2.circlepath")
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
       .disabled(!appState.updateService.canCheckForUpdates)
@@ -236,7 +246,7 @@ struct SystemSettingsView: View {
 
   private var hotkeysSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "tastenkürzel")
+      SectionLabel(text: "tastenkürzel", icon: "keyboard")
 
       VStack(alignment: .leading, spacing: 6) {
         Picker("", selection: $appState.appSettings.hotkeyMode) {
@@ -324,7 +334,7 @@ struct SystemSettingsView: View {
 
   private var dictationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "diktat")
+      SectionLabel(text: "diktat", icon: "mic")
 
       Text("maximale aufnahmelänge")
         .font(.system(size: 11))
@@ -372,7 +382,7 @@ struct SystemSettingsView: View {
 
   private var feedbackSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "akustisches feedback")
+      SectionLabel(text: "akustisches feedback", icon: "speaker.wave.2")
 
       Toggle(
         "töne bei start, fertig und fehler",

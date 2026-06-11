@@ -12,6 +12,7 @@ import SwiftUI
 /// every tab reads with the same surface language as the System tab.
 struct SettingsSection<Content: View, Trailing: View>: View {
   let label: String
+  let icon: String?
   let action: (label: String, perform: () -> Void)?
   let caption: String?
   let trailing: Trailing
@@ -19,12 +20,14 @@ struct SettingsSection<Content: View, Trailing: View>: View {
 
   init(
     _ label: String,
+    icon: String? = nil,
     action: (label: String, perform: () -> Void)? = nil,
     caption: String? = nil,
     @ViewBuilder trailing: () -> Trailing,
     @ViewBuilder content: () -> Content
   ) {
     self.label = label
+    self.icon = icon
     self.action = action
     self.caption = caption
     self.trailing = trailing()
@@ -34,7 +37,7 @@ struct SettingsSection<Content: View, Trailing: View>: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack(spacing: 8) {
-        SectionLabel(text: label)
+        SectionLabel(text: label, icon: icon)
         // Status pill sits in the section header (DESIGN.md), right next to the label.
         trailing
         Spacer()
@@ -60,11 +63,14 @@ struct SettingsSection<Content: View, Trailing: View>: View {
 extension SettingsSection where Trailing == EmptyView {
   init(
     _ label: String,
+    icon: String? = nil,
     action: (label: String, perform: () -> Void)? = nil,
     caption: String? = nil,
     @ViewBuilder content: () -> Content
   ) {
-    self.init(label, action: action, caption: caption, trailing: { EmptyView() }, content: content)
+    self.init(
+      label, icon: icon, action: action, caption: caption, trailing: { EmptyView() },
+      content: content)
   }
 }
 
@@ -150,16 +156,20 @@ struct DestructiveClearButton: View {
   }
 
   var body: some View {
-    Button(label) { showConfirm = true }
-      .font(.system(size: 10, weight: .medium))
-      .buttonStyle(PopoverActionButtonStyle(.danger))
-      .accessibilityLabel(label)
-      .confirmationDialog("\(label)?", isPresented: $showConfirm, titleVisibility: .visible) {
-        Button("löschen", role: .destructive, action: action)
-        Button("abbrechen", role: .cancel) {}
-      } message: {
-        Text(message)
-      }
+    Button {
+      showConfirm = true
+    } label: {
+      Label(label, systemImage: "trash")
+        .font(.system(size: 10, weight: .medium))
+    }
+    .buttonStyle(PopoverActionButtonStyle(.danger))
+    .accessibilityLabel(label)
+    .confirmationDialog("\(label)?", isPresented: $showConfirm, titleVisibility: .visible) {
+      Button("löschen", role: .destructive, action: action)
+      Button("abbrechen", role: .cancel) {}
+    } message: {
+      Text(message)
+    }
   }
 }
 

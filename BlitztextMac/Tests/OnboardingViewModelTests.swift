@@ -43,6 +43,18 @@ final class OnboardingViewModelTests: XCTestCase {
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.primaryActionLabel, "fertig")
   }
 
+  /// Every step must provide the wizard-hero copy (headline + subheadline) — the step views no
+  /// longer carry their own headers, so missing metadata would render an empty hero.
+  func testEveryStepProvidesHeroCopy() {
+    for step in OnboardingViewModel.OnboardingStep.allCases {
+      XCTAssertFalse(step.headline.isEmpty, "\(step) needs a headline")
+      XCTAssertFalse(step.subheadline.isEmpty, "\(step) needs a subheadline")
+      XCTAssertFalse(step.systemImage.isEmpty, "\(step) needs a hero symbol")
+    }
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.welcome.headline, "lass uns reden.")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.headline, "sitzt.")
+  }
+
   // MARK: - canAdvance gating
 
   func testSoftStepsAlwaysAdvanceable() {

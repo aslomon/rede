@@ -14,8 +14,6 @@ struct FinishStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      successHeader
-
       OnboardingCard {
         VStack(alignment: .leading, spacing: 10) {
           OnboardingRecapRow(
@@ -54,37 +52,6 @@ struct FinishStepView: View {
       }
     }
     .onAppear { launchAtLoginService.refresh() }
-  }
-
-  // MARK: - Success header
-
-  /// 44pt checkmark circle: glass capsule on macOS 26+, flat green circle on macOS 14–25 (change 12).
-  private var successHeader: some View {
-    HStack(spacing: 12) {
-      ZStack {
-        Circle()
-          .fill(Color.green.opacity(0.12))
-          .frame(width: 44, height: 44)
-        Image(systemName: "checkmark.circle.fill")
-          .font(.system(size: 24))
-          .foregroundStyle(.green)
-      }
-      // liquidGlassCapsule provides the macOS 26 glass celebration moment;
-      // on macOS 14–25 it falls back to .regularMaterial + shadow (change 12).
-      .liquidGlassCapsule(accent: .green)
-      .frame(width: 44, height: 44)
-
-      VStack(alignment: .leading, spacing: 3) {
-        Text("sitzt.")
-          .font(.system(size: 15, weight: .semibold))
-          .foregroundStyle(.primary)
-        Text("hier ist deine einrichtung im überblick. mit \u{201E}fertig\u{201C} legst du los.")
-          .font(.system(size: 11.5))
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-      Spacer(minLength: 0)
-    }
   }
 
   // MARK: - Discover content (behind InfoDisclosure, change 12)

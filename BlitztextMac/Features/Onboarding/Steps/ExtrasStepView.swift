@@ -10,13 +10,6 @@ struct ExtrasStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "slider.horizontal.3",
-        accent: .cyan,
-        title: "noch ein feinschliff?",
-        subtitle: "alles optional, alles später änderbar. aber jetzt ist der beste moment dafür."
-      )
-
       launchAtLoginCard
       soundCard
       memoryCard
@@ -30,7 +23,7 @@ struct ExtrasStepView: View {
     OnboardingCard {
       VStack(alignment: .leading, spacing: 6) {
         HStack(spacing: 8) {
-          SectionLabel(text: "autostart")
+          SectionLabel(text: "autostart", icon: "power")
           Spacer()
           Toggle(
             "rede automatisch starten",
@@ -63,7 +56,7 @@ struct ExtrasStepView: View {
     OnboardingCard {
       VStack(alignment: .leading, spacing: 6) {
         HStack(spacing: 8) {
-          SectionLabel(text: "töne")
+          SectionLabel(text: "töne", icon: "speaker.wave.2")
           Spacer()
           Toggle(
             "töne bei start, fertig und fehler",
@@ -106,7 +99,7 @@ struct ExtrasStepView: View {
     OnboardingCard(accent: appState.isUnifiedMemoryEnabled ? .green : nil) {
       VStack(alignment: .leading, spacing: 6) {
         HStack(spacing: 8) {
-          SectionLabel(text: "archiv & memory")
+          SectionLabel(text: "archiv & memory", icon: "brain")
           if appState.isUnifiedMemoryEnabled {
             BlitzStatusPill(state: .local, label: "lokal aktiv")
           }

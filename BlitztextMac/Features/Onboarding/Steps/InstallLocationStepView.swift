@@ -13,13 +13,6 @@ struct InstallLocationStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "arrow.down.app",
-        accent: isInApplications ? .green : .orange,
-        title: "speicherort",
-        subtitle: "eine app-kopie in /Applications hält start, updates und hotkeys sauber."
-      )
-
       OnboardingCard(accent: isInApplications ? nil : .orange) {
         VStack(alignment: .leading, spacing: 10) {
           HStack(spacing: 8) {

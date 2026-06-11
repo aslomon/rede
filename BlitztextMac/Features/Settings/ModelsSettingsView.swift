@@ -66,7 +66,7 @@ struct ModelsSettingsView: View {
   // MARK: - Processing mode (online OpenAI vs. secure local)
 
   private var processingCard: some View {
-    SettingsSection("verarbeitung") {
+    SettingsSection("verarbeitung", icon: "cpu") {
       Picker("", selection: $appState.appSettings.secureLocalModeEnabled) {
         Text("online · OpenAI").tag(false)
         Text("lokal · sicher").tag(true)
@@ -103,6 +103,7 @@ struct ModelsSettingsView: View {
   private var whisperCard: some View {
     SettingsSection(
       "lokale transkription (Whisper)",
+      icon: "waveform",
       action: appState.isDownloadingLocalModel
         ? nil : (label: "prüfen", perform: { transcriptionRecheckToken += 1 }),
       trailing: {
@@ -118,7 +119,7 @@ struct ModelsSettingsView: View {
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
 
-      // Full paragraph only when no model is installed (spec #3)
+      // Guidance only when no model is installed (spec #3) — the heading carries the concept.
       if !appState.hasAnyTranscriptionEngine {
         EmptyStateCard(
           icon: "waveform",
@@ -246,6 +247,7 @@ struct ModelsSettingsView: View {
   private var localLLMCard: some View {
     SettingsSection(
       "lokales sprachmodell",
+      icon: "text.bubble",
       caption: "formuliert texte lokal um — nutzbar in jedem modus, unabhängig vom online-modus."
     ) {
       LocalLLMModelPicker(appState: appState)

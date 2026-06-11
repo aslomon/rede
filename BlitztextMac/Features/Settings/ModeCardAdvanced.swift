@@ -29,15 +29,18 @@ extension ModeCardView {
       Text("eigene anweisung")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
+      // Real text-field surface (DESIGN.md: controlBackground/textBackground für Felder) — the
+      // earlier primary.opacity(0.03) wash was nearly invisible against the card in dark mode.
       TextEditor(text: bind(\.rewrite.systemPrompt))
         .font(.system(size: 11))
         .frame(height: 96)
         .scrollContentBackground(.hidden)
         .padding(8)
-        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 6))
+        .background(
+          Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
         .overlay(
           RoundedRectangle(cornerRadius: 6).strokeBorder(
-            Color.primary.opacity(0.06), lineWidth: 0.5))
+            Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5))
     }
   }
 

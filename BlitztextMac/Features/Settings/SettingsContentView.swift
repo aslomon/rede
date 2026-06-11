@@ -96,13 +96,25 @@ struct SettingsContentView: View {
 
 // MARK: - Section Label (quiet style)
 
+/// The app-wide section heading: optional concept icon + uppercase label. The icon comes from the
+/// rede icon language (one SF Symbol per concept, DESIGN.md) and stays quiet — same secondary
+/// colour and near-text size as the label itself.
 struct SectionLabel: View {
   let text: String
+  var icon: String? = nil
 
   var body: some View {
-    Text(text.uppercased())
-      .font(.system(size: 11, weight: .medium))
-      .foregroundStyle(.secondary)
+    HStack(spacing: 5) {
+      if let icon {
+        Image(systemName: icon)
+          .font(.system(size: 10, weight: .semibold))
+          .foregroundStyle(.secondary)
+          .accessibilityHidden(true)
+      }
+      Text(text.uppercased())
+        .font(.system(size: 11, weight: .medium))
+        .foregroundStyle(.secondary)
+    }
   }
 }
 // MARK: - Flow Layout (for term tags)

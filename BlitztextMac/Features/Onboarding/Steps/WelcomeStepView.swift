@@ -1,20 +1,12 @@
 import SwiftUI
 
-/// Step 1: a warm intro with three value bullets plus the one personal question — your name.
-/// Merging the old identity step in here gives the welcome screen an actual decision (DESIGN.md:
-/// one main decision per step) instead of being a read-only marketing page.
+/// Welcome step: three value bullets plus the one personal question — your name. The headline
+/// ("lass uns reden.") lives in the wizard hero; this body carries only the controls.
 struct WelcomeStepView: View {
   @Bindable var appState: AppState
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "sparkles",
-        accent: .blue,
-        title: "lass uns reden",
-        subtitle: "einmal einrichten — danach: sprechen, loslassen, text sitzt im feld."
-      )
-
       VStack(alignment: .leading, spacing: 10) {
         valueBullet(
           icon: "mic.fill", accent: .blue,
@@ -39,7 +31,7 @@ struct WelcomeStepView: View {
   private var nameCard: some View {
     OnboardingCard(accent: .blue) {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "wie heißt du?")
+        SectionLabel(text: "wie heißt du?", icon: "person.crop.circle")
 
         TextField("dein name", text: $appState.appSettings.userDisplayName)
           .textFieldStyle(.roundedBorder)

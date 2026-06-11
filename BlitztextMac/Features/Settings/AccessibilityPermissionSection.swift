@@ -15,7 +15,7 @@ struct AccessibilityPermissionSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "bedienungshilfen")
+      SectionLabel(text: "bedienungshilfen", icon: "accessibility")
 
       BlitzStatusPill(state: isGranted ? .ready : .warning, label: isGranted ? "erkannt" : "fehlt")
 
@@ -58,20 +58,26 @@ struct AccessibilityPermissionSection: View {
       //                       'erneut prüfen' as icon button (.quiet), not a full label button
       if isGranted {
         HStack(spacing: 8) {
-          Button("bedienungshilfen öffnen") {
+          Button {
             appState.requestAccessibilityPermission()
+          } label: {
+            Label("bedienungshilfen öffnen", systemImage: "arrow.up.forward.app")
           }
           .buttonStyle(PopoverActionButtonStyle(.quiet))
 
-          Button("erneut prüfen") {
+          Button {
             appState.refreshAccessibilityPermission()
+          } label: {
+            Label("erneut prüfen", systemImage: "arrow.clockwise")
           }
           .buttonStyle(PopoverActionButtonStyle(.secondary))
         }
       } else {
         HStack(spacing: 8) {
-          Button("bedienungshilfen öffnen") {
+          Button {
             appState.requestAccessibilityPermission()
+          } label: {
+            Label("bedienungshilfen öffnen", systemImage: "arrow.up.forward.app")
           }
           .buttonStyle(PopoverActionButtonStyle(.warning))
 

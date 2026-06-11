@@ -8,13 +8,6 @@ struct PermissionsStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "hand.raised.fill",
-        accent: .orange,
-        title: "berechtigungen",
-        subtitle: "mikrofon nimmt auf. bedienungshilfen fügen direkt ein."
-      )
-
       microphoneCard
 
       OnboardingCard {
@@ -27,7 +20,7 @@ struct PermissionsStepView: View {
   private var microphoneCard: some View {
     OnboardingCard(accent: micStatus.isGranted ? nil : .orange) {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "mikrofon")
+        SectionLabel(text: "mikrofon", icon: "mic.fill")
 
         HStack(spacing: 6) {
           Image(

@@ -9,7 +9,7 @@ struct PromptsSettingsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       HStack(spacing: 8) {
-        SectionLabel(text: "modi")
+        SectionLabel(text: "modi", icon: "rectangle.stack")
         BlitzStatusPill(
           state: appState.hasAnyRewriteEngine ? .ready : .warning,
           label: appState.hasAnyRewriteEngine ? "bereit" : "modell fehlt"

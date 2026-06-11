@@ -54,8 +54,9 @@ final class OnboardingWindowController {
     window.titleVisibility = .hidden
     window.titlebarSeparatorStyle = .none  // removes the hairline separator under the title bar
     window.isMovableByWindowBackground = true
-    window.setContentSize(NSSize(width: 620, height: 560))
-    window.minSize = NSSize(width: 560, height: 520)
+    // Wizard layout: centered hero + single content column wants a calmer, taller portrait shape.
+    window.setContentSize(NSSize(width: 660, height: 700))
+    window.minSize = NSSize(width: 620, height: 640)
     window.isReleasedWhenClosed = false
     window.center()
     return window

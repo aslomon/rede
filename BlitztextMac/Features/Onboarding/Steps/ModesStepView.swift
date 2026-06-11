@@ -10,13 +10,6 @@ struct ModesStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "text.badge.checkmark",
-        accent: .purple,
-        title: "modi anpassen",
-        subtitle: "die drei modi sind vorbereitet. details kannst du später jederzeit ändern."
-      )
-
       promptCard(
         accent: .purple,
         modeSymbol: WorkflowType.textImprover.systemImageForOnboarding,
@@ -84,17 +77,18 @@ struct ModesStepView: View {
         }
 
         if isEditing.wrappedValue {
+          // Real text-field surface so the editor reads as editable in both colour schemes.
           TextEditor(text: text)
             .font(.system(size: 11))
             .frame(height: 96)
             .padding(6)
             .background(
               RoundedRectangle(cornerRadius: 6)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .fill(Color(nsColor: .textBackgroundColor))
             )
             .overlay(
               RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+                .strokeBorder(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
             )
             .scrollContentBackground(.hidden)
         }

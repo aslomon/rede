@@ -25,7 +25,7 @@ struct OpenAIKeySection: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
-        SectionLabel(text: "OpenAI API Key")
+        SectionLabel(text: "OpenAI API Key", icon: "key.fill")
         if showsStatusPill {
           BlitzStatusPill(
             state: appState.hasOpenAIKey ? .online : .warning,
@@ -115,8 +115,10 @@ struct OpenAIKeySection: View {
         .font(.system(size: 11.5))
         .focused($focused, equals: .openAIAPIKey)
 
-      Button("einfügen") {
+      Button {
         pasteAPIKeyFromClipboard()
+      } label: {
+        Label("einfügen", systemImage: "doc.on.clipboard")
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
     }

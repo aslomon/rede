@@ -15,7 +15,7 @@ struct DictationStatsSection: View {
     // Plain heading + content (NOT a carded SettingsSection): the stat tiles are already a card, so
     // a box here was a box-in-box. Matches the popover section style.
     VStack(alignment: .leading, spacing: 10) {
-      SectionLabel(text: "deine diktate")
+      SectionLabel(text: "deine diktate", icon: "chart.bar")
       Text("aus dem lokalen archiv berechnet. keine neue aufzeichnung, kein datenfluss.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)

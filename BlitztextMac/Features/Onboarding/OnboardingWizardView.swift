@@ -1,17 +1,23 @@
 import SwiftUI
 
-/// Root of the first-run wizard hosted in its own window. The wizard is a setup journey: each step
-/// has one decision/status, visible buttons, and compact progress.
+/// Root of the first-run wizard hosted in its own window — a real macOS wizard, not a settings
+/// window: centered hero (icon tile + headline + subheadline) per step, the step's controls in a
+/// constrained column underneath, brand-violet progress dots and a back/continue footer. "später"
+/// floats quietly in the top-right corner.
 struct OnboardingWizardView: View {
   @Bindable var appState: AppState
   @State private var viewModel: OnboardingViewModel
   /// Tracks direction for asymmetric push transitions.
   @State private var navigatingForward = true
+  @Environment(\.colorScheme) private var colorScheme
 
   /// Closes the wizard window (the "später" link and the red close button share this path).
   let onClose: () -> Void
   /// Finishes onboarding, closes the window, and opens the popover settings.
   let onOpenSettings: () -> Void
+
+  /// Step controls are constrained to a calm single column, Apple-setup-assistant style.
+  private static let contentWidth: CGFloat = 440
 
   init(appState: AppState, onClose: @escaping () -> Void, onOpenSettings: @escaping () -> Void) {
     self.appState = appState
@@ -21,100 +27,89 @@ struct OnboardingWizardView: View {
   }
 
   var body: some View {
-    HStack(spacing: 0) {
-      // Persistent brand rail (uniform across all steps) instead of a per-page top header.
-      sidebar
-      Divider().opacity(0.5)
-
+    ZStack(alignment: .topTrailing) {
       VStack(spacing: 0) {
         ScrollView {
-          stepBody
-            .padding(28)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // Asymmetric directional push transition (change 5)
-            .transition(
-              .asymmetric(
-                insertion: .push(from: navigatingForward ? .trailing : .leading),
-                removal: .push(from: navigatingForward ? .leading : .trailing)
-              )
+          // Hero + step controls move together as ONE page: .id per step gives the container a
+          // fresh identity so the directional push transition covers the whole page.
+          VStack(spacing: 0) {
+            heroHeader
+              .padding(.top, 52)
+              .padding(.horizontal, 40)
+
+            stepBody
+              .frame(maxWidth: Self.contentWidth, alignment: .leading)
+              .padding(.top, 24)
+              .padding(.horizontal, 32)
+              .padding(.bottom, 20)
+          }
+          .frame(maxWidth: .infinity)
+          .id(viewModel.step)
+          .transition(
+            .asymmetric(
+              insertion: .push(from: navigatingForward ? .trailing : .leading),
+              removal: .push(from: navigatingForward ? .leading : .trailing)
             )
+          )
         }
+
         footer
       }
+
+      // Quiet escape hatch, out of the main flow (hidden on the last step — the footer offers
+      // "zu den einstellungen" there).
+      if !viewModel.isLastStep {
+        Button("später") { onClose() }
+          .buttonStyle(PopoverActionButtonStyle(.quiet))
+          .font(.system(size: 11))
+          .padding(.top, 14)
+          .padding(.trailing, 16)
+      }
     }
-    .frame(minWidth: 680, minHeight: 520)
-    // Replaced .easeInOut(duration: 0.18) with spring (change 5)
+    .frame(minWidth: 620, minHeight: 640)
     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: viewModel.step)
-    // Glass backdrop for the entire wizard window (change 1)
+    // Glass backdrop for the entire wizard window.
     .blitztextSurface()
     // rede voice: SF Rounded across the whole wizard window, matching the popover root.
     // Monospaced runs (hotkeys, paths) opt out explicitly with .monospaced.
     .fontDesign(.rounded)
   }
 
-  // MARK: - Sidebar (brand rail)
+  // MARK: - Hero (icon tile + headline + subheadline)
 
-  /// Left rail: the rede wordmark + the full step list with the current step highlighted and
-  /// completed steps check-marked. Replaces the old top header + segmented progress so the wizard
-  /// reads as one uniform surface, not a page with a header.
-  private var sidebar: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      HStack(spacing: 8) {
-        BrandMark(size: 20)
-        Wordmark(size: 16)
-      }
-      .padding(.bottom, 24)
-
-      VStack(alignment: .leading, spacing: 2) {
-        ForEach(OnboardingViewModel.OnboardingStep.allCases) { step in
-          stepRailRow(step)
-        }
-      }
-
-      Spacer(minLength: 16)
-
-      Text("schritt \(viewModel.step.displayIndex) von \(OnboardingViewModel.stepCount)")
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-    }
-    // Extra top padding clears the floating traffic lights (full-size-content title bar).
-    .padding(.horizontal, 20)
-    .padding(.top, 38)
-    .padding(.bottom, 20)
-    .frame(width: 196)
-    .frame(maxHeight: .infinity, alignment: .topLeading)
-  }
-
-  private func stepRailRow(_ step: OnboardingViewModel.OnboardingStep) -> some View {
-    let isActive = step == viewModel.step
-    let isPast = step.rawValue < viewModel.step.rawValue
-    return HStack(spacing: 10) {
+  private var heroHeader: some View {
+    let step = viewModel.step
+    return VStack(spacing: 14) {
       ZStack {
-        Circle()
-          .fill(isActive ? step.accent.opacity(0.18) : Color.clear)
-          .frame(width: 24, height: 24)
-        Image(systemName: isPast ? "checkmark" : step.systemImage)
-          .font(.system(size: 11, weight: .semibold))
-          .foregroundStyle(
-            isActive
-              ? AnyShapeStyle(step.accent)
-              : (isPast ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tertiary)))
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+          .fill(MenuBarTokens.tintFill(step.accent, colorScheme: colorScheme))
+          .frame(width: 64, height: 64)
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+          .strokeBorder(
+            MenuBarTokens.tintStroke(step.accent, colorScheme: colorScheme), lineWidth: 0.5
+          )
+          .frame(width: 64, height: 64)
+        Image(systemName: step.systemImage)
+          .font(.system(size: 26, weight: .semibold))
+          .foregroundStyle(step.accent)
       }
-      Text(step.title)
-        .font(.system(size: 12, weight: isActive ? .semibold : .regular))
-        .foregroundStyle(isActive ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
-      Spacer(minLength: 0)
+      .accessibilityHidden(true)
+
+      VStack(spacing: 4) {
+        Text(step.headline)
+          .font(.system(size: 21, weight: .bold, design: .rounded))
+          .foregroundStyle(.primary)
+        Text(step.subheadline)
+          .font(.system(size: 12))
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: 420)
+      }
     }
-    .padding(.vertical, 5)
-    .padding(.horizontal, 8)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(isActive ? Color.primary.opacity(0.05) : Color.clear)
-    )
-    .animation(.easeInOut(duration: 0.2), value: viewModel.step)
   }
 
-  // MARK: - Step body
+  // MARK: - Step body (controls only — the hero carries title + subtitle)
 
   @ViewBuilder
   private var stepBody: some View {
@@ -140,40 +135,57 @@ struct OnboardingWizardView: View {
     }
   }
 
-  // MARK: - Footer
+  // MARK: - Footer (back · progress dots · continue)
 
   private var footer: some View {
-    HStack(spacing: 12) {
-      if !viewModel.isFirstStep {
-        Button {
-          back()
-        } label: {
-          Label("zurück", systemImage: "chevron.left")
-        }
-        .buttonStyle(PopoverActionButtonStyle(.secondary))
-        .font(.system(size: 12, weight: .medium))
-      }
+    ZStack {
+      progressDots
 
-      Spacer()
-
-      if viewModel.isLastStep {
-        // On the Finish step: replace 'später' with 'zu den einstellungen' (change 4)
-        Button("zu den einstellungen") { openSettings() }
+      HStack(spacing: 12) {
+        if !viewModel.isFirstStep {
+          Button {
+            back()
+          } label: {
+            Label("zurück", systemImage: "chevron.left")
+              .font(.system(size: 12, weight: .medium))
+          }
           .buttonStyle(PopoverActionButtonStyle(.secondary))
-          .font(.system(size: 11.5))
-      } else {
-        // On all other steps: keep 'später' but remove .cancelAction shortcut (change 3)
-        Button("später") { onClose() }
-          .buttonStyle(PopoverActionButtonStyle(.quiet))
-          .font(.system(size: 11.5))
-        // Note: .keyboardShortcut(.cancelAction) intentionally removed so Esc does not
-        // close the wizard while a TextField is focused on the welcome step.
-      }
+        }
 
-      primaryButton
+        Spacer()
+
+        if viewModel.isLastStep {
+          Button("zu den einstellungen") { openSettings() }
+            .buttonStyle(PopoverActionButtonStyle(.secondary))
+            .font(.system(size: 11.5))
+        }
+
+        primaryButton
+      }
     }
     .padding(.horizontal, 20)
-    .padding(.vertical, 12)
+    .padding(.vertical, 14)
+  }
+
+  /// Brand moment: the active dot is a wide rede-violet capsule, walked dots stay slightly darker
+  /// than upcoming ones.
+  private var progressDots: some View {
+    HStack(spacing: 5) {
+      ForEach(OnboardingViewModel.OnboardingStep.allCases) { step in
+        Capsule(style: .continuous)
+          .fill(dotColor(for: step))
+          .frame(width: step == viewModel.step ? 18 : 5, height: 5)
+      }
+    }
+    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.step)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      "Schritt \(viewModel.step.displayIndex) von \(OnboardingViewModel.stepCount)")
+  }
+
+  private func dotColor(for step: OnboardingViewModel.OnboardingStep) -> Color {
+    if step == viewModel.step { return RedeBrand.violet }
+    return Color.primary.opacity(step.rawValue < viewModel.step.rawValue ? 0.28 : 0.12)
   }
 
   // DESIGN.md: GlassProminentButtonStyle is the primary CTA in floating surfaces (pill, onboarding
@@ -182,8 +194,14 @@ struct OnboardingWizardView: View {
     Button {
       primaryAction()
     } label: {
-      Text(viewModel.step.primaryActionLabel)
-        .font(.system(size: 12.5, weight: .semibold))
+      HStack(spacing: 5) {
+        Text(viewModel.step.primaryActionLabel)
+          .font(.system(size: 12.5, weight: .semibold))
+        if !viewModel.isLastStep {
+          Image(systemName: "chevron.right")
+            .font(.system(size: 10, weight: .bold))
+        }
+      }
     }
     .buttonStyle(GlassProminentButtonStyle())
     .disabled(!viewModel.canAdvance(appState))
@@ -193,7 +211,7 @@ struct OnboardingWizardView: View {
   // MARK: - Actions
 
   private func back() {
-    navigatingForward = false  // set direction before triggering step change (change 5)
+    navigatingForward = false  // set direction before triggering step change
     viewModel.back()
   }
 
@@ -206,7 +224,7 @@ struct OnboardingWizardView: View {
       viewModel.finish(appState)
       onClose()
     } else {
-      navigatingForward = true  // set direction before triggering step change (change 5)
+      navigatingForward = true  // set direction before triggering step change
       viewModel.next()
     }
   }

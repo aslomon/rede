@@ -10,7 +10,7 @@ struct LicensesSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "über & lizenzen")
+      SectionLabel(text: "über & lizenzen", icon: "info.circle")
 
       Text(
         "diese app baut auf open-source-software auf. die lizenzhinweise gehören zu jeder "

@@ -22,6 +22,10 @@ public enum LiquidGlass {
   public static let cardCornerRadius: CGFloat = 10
   /// Corner radius for expanded pill cards (CardGlassModifier).
   public static let pillCardRadius: CGFloat = 14
+  /// Tint strength for accent-tinted glass on macOS 26. Full-strength accent glass produced
+  /// saturated surfaces on which `.secondary` captions became hard to read (legibility bug);
+  /// a soft wash keeps the accent identity while text stays on a near-neutral surface.
+  public static let tintedGlassOpacity: CGFloat = 0.35
 }
 
 // MARK: - Pill (capsule) glass
@@ -278,7 +282,8 @@ extension View {
   }
 
   /// A card-shaped glass surface with an optional accent tint.
-  /// - macOS 26+: .glassEffect(.regular.tint(accent), in: .rect(cornerRadius:)) + shadow
+  /// - macOS 26+: .glassEffect with a SOFT accent wash (tintedGlassOpacity) + shadow — full
+  ///   accent tint made secondary text illegible on the saturated glass.
   /// - macOS 14–25: MenuBarTokens fill + hairline border
   @ViewBuilder
   public func liquidGlassCard(
@@ -287,7 +292,8 @@ extension View {
     if #available(macOS 26.0, *) {
       self
         .glassEffect(
-          accent.map { .regular.tint($0) } ?? .regular, in: .rect(cornerRadius: cornerRadius)
+          accent.map { .regular.tint($0.opacity(LiquidGlass.tintedGlassOpacity)) } ?? .regular,
+          in: .rect(cornerRadius: cornerRadius)
         )
         .shadow(color: .black.opacity(0.10), radius: 12, y: 3)
     } else {
@@ -301,7 +307,8 @@ extension View {
   }
 
   /// A tinted card-shaped glass surface for accent-colored banners and cards.
-  /// - macOS 26+: .glassEffect(.regular.tint(accent), in: .rect(cornerRadius:))
+  /// - macOS 26+: .glassEffect with a SOFT accent wash (tintedGlassOpacity) — full accent tint
+  ///   made `.secondary` banner copy illegible on the saturated glass.
   /// - macOS 14–25: MenuBarTokens.tintFill fill + tintStroke hairline border
   @ViewBuilder
   public func liquidGlassTintedCard(
@@ -309,7 +316,10 @@ extension View {
   ) -> some View {
     if #available(macOS 26.0, *) {
       self
-        .glassEffect(.regular.tint(accent), in: .rect(cornerRadius: cornerRadius))
+        .glassEffect(
+          .regular.tint(accent.opacity(LiquidGlass.tintedGlassOpacity)),
+          in: .rect(cornerRadius: cornerRadius)
+        )
     } else {
       modifier(LiquidGlassCardFallback(accent: accent, cornerRadius: cornerRadius))
     }

@@ -31,6 +31,33 @@ einfügen.
 - Vokabular ist bewusst **klein gehalten**: die Begriffsliste (manuell + automatisch gelernt) ist auf **30** gedeckelt (`MemoryStore.injectionCap`/`maxConfirmed`), damit nicht hunderte Begriffe lernen und der Whisper-Prompt knapp bleibt. Gesprochene Satzzeichen gibt es nicht (entfernt).
 - Schwebende **Pille**: Kapsel-Glass (`PillGlassModifier`) für Aufnahme/Status; für erweiterte **Copy- und Varianten-Karten** ein eigener `CardGlassModifier` (abgerundetes Rechteck, 14pt-Radius, tieferer Schatten) statt Kapsel — sonst „eckiger Inhalt im Pillen-Loch".
 
+## Iconsprache (rede icon language)
+
+Ein SF Symbol pro Konzept, app-weit identisch — Icons erklären, die Überschrift benennt. Alle
+Sektions-Header (`SectionLabel(text:icon:)` / `SettingsSection(_:icon:)`) tragen ihr Konzept-Icon
+(10pt, `.semibold`, `.secondary` — gleiche Farbe wie das Label, nie lauter als der Text).
+
+| Konzept | Symbol | | Konzept | Symbol |
+|---|---|---|---|---|
+| diktat/mikrofon | `mic` / `mic.fill` | | memory | `brain` |
+| Whisper/transkription | `waveform` | | identität | `person.crop.circle` |
+| sprachmodell (LLM) | `text.bubble` | | begriffe | `character.book.closed` |
+| verarbeitung | `cpu` | | ersetzungen | `arrow.left.arrow.right` |
+| OpenAI-Key | `key.fill` | | archiv | `archivebox` |
+| hotkeys | `keyboard` | | statistik | `chart.bar` |
+| modi | `rectangle.stack` | | kontext | `scope` |
+| bedienungshilfen | `accessibility` | | lernen/verbessern | `wand.and.stars` |
+| installation | `arrow.down.app` | | updates | `arrow.triangle.2.circlepath` |
+| töne | `speaker.wave.2` | | embedding | `point.3.connected.trianglepath.dotted` |
+| autostart | `power` | | einrichtung | `sparkles` |
+| über/lizenzen | `info.circle` | | entfernen (destruktiv) | `trash` |
+
+Aktions-Verben auf Buttons (als `Label`): laden = `arrow.down.circle.fill`, prüfen/neu laden =
+`arrow.clockwise`, löschen = `trash` (alle destruktiven Aktionen inkl. `DestructiveClearButton`),
+fenster öffnen = `macwindow`, system-panel öffnen = `arrow.up.forward.app`, einfügen aus
+zwischenablage = `doc.on.clipboard`, analysieren = `sparkle.magnifyingglass`, weiter (wizard) =
+trailing `chevron.right`. Kurze Banner-CTAs („öffnen", „prüfen") und Abbrechen bleiben textonly.
+
 ## Farben
 
 - Akzent pro Modus: `transcription`=blue, `localTranscription`=green, `textImprover`=purple,
@@ -103,9 +130,17 @@ einfügen.
 - **Onboarding-Journey (9 Schritte)**: start (Intro + Name) → speicherort → rechte →
   verarbeitung → modelle → modi → hotkeys (Halten/Umschalten-Entscheidung + read-only
   Keycap-Liste der Modus-Hotkeys) → extras (Opt-ins: Autostart, Töne, Archiv & Memory) →
-  fertig (Recap inkl. Hotkey-Modus und Extras). Sidebar-Rail trägt die `Wordmark`; die primäre
-  Footer-CTA nutzt `GlassProminentButtonStyle`. Bearbeitung einzelner Hotkey-Kombinationen bleibt
+  fertig (Recap inkl. Hotkey-Modus und Extras). Bearbeitung einzelner Hotkey-Kombinationen bleibt
   in der Modus-Karte (Prompts-Tab) — das Onboarding zeigt sie nur.
+- **Onboarding-Wizard-Chrome** (echtes Setup-Assistant-Muster, keine Settings-Sidebar):
+  zentrierter Hero pro Schritt — 64pt-Icon-Tile (18pt-Radius, `tintFill`/`tintStroke` im
+  Schritt-Akzent) + Headline (21pt bold rounded, rede-Voice mit Punkt: „lass uns reden.") +
+  einzeilige Subheadline (12pt secondary, zentriert). Schritt-Views rendern NUR ihre Controls in
+  einer Spalte (maxWidth 440). Footer: zurück (links) · Fortschritts-Dots (zentriert; aktiver
+  Dot = 18pt-Kapsel in `RedeBrand.violet`, besucht 0.28, offen 0.12) · weiter-CTA
+  (`GlassProminentButtonStyle` mit trailing `chevron.right`). „später" als quiet-Button oben
+  rechts. Headline/Subheadline leben als Step-Metadaten im `OnboardingViewModel`.
+  Fenster ~660×700, min 620×640, Hochformat.
 - **Varianten-Karte in der Pille**: zwei gleich gewichtete Textkarten, je `Einfügen` und
   `Kopieren`. Keine automatische Paste, solange die Karte sichtbar ist.
 - **Verfügbarkeits-Badges**: vorhandene Icons `checkmark.circle.fill` (grün) /
@@ -140,6 +175,14 @@ Liquid Glass gilt für **schwebende Surfaces**: das Popover (`MenuBarView`), die
 ### Regel: Glass nicht stapeln
 
 Ein Glass-Layer pro Surface-Ebene. Im Popover: `BlitztextSurface` (Fenster-Backdrop) = Layer 1. Karten wie `enginePanel` oder `accessibilityHintBanner` innerhalb des Popovers = Layer 2. Kein weiterer Glass-Layer innerhalb dieser Karten. Chips, Toggles, Picker innerhalb einer GroupBox = nullte Glass-Ebene; sie erben den Systemlook.
+
+### Lesbarkeit auf Glas (HARD CONSTRAINT)
+
+Akzent-getönte Glass-Flächen (`liquidGlassCard(accent:)`, `liquidGlassTintedCard`,
+`liquidGlassInfoBanner`) tinten auf macOS 26 mit `accent.opacity(LiquidGlass.tintedGlassOpacity)`
+(= 0.35), NIE mit voller Akzentfarbe — auf gesättigtem Farbglas wird `.secondary`-Text unlesbar.
+Texteingabeflächen (`TextEditor`, custom Felder) liegen auf `Color(nsColor: .textBackgroundColor)`
+mit `separatorColor`-Hairline, nie auf `primary.opacity(0.03)`-Wäschen (in Dark Mode unsichtbar).
 
 ### Gating-Strategie (HARD CONSTRAINT)
 

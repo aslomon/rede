@@ -8,13 +8,6 @@ struct HotkeysStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      OnboardingStepHeader(
-        systemImage: "keyboard",
-        accent: .indigo,
-        title: "deine hotkeys",
-        subtitle: "so startest du jeden modus von überall — ohne die menüleiste zu öffnen."
-      )
-
       modeCard
 
       hotkeyListCard
@@ -26,7 +19,7 @@ struct HotkeysStepView: View {
   private var modeCard: some View {
     OnboardingCard(accent: .indigo) {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "auslösen")
+        SectionLabel(text: "auslösen", icon: "keyboard")
 
         Picker("", selection: $appState.appSettings.hotkeyMode) {
           ForEach(HotkeyMode.allCases) { mode in
@@ -50,7 +43,7 @@ struct HotkeysStepView: View {
   private var hotkeyListCard: some View {
     OnboardingCard {
       VStack(alignment: .leading, spacing: 10) {
-        SectionLabel(text: "deine modi")
+        SectionLabel(text: "deine modi", icon: "rectangle.stack")
 
         VStack(spacing: 8) {
           ForEach(appState.mainMenuModeConfigs) { config in

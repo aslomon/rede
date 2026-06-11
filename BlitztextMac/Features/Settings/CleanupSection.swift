@@ -12,7 +12,7 @@ struct CleanupSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "sauber entfernen")
+      SectionLabel(text: "sauber entfernen", icon: "trash")
 
       Text(
         "vor dem löschen rede erst auf diesem Mac bereinigen. so verschwinden anmeldestart und lokale daten sauber aus dem weg."
@@ -24,8 +24,10 @@ struct CleanupSection: View {
       if showCleanupOptions {
         confirmControls
       } else {
-        Button("entfernung vorbereiten") {
+        Button {
           showCleanupOptions = true
+        } label: {
+          Label("entfernung vorbereiten", systemImage: "trash")
         }
         .buttonStyle(PopoverActionButtonStyle(.danger))
       }

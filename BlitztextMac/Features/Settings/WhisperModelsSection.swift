@@ -19,7 +19,7 @@ struct WhisperModelsSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "transkription · Whisper (\(installedCount))")
+      SectionLabel(text: "transkription · Whisper (\(installedCount))", icon: "waveform")
 
       ForEach(models) { model in
         modelRow(model)

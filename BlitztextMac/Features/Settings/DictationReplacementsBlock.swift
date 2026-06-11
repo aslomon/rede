@@ -20,9 +20,15 @@ struct DictationReplacementsBlock: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("ersetzungen")
-        .font(.system(size: 11, weight: .medium))
-        .foregroundStyle(.secondary)
+      HStack(spacing: 5) {
+        Image(systemName: "arrow.left.arrow.right")
+          .font(.system(size: 9, weight: .semibold))
+          .foregroundStyle(.secondary)
+          .accessibilityHidden(true)
+        Text("ersetzungen")
+          .font(.system(size: 11, weight: .medium))
+          .foregroundStyle(.secondary)
+      }
       Text(
         "festes wortpaar: gesagt \u{2192} geschrieben. lokal angewendet, bevor der text eingefügt wird."
       )

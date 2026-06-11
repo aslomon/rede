@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **rede Icon Language**: One SF Symbol per concept across the whole app (documented in DESIGN.md)
+  - **Section headers**: `SectionLabel`/`SettingsSection` gained an icon slot — every section in all five tabs, both windows and the onboarding cards now carries its quiet concept icon (brain=memory, waveform=Whisper, text.bubble=LLM, keyboard=hotkeys, archivebox=archive, accessibility, …)
+  - **Action verbs on buttons**: Consistent Label icons app-wide (load, check, delete=trash incl. `DestructiveClearButton`, open window=macwindow, open system panel, paste from clipboard, analyze); wizard continue gets a trailing chevron
+- **Onboarding Wizard Chrome (v2)**: Real macOS setup-assistant pattern instead of a sidebar window
+  - Centered hero per step (64pt accent icon tile + bold lowercase headline + one-line subheadline), step views render only their controls in a 440pt column
+  - Brand-violet progress dots (active = wide capsule), back/continue footer, quiet "später" in the top-right, portrait window (~660×700)
+  - Headline/subheadline live as step metadata in `OnboardingViewModel` (tested)
+- **Legibility fixes**: Accent-tinted Liquid Glass surfaces now tint at 0.35 opacity on macOS 26 (full-strength accent glass made `.secondary` captions unreadable); `TextEditor`s sit on real `textBackgroundColor` field surfaces instead of a `primary.opacity(0.03)` wash that vanished in dark mode
+- **Less permanent text**: Identity explanation moved behind an info disclosure; headings + icons carry the meaning
+
 - **Unified Settings Surface (polish pass)**: One section card across all five settings tabs
   - **SettingsSection**: Now renders the shared `settingsGroupBackground` card (12pt radius) with label, optional status pill, header action and caption inside — replaces the GroupBox styling that mixed three different container looks across tabs and nested box-in-box
   - **Mode cards (Prompts)**: Header moved inside the card (GroupBox floated it above), hotkey shown as quiet mini keycaps instead of near-invisible quaternary text, divider before the editor footer

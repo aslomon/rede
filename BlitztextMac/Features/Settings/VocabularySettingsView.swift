@@ -74,18 +74,18 @@ struct VocabularySettingsView: View {
   private var identitySection: some View {
     SettingsSection(
       "eigene identität",
+      icon: "person.crop.circle",
       caption: "dein name als feste schreibperspektive für E-Mail und umschreiben."
     ) {
       TextField("dein name", text: $appState.appSettings.userDisplayName)
         .textFieldStyle(.roundedBorder)
         .font(.system(size: 11))
 
-      Text(
-        "wird lokal gespeichert, als schreibweise-hinweis genutzt und im E-Mail-Modus als \u{201E}Ich schreibe als \u{2026}\u{201C} mitgegeben."
-      )
-      .font(.system(size: 10.5))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+      InfoDisclosure("wofür genau?") {
+        Text(
+          "wird lokal gespeichert, als schreibweise-hinweis genutzt und im E-Mail-Modus als \u{201E}Ich schreibe als \u{2026}\u{201C} mitgegeben."
+        )
+      }
     }
   }
 
@@ -94,6 +94,7 @@ struct VocabularySettingsView: View {
   private var recognizeSection: some View {
     SettingsSection(
       "begriffe",
+      icon: "character.book.closed",
       caption:
         "exakte schreibweisen für namen, marken und fachwörter."
     ) {
@@ -197,6 +198,7 @@ struct VocabularySettingsView: View {
   private var memorySection: some View {
     SettingsSection(
       "memory",
+      icon: "brain",
       action: (
         label: "prüfen",
         perform: { Task { await appState.localModelManager.refresh() } }
@@ -221,9 +223,13 @@ struct VocabularySettingsView: View {
             ProgressView()
               .controlSize(.small)
           }
-          Button("jetzt analysieren") { appState.recomputeMemory() }
-            .buttonStyle(PopoverActionButtonStyle(.primary))
-            .disabled(appState.isRecomputingMemory || !appState.isArchiveEnabled)
+          Button {
+            appState.recomputeMemory()
+          } label: {
+            Label("jetzt analysieren", systemImage: "sparkle.magnifyingglass")
+          }
+          .buttonStyle(PopoverActionButtonStyle(.primary))
+          .disabled(appState.isRecomputingMemory || !appState.isArchiveEnabled)
         }
 
         // 4. InfoDisclosure — optional details

@@ -14,7 +14,8 @@ struct ImprovementSection: View {
       // Plain heading + content (NOT a carded SettingsSection): the row list is already cards, so a
       // box here was a box-in-box. Matches the popover section style.
       VStack(alignment: .leading, spacing: 10) {
-        SectionLabel(text: "verbesserungen · was du nach dem diktat änderst")
+        SectionLabel(
+          text: "verbesserungen · was du nach dem diktat änderst", icon: "wand.and.stars")
         Text(
           "lokal protokolliert (nur du). lernt aus deinen korrekturen — wiederkehrende schlägt es "
             + "als festes wörterbuch-wort vor."
