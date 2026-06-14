@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AppState Dependency Injection**: Refactored `AppState.init()` to accept optional dependency parameters (`appSettings`, `transcriptionSettings`, `textImprovementSettings`, `dampfAblassenSettings`, `emojiTextSettings`, `localModelManager`, `prewarmEnginesAtLaunch`) with sensible defaults, improving testability and enabling fine-grained control over engine prewarming in launch sequences
+- **LocalModelManager Initialization**: Added `store` parameter to `LocalModelManager.init()` (defaults to `.default`) for dependency injection in tests and custom scenarios
+- **Local Model Auto-Adoption on Launch**: Added `adoptInstalledLocalModelsIfNeeded()` call during app initialization to automatically select the first installed local model if the persisted selection points to nothing on disk, improving UX on first launch after model installation
 - **Tab & Toggle Icon Rollout (RedeTabBar)**
   - New `RedeTabBar` component: horizontal icon+label pills with the active tab in rede-violet on a violet tint capsule; replaces the native segmented pickers for the five settings tabs (rectangle.stack/shippingbox/character.book.closed/archivebox/gearshape) and the four archive-window facets (clock.arrow.circlepath/chart.bar/scope/wand.and.stars) — the verbesserungen facet carries a live violet count badge instead of the "(n)" text suffix
   - Toggles carry their concept icon via the new `QuietToggleLabelStyle` (scope, brain, square.split.2x1, textformat.abc.dottedunderline, wand.and.stars, power, calendar, scissors, key.fill); master toggles directly under a same-concept section header stay icon-free (documented rule)

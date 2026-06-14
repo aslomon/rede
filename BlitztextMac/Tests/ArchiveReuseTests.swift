@@ -47,6 +47,16 @@ final class ArchiveReuseTests: XCTestCase {
     XCTAssertFalse(prompt.contains("Lektor"))
   }
 
+  func testEmojiSlotUsesCustomSystemPromptWhenSet() {
+    var rewrite = ModeConfig.default(for: .emojiText).rewrite
+    rewrite.systemPrompt = "Schreibe als Social-Post mit klarer Hook."
+
+    let prompt = RewriteReuse.systemPrompt(
+      kind: .transcribeThenEmoji, rewrite: rewrite, customTerms: [], memory: nil)
+
+    XCTAssertEqual(prompt, "Schreibe als Social-Post mit klarer Hook.")
+  }
+
   func testRewriteSlotUsesImproverPromptWithNilSelection() {
     let rewrite = ModeConfig.default(for: .textImprover).rewrite
     let prompt = RewriteReuse.systemPrompt(

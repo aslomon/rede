@@ -188,8 +188,11 @@ enum LLMService {
       densityInstruction = "Setze grosszuegig Emojis ein, gerne mehrere pro Satz."
     }
 
+    let customPrompt = rewrite.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
     var prompt =
-      "Du erhaeltst ein gesprochenes Transkript. Gib den Text moeglichst originalgetreu zurueck, aber fuege passende Emojis ein. \(densityInstruction) Korrigiere offensichtliche Sprach- und Grammatikfehler. Behalte den Stil und die Bedeutung bei. Gib NUR den Text mit Emojis zurueck, keine Erklaerungen."
+      customPrompt.isEmpty
+      ? "Du erhaeltst ein gesprochenes Transkript. Gib den Text moeglichst originalgetreu zurueck, aber fuege passende Emojis ein. \(densityInstruction) Korrigiere offensichtliche Sprach- und Grammatikfehler. Behalte den Stil und die Bedeutung bei. Gib NUR den Text mit Emojis zurueck, keine Erklaerungen."
+      : customPrompt
 
     if !customTerms.isEmpty {
       prompt +=

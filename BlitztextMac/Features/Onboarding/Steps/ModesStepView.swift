@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// Step: pre-fill the example system prompts for the E-Mail and Prompt modes, and pick the emoji
-/// density for the Social mode. Prompt edits live in the view model and are persisted on advance.
+/// Step: pre-fill the example system prompts for the rewrite modes, and pick the emoji density for
+/// the Social mode. Prompt edits live in the view model and are persisted on advance.
 struct ModesStepView: View {
   @Bindable var appState: AppState
   @Bindable var viewModel: OnboardingViewModel
   @State private var isEditingEmail = false
   @State private var isEditingPrompt = false
+  @State private var isEditingSocial = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
@@ -109,11 +110,49 @@ struct ModesStepView: View {
             .foregroundStyle(.cyan)
             .accessibilityHidden(true)
           SectionLabel(text: "Social")
+          Spacer()
+          BlitzStatusPill(state: .ready, label: "preset")
         }
 
         Text("wie viele emojis soll der Social-Modus einstreuen?")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
+
+        HStack(spacing: 8) {
+          Button {
+            withAnimation(.easeInOut(duration: 0.16)) { isEditingSocial.toggle() }
+          } label: {
+            Label(isEditingSocial ? "fertig" : "anpassen", systemImage: "pencil")
+          }
+          .buttonStyle(PopoverActionButtonStyle(isEditingSocial ? .primary : .secondary))
+
+          Button {
+            viewModel.restoreExample(for: .emojiText)
+          } label: {
+            Label("beispiel", systemImage: "arrow.uturn.backward")
+          }
+          .buttonStyle(PopoverActionButtonStyle(.quiet))
+        }
+
+        if isEditingSocial {
+          TextEditor(text: $viewModel.socialPrompt)
+            .font(.system(size: 11))
+            .frame(height: 96)
+            .padding(6)
+            .background(
+              RoundedRectangle(cornerRadius: 6)
+                .fill(Color(nsColor: .textBackgroundColor))
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: 6)
+                .strokeBorder(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
+            )
+            .scrollContentBackground(.hidden)
+
+          Text("leer lassen nutzt die emoji-dichte unten.")
+            .font(.system(size: 10))
+            .foregroundStyle(.secondary)
+        }
 
         Picker(
           "",

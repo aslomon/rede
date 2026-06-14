@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tab "Prompts": every visible mode. Each card owns its name, hotkey, behavior and reset.
+/// Tab "Modi": every visible mode. Each card owns its name, hotkey, behavior and reset.
 struct PromptsSettingsView: View {
   @Bindable var appState: AppState
   /// Jump to another settings tab (e.g. "Zu Modelle" when no rewrite engine is connected yet).
@@ -11,20 +11,18 @@ struct PromptsSettingsView: View {
       HStack(spacing: 8) {
         SectionLabel(text: "modi", icon: "rectangle.stack")
         BlitzStatusPill(
-          state: appState.hasAnyRewriteEngine ? .ready : .warning,
-          label: appState.hasAnyRewriteEngine ? "bereit" : "modell fehlt"
+          state: appState.hasActiveRewriteEngine ? .ready : .warning,
+          label: appState.hasActiveRewriteEngine ? "bereit" : "modell fehlt"
         )
         Spacer()
         addModeMenu
       }
 
-      if !appState.hasAnyRewriteEngine {
+      if !appState.hasActiveRewriteEngine {
         EmptyStateCard(
           icon: "wand.and.stars",
           title: "noch kein umschreib-modell verbunden",
-          caption:
-            "modi formulieren text nur um, wenn ein umschreib-modell bereitsteht — der OpenAI-Key "
-            + "oder ein lokales llama.cpp-Modell. richte zuerst eine engine ein.",
+          caption: missingRewriteEngineCaption,
           accent: .purple,
           buttonLabel: "zu modelle",
           action: { selectTab(1) }
@@ -56,6 +54,7 @@ struct PromptsSettingsView: View {
         } label: {
           Label(template.displayName, systemImage: template.icon)
         }
+        .disabled(template.slot.isRewriteCapable && !appState.hasActiveRewriteEngine)
       }
     } label: {
       Image(systemName: "plus")
@@ -63,5 +62,11 @@ struct PromptsSettingsView: View {
     .buttonStyle(PopoverIconButtonStyle(.secondary))
     .help("modus hinzufügen")
     .accessibilityLabel("Modus hinzufügen")
+  }
+
+  private var missingRewriteEngineCaption: String {
+    appState.appSettings.secureLocalModeEnabled
+      ? "lokale modi brauchen ein geladenes llama.cpp/GGUF-Modell. online-key und lokales modell werden nicht gemischt."
+      : "online-modi brauchen einen OpenAI API-Key. lokale modelle werden im online-modus nicht verwendet."
   }
 }

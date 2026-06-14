@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Step: the local engines. The Whisper picker + install controls mirror `ModelsSettingsView`'s
-/// transcription block (only relevant in offline mode); the local rewrite model is always shown,
-/// but labelled optional because online rewriting never needs it.
+/// transcription block. Online and local processing are exclusive, so the step shows only the
+/// model path selected in the previous step.
 struct ModelsStepView: View {
   @Bindable var appState: AppState
   @State private var transcriptionRecheckToken = 0
@@ -19,15 +19,11 @@ struct ModelsStepView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
-      whisperCard
-
-      // Local rewrite-model card gated behind InfoDisclosure in online mode.
-      if needsWhisper {
+      if appState.appSettings.secureLocalModeEnabled {
+        whisperCard
         localRewriteCard
       } else {
-        InfoDisclosure("lokales umformen") {
-          localRewriteCard
-        }
+        onlineModelsCard
       }
     }
   }
@@ -35,7 +31,7 @@ struct ModelsStepView: View {
   // MARK: - Whisper (transcription)
 
   private var whisperCard: some View {
-    OnboardingCard(accent: needsWhisper && !appState.selectedLocalModelIsInstalled ? .orange : nil)
+    OnboardingCard(accent: !appState.selectedLocalModelIsInstalled ? .orange : nil)
     {
       VStack(alignment: .leading, spacing: 10) {
         HStack(spacing: 6) {
@@ -51,27 +47,42 @@ struct ModelsStepView: View {
           BlitzStatusPill(state: .download, label: "download läuft — bitte warten")
         }
 
-        if needsWhisper {
-          stateRow
-          modelPicker
-          downloadControls
-          if let errorText = appState.localModelDownloadErrorText {
-            Text(errorText)
-              .font(.system(size: 10.5))
-              .foregroundStyle(.red)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-        } else {
-          BlitzStatusPill(state: .online, label: "online Whisper")
-          InfoDisclosure("lokale modelle") {
-            Text("ein lokales modell brauchst du nur im sicheren lokalen modus.")
-          }
+        stateRow
+        modelPicker
+        downloadControls
+        if let errorText = appState.localModelDownloadErrorText {
+          Text(errorText)
+            .font(.system(size: 10.5))
+            .foregroundStyle(.red)
+            .fixedSize(horizontal: false, vertical: true)
         }
       }
     }
   }
 
-  private var needsWhisper: Bool { appState.appSettings.secureLocalModeEnabled }
+  private var onlineModelsCard: some View {
+    OnboardingCard(accent: appState.hasOpenAIKey ? nil : .orange) {
+      VStack(alignment: .leading, spacing: 8) {
+        HStack(spacing: 6) {
+          SectionLabel(text: "online-modelle", icon: "key.fill")
+          Spacer()
+          BlitzStatusPill(
+            state: appState.hasOpenAIKey ? .online : .warning,
+            label: appState.hasOpenAIKey ? "OpenAI bereit" : "OpenAI fehlt"
+          )
+        }
+
+        Text(
+          appState.hasOpenAIKey
+            ? "Whisper online und die umschreib-modelle laufen über die OpenAI-API. lokale modelle werden in diesem modus nicht verwendet."
+            : "trage zuerst deinen OpenAI API-Key ein, damit online-transkription und umschreiben funktionieren."
+        )
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+  }
 
   private var stateRow: some View {
     HStack(spacing: 6) {
@@ -150,10 +161,10 @@ struct ModelsStepView: View {
   private var localRewriteCard: some View {
     OnboardingCard {
       VStack(alignment: .leading, spacing: 8) {
-        SectionLabel(text: "optional – nur für lokales umformen", icon: "text.bubble")
+        SectionLabel(text: "lokales sprachmodell", icon: "text.bubble")
         InfoDisclosure("wofür") {
           Text(
-            "formuliert texte lokal um (E-Mail, Prompt, Social) über den gebündelten llama.cpp-Helper. nur nötig, wenn ein modus offline umformen soll."
+            "formuliert E-Mail, Prompt und Social lokal über den gebündelten llama.cpp-Helper um. nötig für umschreib-modi, wenn verarbeitung auf lokal steht."
           )
         }
 

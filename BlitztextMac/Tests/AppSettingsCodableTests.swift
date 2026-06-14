@@ -15,6 +15,10 @@ final class AppSettingsCodableTests: XCTestCase {
 
   // MARK: - Round-trip
 
+  func testDefaultSettingsPreferLocalProcessing() {
+    XCTAssertTrue(AppSettings().secureLocalModeEnabled)
+  }
+
   func testRoundTripPreservesModesAndNewFlags() throws {
     var settings = AppSettings(
       archiveEnabled: true,
@@ -176,6 +180,7 @@ final class AppSettingsCodableTests: XCTestCase {
     XCTAssertEqual(decoded.selectedEmbeddingModelName, LlamaCppEmbeddingProvider.defaultModelID)
     XCTAssertFalse(decoded.hadAccessibilityGrant)
     XCTAssertEqual(decoded.userDisplayName, "")
+    XCTAssertTrue(decoded.secureLocalModeEnabled)
     // Dictation dictionary absent -> empty replacements.
     XCTAssertTrue(decoded.dictationDictionary.replacements.isEmpty)
   }

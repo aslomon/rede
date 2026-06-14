@@ -26,9 +26,20 @@ extension ModeCardView {
 
   var systemPromptEditor: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("eigene anweisung")
-        .font(.system(size: 11))
-        .foregroundStyle(.secondary)
+      HStack(spacing: 8) {
+        Text("eigene anweisung")
+          .font(.system(size: 11))
+          .foregroundStyle(.secondary)
+        Spacer()
+        Button {
+          improveSystemPrompt()
+        } label: {
+          Label(isImprovingPrompt ? "verbessert …" : "verbessern", systemImage: "wand.and.stars")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.quiet))
+        .disabled(isImprovingPrompt || !appState.canImproveSystemPrompts)
+        .help("systemprompt mit \(appState.promptImprovementEngineLabel) verbessern")
+      }
       // Real text-field surface (DESIGN.md: controlBackground/textBackground für Felder) — the
       // earlier primary.opacity(0.03) wash was nearly invisible against the card in dark mode.
       TextEditor(text: bind(\.rewrite.systemPrompt))
@@ -41,6 +52,13 @@ extension ModeCardView {
         .overlay(
           RoundedRectangle(cornerRadius: 6).strokeBorder(
             Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5))
+
+      if let promptImprovementError {
+        Text(promptImprovementError)
+          .font(.system(size: 10))
+          .foregroundStyle(.red)
+          .fixedSize(horizontal: false, vertical: true)
+      }
     }
   }
 
@@ -90,6 +108,7 @@ extension ModeCardView {
         }
       }
       .pickerStyle(.segmented)
+      .disabled(hasCustomPrompt)
     }
   }
 
@@ -157,5 +176,25 @@ extension ModeCardView {
     .toggleStyle(.switch)
     .controlSize(.small)
     .font(.system(size: 11))
+  }
+
+  func improveSystemPrompt() {
+    guard !isImprovingPrompt else { return }
+    isImprovingPrompt = true
+    promptImprovementError = nil
+    let targetConfig = config
+
+    Task { @MainActor in
+      let result = await appState.improveSystemPrompt(for: targetConfig)
+      switch result {
+      case .success(let improvedPrompt):
+        appState.updateMode(id: modeID) { mode in
+          mode.rewrite.systemPrompt = improvedPrompt
+        }
+      case .failure(let error):
+        promptImprovementError = error.localizedDescription
+      }
+      isImprovingPrompt = false
+    }
   }
 }

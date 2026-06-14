@@ -2,7 +2,7 @@ import Observation
 import SwiftUI
 
 /// Drives the first-run wizard. Owns the step cursor, the per-step advance gating, and the
-/// editable example-prompt drafts that get persisted into the E-Mail and Prompt modes on advance.
+/// editable example-prompt drafts that get persisted into the rewrite modes on advance.
 /// All persistence routes through `AppState` so the wizard never touches `settings.json` directly.
 @Observable
 @MainActor
@@ -17,6 +17,8 @@ final class OnboardingViewModel {
     case modes
     /// Hold-vs-toggle decision plus a read-only keycap overview of the default mode hotkeys.
     case hotkeys
+    /// Safe in-wizard dictation test that never auto-pastes.
+    case dictationTest
     /// Small opt-in comfort toggles: launch at login, sound feedback, local archive & memory.
     case extras
     case finish
@@ -35,6 +37,7 @@ final class OnboardingViewModel {
       case .models: return "modelle"
       case .modes: return "modi"
       case .hotkeys: return "hotkeys"
+      case .dictationTest: return "test"
       case .extras: return "extras"
       case .finish: return "fertig"
       }
@@ -49,6 +52,7 @@ final class OnboardingViewModel {
       case .models: return "shippingbox"
       case .modes: return "text.badge.checkmark"
       case .hotkeys: return "keyboard"
+      case .dictationTest: return "mic.circle.fill"
       case .extras: return "slider.horizontal.3"
       case .finish: return "checkmark.circle.fill"
       }
@@ -61,6 +65,7 @@ final class OnboardingViewModel {
       case .models, .finish: return .green
       case .modes: return .purple
       case .hotkeys: return .indigo
+      case .dictationTest: return .indigo
       case .extras: return .cyan
       }
     }
@@ -69,6 +74,7 @@ final class OnboardingViewModel {
       switch self {
       case .processing: return "auswahl prüfen"
       case .models: return "modelle prüfen"
+      case .dictationTest: return "weiter"
       case .finish: return "fertig"
       default: return "weiter"
       }
@@ -85,6 +91,7 @@ final class OnboardingViewModel {
       case .models: return "deine lokalen engines."
       case .modes: return "deine modi."
       case .hotkeys: return "von überall."
+      case .dictationTest: return "einmal testen."
       case .extras: return "noch ein feinschliff?"
       case .finish: return "sitzt."
       }
@@ -102,11 +109,13 @@ final class OnboardingViewModel {
       case .processing:
         return "online-leistung oder alles lokal — du entscheidest."
       case .models:
-        return "Whisper für sprache → text, optional ein modell fürs umformen."
+        return "online nutzt OpenAI; lokal braucht Whisper und ein lokales sprachmodell."
       case .modes:
-        return "E-Mail, Prompt und Social sind vorbereitet — pass die beispiele an."
+        return "E-Mail, Prompt und Social sind vorbereitet — pass die anweisungen an."
       case .hotkeys:
         return "ein hotkey pro modus — halten oder umschalten."
+      case .dictationTest:
+        return "teste sprache zu text im wizard — ohne automatisches einfügen."
       case .extras:
         return "alles optional, alles später änderbar."
       case .finish:
@@ -119,10 +128,11 @@ final class OnboardingViewModel {
 
   var step: OnboardingStep = .welcome
 
-  /// Editable drafts for the two curated example prompts, seeded from the live mode config so a
+  /// Editable drafts for the curated example prompts, seeded from the live mode config so a
   /// returning user sees their own prompt, and a fresh user sees the `ModeDefaults` example.
   var emailPrompt: String
   var promptPrompt: String
+  var socialPrompt: String
   private let isOpenAIKeyConfigured: () -> Bool
 
   init(
@@ -132,6 +142,7 @@ final class OnboardingViewModel {
     self.isOpenAIKeyConfigured = isOpenAIKeyConfigured
     emailPrompt = Self.seededPrompt(for: .textImprover, appState: appState)
     promptPrompt = Self.seededPrompt(for: .dampfAblassen, appState: appState)
+    socialPrompt = Self.seededPrompt(for: .emojiText, appState: appState)
   }
 
   private static func seededPrompt(for type: WorkflowType, appState: AppState) -> String {
@@ -163,7 +174,7 @@ final class OnboardingViewModel {
   /// for the name (writing perspective) and blocks until it is non-empty.
   func canAdvance(_ appState: AppState) -> Bool {
     switch step {
-    case .installLocation, .permissions, .modes, .hotkeys, .extras, .finish:
+    case .installLocation, .permissions, .modes, .hotkeys, .dictationTest, .extras, .finish:
       return true
     case .welcome:
       return !appState.appSettings.userDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -171,7 +182,8 @@ final class OnboardingViewModel {
     case .processing:
       return appState.appSettings.secureLocalModeEnabled || isOpenAIKeyConfigured()
     case .models:
-      return appState.appSettings.secureLocalModeEnabled
+      let requiresWhisper = appState.appSettings.secureLocalModeEnabled || !isOpenAIKeyConfigured()
+      return requiresWhisper
         ? appState.selectedLocalModelIsInstalled
         : true
     }
@@ -179,13 +191,15 @@ final class OnboardingViewModel {
 
   // MARK: - Persistence
 
-  /// Writes the two example-prompt drafts back into their modes. Called on every advance off the
+  /// Writes the example-prompt drafts back into their modes. Called on every advance off the
   /// modes step and on finish so the user's edits are never lost.
   func persistPrompts(_ appState: AppState) {
     let email = emailPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
     let prompt = promptPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+    let social = socialPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
     appState.updateMode(.textImprover) { $0.rewrite.systemPrompt = email }
     appState.updateMode(.dampfAblassen) { $0.rewrite.systemPrompt = prompt }
+    appState.updateMode(.emojiText) { $0.rewrite.systemPrompt = social }
   }
 
   /// Resets a draft back to the curated `ModeDefaults` example (the "beispiel" link).
@@ -194,6 +208,7 @@ final class OnboardingViewModel {
     switch type {
     case .textImprover: emailPrompt = example
     case .dampfAblassen: promptPrompt = example
+    case .emojiText: socialPrompt = example
     default: break
     }
   }

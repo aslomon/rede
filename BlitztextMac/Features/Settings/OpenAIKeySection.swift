@@ -1,11 +1,15 @@
 import AppKit
 import SwiftUI
 
-/// Self-contained "OpenAI API Key" surface: masked display + edit/paste, validation, and the
+/// Self-contained "OpenAI API Key" surface: masked display + edit, validation, and the
 /// "Speichern" button (which belongs to the key). Owns its own state so it can be dropped into any
 /// settings tab. Lives in the Modelle tab next to the local engines.
 struct OpenAIKeySection: View {
   private static let openAIAPIKeyPattern = #"^sk-[A-Za-z0-9_-]{20,}$"#
+  private static let platformURL = URL(string: "https://platform.openai.com/")!
+  private static let apiKeysURL = URL(string: "https://platform.openai.com/api-keys")!
+  private static let quickstartURL = URL(string: "https://developers.openai.com/api/docs/quickstart")!
+  private static let pricingURL = URL(string: "https://openai.com/api/pricing/")!
 
   @Bindable var appState: AppState
   /// Adds a header status pill (online bereit / OpenAI fehlt). On in the Modelle tab where the
@@ -57,24 +61,14 @@ struct OpenAIKeySection: View {
       if appState.hasValue(for: .openAIAPIKey) && !editing {
         maskedKey
       } else {
+        setupHint
         keyEntryRow
         // spec #5: 'Speichern' anchored directly below the key entry row, before InfoDisclosure
         saveButton
       }
 
       // spec #2: full explanation moved into InfoDisclosure
-      InfoDisclosure("warum?") {
-        VStack(alignment: .leading, spacing: 6) {
-          Text(
-            "ohne key bleiben die online-modelle deaktiviert. "
-              + "trage deinen OpenAI-Key ein, um sie für transkription und umschreiben zu nutzen."
-          )
-          Text(
-            "dein key bleibt lokal in dieser app. "
-              + "audio und text werden direkt an die OpenAI-API gesendet."
-          )
-        }
-      }
+      InfoDisclosure("wie bekomme ich einen key?") { apiKeyHelp }
 
       if let errorText {
         Text(errorText)
@@ -109,18 +103,76 @@ struct OpenAIKeySection: View {
   }
 
   private var keyEntryRow: some View {
-    HStack(spacing: 8) {
-      SecureField("sk-...", text: $apiKey)
-        .textFieldStyle(.roundedBorder)
-        .font(.system(size: 11.5))
-        .focused($focused, equals: .openAIAPIKey)
+    SecureField("sk-...", text: $apiKey)
+      .textFieldStyle(.roundedBorder)
+      .font(.system(size: 11.5))
+      .focused($focused, equals: .openAIAPIKey)
+  }
 
-      Button {
-        pasteAPIKeyFromClipboard()
-      } label: {
-        Label("einfügen", systemImage: "doc.on.clipboard")
+  private var setupHint: some View {
+    Text("ChatGPT Plus/Pro reicht hier nicht. Für Online-Transkription und Umschreiben brauchst du einen OpenAI Platform API-Key.")
+      .font(.system(size: 10.5))
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
+  }
+
+  private var apiKeyHelp: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      VStack(alignment: .leading, spacing: 4) {
+        helpStep("1", "OpenAI Platform öffnen und anmelden.")
+        helpStep("2", "Falls nötig Billing/Prepaid-Guthaben einrichten; die API wird separat von ChatGPT abgerechnet.")
+        helpStep("3", "Auf der API-Key-Seite einen neuen Secret Key erstellen.")
+        helpStep("4", "Key einmal kopieren, hier einfügen und speichern.")
       }
-      .buttonStyle(PopoverActionButtonStyle(.secondary))
+
+      Text("Der Key bleibt lokal im macOS Keychain. Bei Online-Modi sendet rede Audio/Text direkt an die OpenAI API.")
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+      apiHelpLinks
+    }
+  }
+
+  private func helpStep(_ number: String, _ text: String) -> some View {
+    HStack(alignment: .top, spacing: 6) {
+      Text(number)
+        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+        .foregroundStyle(.white)
+        .frame(width: 16, height: 16)
+        .background(Circle().fill(RedeBrand.violet))
+      Text(text)
+        .font(.system(size: 10.5))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+  }
+
+  private var apiHelpLinks: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 8) {
+        Link(destination: Self.platformURL) {
+          Label("platform", systemImage: "arrow.up.forward.app")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+
+        Link(destination: Self.apiKeysURL) {
+          Label("api-key", systemImage: "key.fill")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+      }
+
+      HStack(spacing: 8) {
+        Link(destination: Self.quickstartURL) {
+          Label("quickstart", systemImage: "book")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+
+        Link(destination: Self.pricingURL) {
+          Label("preise", systemImage: "creditcard")
+        }
+        .buttonStyle(PopoverActionButtonStyle(.secondary))
+      }
     }
   }
 
@@ -153,6 +205,11 @@ struct OpenAIKeySection: View {
         errorText = "bitte trage deinen OpenAI API Key ein."
         return
       }
+      guard trimmedAPIKey.range(of: Self.openAIAPIKeyPattern, options: .regularExpression) != nil
+      else {
+        errorText = "bitte trage einen plausiblen OpenAI API Key ein."
+        return
+      }
       do {
         try KeychainService.save(key: .openAIAPIKey, value: trimmedAPIKey)
         apiKey = ""
@@ -174,23 +231,5 @@ struct OpenAIKeySection: View {
     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
       withAnimation(.easeInOut(duration: 0.2)) { saved = false }
     }
-  }
-
-  private func pasteAPIKeyFromClipboard() {
-    guard let rawText = NSPasteboard.general.string(forType: .string) else {
-      errorText = "zwischenablage enthält keinen text."
-      return
-    }
-
-    let firstLine = rawText.components(separatedBy: .newlines).first ?? rawText
-    let trimmedKey = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard trimmedKey.range(of: Self.openAIAPIKeyPattern, options: .regularExpression) != nil else {
-      errorText = "zwischenablage enthält keinen plausiblen OpenAI API Key."
-      return
-    }
-
-    apiKey = trimmedKey
-    NSPasteboard.general.clearContents()
-    errorText = nil
   }
 }

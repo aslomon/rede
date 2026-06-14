@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Step: choose where transcription and rewriting happen. Online (OpenAI) reveals the key entry;
-/// "sicherer lokaler modus" flips the offline master and shows a green offline assurance.
+/// Step: choose where transcription and rewriting happen. Local is the first-run default; online
+/// (OpenAI) reveals the key entry.
 struct ProcessingStepView: View {
   @Bindable var appState: AppState
   @Environment(\.colorScheme) private var colorScheme
@@ -12,6 +12,17 @@ struct ProcessingStepView: View {
     VStack(alignment: .leading, spacing: OnboardingChrome.contentSpacing) {
       VStack(spacing: 10) {
         choiceCard(
+          selected: isLocal,
+          icon: "lock.shield.fill",
+          accent: .green,
+          pillState: .local,
+          title: "sicherer lokaler modus",
+          detail: "alles bleibt auf diesem Mac. kein server, keine cloud. lokale modelle nötig."
+        ) {
+          appState.appSettings.secureLocalModeEnabled = true
+        }
+
+        choiceCard(
           selected: !isLocal,
           icon: "cloud",
           accent: .blue,
@@ -21,17 +32,6 @@ struct ProcessingStepView: View {
             "schnell und stark. audio und text gehen an die OpenAI-API. eigener API-Key nötig."
         ) {
           appState.appSettings.secureLocalModeEnabled = false
-        }
-
-        choiceCard(
-          selected: isLocal,
-          icon: "lock.shield.fill",
-          accent: .green,
-          pillState: .local,
-          title: "sicherer lokaler modus",
-          detail: "alles bleibt auf diesem Mac. kein server, keine cloud. lokale modelle nötig."
-        ) {
-          appState.enableSecureLocalMode()
         }
       }
 

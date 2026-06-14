@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Step: how recordings start. One decision — hold vs. toggle — plus a read-only keycap overview
 /// of the default per-mode hotkeys so the core interaction is learned before the wizard ends.
-/// Editing individual combinations stays in Einstellungen → Prompts (per mode card).
+/// Editing individual combinations stays in Einstellungen → Modi (per mode card).
 struct HotkeysStepView: View {
   @Bindable var appState: AppState
 

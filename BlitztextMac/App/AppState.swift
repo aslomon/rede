@@ -58,6 +58,7 @@ final class AppState {
   /// rewrite, which left local-rewrite modes cold after a restart.
   private(set) var localRewritePreparing = false
   @ObservationIgnored private var localRewritePrewarmTask: Task<Void, Never>?
+  @ObservationIgnored private var suppressLocalRewritePrewarm = false
   var onMenuBarStatusChange: ((MenuBarStatus) -> Void)?
   /// Invoked when a finished run could NOT be auto-pasted (no Accessibility right / no target /
   /// focus race lost). Carries the dictated text so the floating pill can expand and show it in a
@@ -69,8 +70,8 @@ final class AppState {
   private var currentPasteText: String?
   private var pendingVariantChoice: PendingRewriteVariants?
 
-  /// Backs the "Lokale Modelle" management window (Ollama status, installed models, downloads).
-  let localModelManager = LocalModelManager()
+  /// Backs the "Lokale Modelle" management window (installed models, downloads).
+  let localModelManager: LocalModelManager
   private var activeLaunchSource: WorkflowLaunchSource = .manual
   private var activeModeID: ModeConfig.ID?
   private var activePasteTarget: PasteTarget?
@@ -110,7 +111,9 @@ final class AppState {
       }
       // Re-warm the local rewrite server when the selected llama.cpp model changes, so a freshly
       // picked model is loaded and ready without waiting for the first rewrite.
-      if oldValue.selectedLocalLLM != appSettings.selectedLocalLLM {
+      if oldValue.selectedLocalLLM != appSettings.selectedLocalLLM,
+        !suppressLocalRewritePrewarm
+      {
         prewarmLocalRewriteIfNeeded()
       }
       reloadHotkeys()
@@ -174,24 +177,44 @@ final class AppState {
   /// At least one rewrite engine is usable: the OpenAI key or an installed local llama.cpp model.
   var hasAnyRewriteEngine: Bool { hasOpenAIKey || !localModelManager.llamaCppInstalled.isEmpty }
 
+  /// The rewrite engine that matches the global processing switch. Online mode uses OpenAI only;
+  /// secure local mode uses local llama.cpp only. No per-mode mixing.
+  var hasActiveRewriteEngine: Bool {
+    appSettings.secureLocalModeEnabled ? !localModelManager.llamaCppInstalled.isEmpty : hasOpenAIKey
+  }
+
   var currentPhase: WorkflowPhase {
     activeWorkflow?.phase ?? .idle
   }
 
-  init() {
-    self.appSettings = Self.loadAppSettings()
-    self.transcriptionSettings = Self.loadTranscriptionSettings()
-    self.textImprovementSettings = Self.loadTextImprovementSettings()
-    self.dampfAblassenSettings = Self.loadDampfAblassenSettings()
-    self.emojiTextSettings = Self.loadEmojiTextSettings()
+  init(
+    appSettings: AppSettings? = nil,
+    transcriptionSettings: TranscriptionSettings? = nil,
+    textImprovementSettings: TextImprovementSettings? = nil,
+    dampfAblassenSettings: DampfAblassenSettings? = nil,
+    emojiTextSettings: EmojiTextSettings? = nil,
+    localModelManager: LocalModelManager? = nil,
+    prewarmEnginesAtLaunch: Bool = true
+  ) {
+    self.appSettings = appSettings ?? Self.loadAppSettings()
+    self.transcriptionSettings = transcriptionSettings ?? Self.loadTranscriptionSettings()
+    self.textImprovementSettings = textImprovementSettings ?? Self.loadTextImprovementSettings()
+    self.dampfAblassenSettings = dampfAblassenSettings ?? Self.loadDampfAblassenSettings()
+    self.emojiTextSettings = emojiTextSettings ?? Self.loadEmojiTextSettings()
+    self.localModelManager = localModelManager ?? LocalModelManager()
     self.memoryCoordinator = MemoryCoordinator(
       memory: memoryStore, archive: archiveStore)
     migrateToModeConfigsIfNeeded()
     refreshDefaultPromptsIfNeeded()
     refreshAccessibilityPermission()
     autoSelectFastLocalModelIfNeeded()
+    suppressLocalRewritePrewarm = true
+    adoptInstalledLocalModelsIfNeeded()
+    suppressLocalRewritePrewarm = false
     prewarmLocalTranscriptionIfNeeded()
-    prewarmLocalRewriteIfNeeded()
+    if prewarmEnginesAtLaunch {
+      prewarmLocalRewriteIfNeeded()
+    }
     applyRecordingSettings()
     reloadHotkeys()
     runMemoryLaunchMaintenanceIfNeeded()
@@ -848,13 +871,14 @@ final class AppState {
     }
   }
 
-  /// Effective rewrite backend: the global offline switch forces on-device.
+  /// Effective rewrite backend: the global processing switch is exclusive. Online means every
+  /// rewrite mode uses OpenAI; local means every rewrite mode uses llama.cpp.
   func resolvedRewriteBackend(for type: WorkflowType) -> RewriteBackend {
     resolvedRewriteBackend(for: modeConfig(for: type))
   }
 
   func resolvedRewriteBackend(for config: ModeConfig) -> RewriteBackend {
-    appSettings.secureLocalModeEnabled ? .local : config.rewrite.rewriteBackend
+    appSettings.secureLocalModeEnabled ? .local : .openai
   }
 
   /// Transcription backend for the rewrite modes — local in secure offline mode so audio never
@@ -884,7 +908,10 @@ final class AppState {
   func rewriteBackendReady(for config: ModeConfig) -> Bool {
     switch resolvedRewriteBackend(for: config) {
     case .local:
-      return appSettings.selectedLocalLLM.isConfigured
+      let selection = appSettings.selectedLocalLLM
+      return selection.isConfigured
+        && selection.runtime == .llamaCpp
+        && localModelManager.isLlamaCppInstalled(selection.modelID)
     case .openai:
       return KeychainService.isConfigured
     }
@@ -1498,10 +1525,18 @@ final class AppState {
       appSettings.selectedLocalTranscriptionModelName = firstInstalled.id
     }
 
-    if !appSettings.selectedLocalLLM.isConfigured,
-      let firstLLM = localModelManager.llamaCppInstalled.first
-    {
-      appSettings.selectedLocalLLM = LocalLLMSelection(runtime: .llamaCpp, modelID: firstLLM.id)
+    let selectedLLM = appSettings.selectedLocalLLM
+    let selectedLLMIsUsable =
+      selectedLLM.isConfigured
+      && selectedLLM.runtime == .llamaCpp
+      && localModelManager.isLlamaCppInstalled(selectedLLM.modelID)
+
+    if !selectedLLMIsUsable {
+      if let firstLLM = localModelManager.llamaCppInstalled.first {
+        appSettings.selectedLocalLLM = LocalLLMSelection(runtime: .llamaCpp, modelID: firstLLM.id)
+      } else if selectedLLM.isConfigured {
+        appSettings.selectedLocalLLM = LocalLLMSelection()
+      }
     }
   }
 
@@ -1853,6 +1888,10 @@ final class AppState {
   /// selected AND installed — so OpenAI-only users never spin up the server. Mirrors
   /// `prewarmLocalTranscriptionIfNeeded()` for Whisper.
   func prewarmLocalRewriteIfNeeded() {
+    guard appSettings.secureLocalModeEnabled else {
+      localRewritePreparing = false
+      return
+    }
     let selection = appSettings.selectedLocalLLM
     guard selection.isConfigured,
       selection.runtime == .llamaCpp,

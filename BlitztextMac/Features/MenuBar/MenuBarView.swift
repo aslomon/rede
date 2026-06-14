@@ -48,21 +48,22 @@ struct Wordmark: View {
 struct MenuBarView: View {
   @Bindable var appState: AppState
 
+  @State private var visiblePage: PopoverPage = .main
+
+  private static let pageAnimation = Animation.easeInOut(duration: 0.16)
+
   var body: some View {
-    VStack(spacing: 0) {
-      switch appState.page {
-      case .main:
-        MainPageView(appState: appState)
-      case .settings:
-        SettingsPageView(appState: appState)
-      case .workflow:
-        WorkflowPageView(appState: appState)
-      }
+    ZStack(alignment: .top) {
+      pageContent(for: visiblePage)
+        .id(visiblePage)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .transition(.opacity)
     }
+    .clipped()
     // The SwiftUI root width IS the popover width (it overrides NSPopover.contentSize). Width stays
     // at the compact 410; the dense settings page just gets more HEIGHT so more fits before scrolling.
     .frame(width: 410)
-    .frame(minHeight: appState.page == .settings ? 600 : 0, alignment: .top)
+    .frame(minHeight: visiblePage == .settings ? 600 : 0, alignment: .top)
     // Popover surface: the native `.popover` material so the body matches the NSPopover-drawn
     // arrow ("Spitze") exactly — `.glassEffect` only covered the body, leaving the arrow a
     // different shade. See PopoverBackdrop.
@@ -70,8 +71,27 @@ struct MenuBarView: View {
     // rede voice: SF Rounded across the popover for a young, friendly tone. Monospaced runs
     // (hotkeys, paths) opt out explicitly with .monospaced, so they are unaffected.
     .fontDesign(.rounded)
-    .animation(.easeInOut(duration: 0.2), value: appState.page)
+    .onAppear { visiblePage = appState.page }
+    .onChange(of: appState.page) { _, newPage in
+      guard newPage != visiblePage else { return }
+      withAnimation(Self.pageAnimation) {
+        visiblePage = newPage
+      }
+    }
   }
+
+  @ViewBuilder
+  private func pageContent(for page: PopoverPage) -> some View {
+    switch page {
+    case .main:
+      MainPageView(appState: appState)
+    case .settings:
+      SettingsPageView(appState: appState)
+    case .workflow:
+      WorkflowPageView(appState: appState)
+    }
+  }
+
 }
 
 // MARK: - Main Page
@@ -101,6 +121,13 @@ private struct MainPageView: View {
           .padding(.bottom, 6)
       }
 
+      if !appState.mainPageReadinessIssues.isEmpty {
+        readinessHintBanner
+          .padding(.horizontal, 16)
+          .padding(.top, 12)
+          .padding(.bottom, 6)
+      }
+
       workflowList
         .padding(.vertical, 2)
 
@@ -117,9 +144,6 @@ private struct MainPageView: View {
       HStack(spacing: 7) {
         BrandMark()
         Wordmark(size: 16)
-        if appState.isConfigured {
-          BlitzStatusPill(state: .ready, label: "läuft")
-        }
 
         Spacer()
 
@@ -243,6 +267,44 @@ private struct MainPageView: View {
 
       Button("prüfen") {
         appState.openSettings(tab: 4)
+      }
+      .buttonStyle(PopoverActionButtonStyle(.warning))
+    }
+    .padding(10)
+    .liquidGlassInfoBanner(accent: .orange)
+  }
+
+  private var readinessHintBanner: some View {
+    let issues = appState.mainPageReadinessIssues
+    return HStack(alignment: .top, spacing: 10) {
+      Image(systemName: "exclamationmark.triangle.fill")
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(.orange)
+        .frame(width: 18, height: 18)
+
+      VStack(alignment: .leading, spacing: 4) {
+        Text("modell oder zugang fehlt.")
+          .font(.system(size: 11.5, weight: .semibold))
+          .foregroundStyle(.primary)
+
+        ForEach(issues.prefix(2)) { issue in
+          Text(issue.message)
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+
+        if issues.count > 2 {
+          Text("+ \(issues.count - 2) weitere hinweise")
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+        }
+      }
+
+      Spacer(minLength: 0)
+
+      Button("modelle") {
+        appState.openSettings(tab: 1)
       }
       .buttonStyle(PopoverActionButtonStyle(.warning))
     }
@@ -447,7 +509,7 @@ private struct WorkflowPageView: View {
 
 // MARK: - Shared footer (used on all pages)
 
-/// Trailing-aligned footer: quiet version label left, optional update hint + Beenden right.
+/// Quiet footer: status left, optional update hint and a text-only quit affordance right.
 /// The update button is the popover's secondary entry into the updater (primary lives in
 /// Einstellungen → System → Updates); it appears only while a gentle update reminder waits.
 private struct AppFooter: View {
@@ -455,9 +517,9 @@ private struct AppFooter: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      Text(appState.updateService.appVersionText)
-        .font(.system(size: 10))
-        .foregroundStyle(.tertiary)
+      if appState.isConfigured {
+        BlitzStatusPill(state: .ready, label: "läuft")
+      }
 
       Spacer()
 
@@ -473,10 +535,25 @@ private struct AppFooter: View {
       Button("beenden") {
         NSApplication.shared.terminate(nil)
       }
-      .buttonStyle(PopoverActionButtonStyle(.quiet))
+      .buttonStyle(FooterTextButtonStyle())
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 8)
+  }
+}
+
+private struct FooterTextButtonStyle: ButtonStyle {
+  @Environment(\.isEnabled) private var isEnabled
+
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .font(.system(size: 10.5, weight: .medium))
+      .foregroundStyle(.tertiary)
+      .padding(.horizontal, 2)
+      .padding(.vertical, 4)
+      .contentShape(Rectangle())
+      .opacity(isEnabled ? (configuration.isPressed ? 0.55 : 1) : 0.4)
+      .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
   }
 }
 

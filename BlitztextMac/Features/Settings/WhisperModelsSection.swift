@@ -76,9 +76,7 @@ struct WhisperModelsSection: View {
     _ model: LocalTranscriptionModel, isActive: Bool, sizeText: String?
   ) -> some View {
     if model.isInstalled {
-      if isActive {
-        BlitzStatusPill(state: .ready, label: "aktiv")
-      } else {
+      if !isActive {
         Button {
           appState.appSettings.selectedLocalTranscriptionModelName = model.id
         } label: {

@@ -27,7 +27,7 @@ einfügen.
 
 - Ruhig, dicht, funktional. Deutschsprachige UI-Texte (du-Form, knapp).
 - Menüleisten-Popover, feste Breite **410pt** (vorher 340) — mehr Luft für die 5 Settings-Tabs + dichten Inhalt.
-- Settings-Tabs (segmented): **Prompts · Modelle · Vokabular · Archiv · System**. Alles Wort- und Memory-bezogene lebt im **Vokabular**-Tab: ein zentraler Memory-Master, E-Mail Memory, Korrekturlernen und **Begriffe** (inkl. der **Ersetzungen** als Unterblock — sie sind für den Nutzer dieselbe Idee). **Archiv** = nur Verlauf/Statistik/Kontext.
+- Settings-Tabs (segmented): **Modi · Modelle · Vokabular · Archiv · System**. Alles Wort- und Memory-bezogene lebt im **Vokabular**-Tab: ein zentraler Memory-Master, E-Mail Memory, Korrekturlernen und **Begriffe** (inkl. der **Ersetzungen** als Unterblock — sie sind für den Nutzer dieselbe Idee). **Archiv** = nur Verlauf/Statistik/Kontext.
 - Vokabular ist bewusst **klein gehalten**: die Begriffsliste (manuell + automatisch gelernt) ist auf **30** gedeckelt (`MemoryStore.injectionCap`/`maxConfirmed`), damit nicht hunderte Begriffe lernen und der Whisper-Prompt knapp bleibt. Gesprochene Satzzeichen gibt es nicht (entfernt).
 - Schwebende **Pille**: Kapsel-Glass (`PillGlassModifier`) für Aufnahme/Status; für erweiterte **Copy- und Varianten-Karten** ein eigener `CardGlassModifier` (abgerundetes Rechteck, 14pt-Radius, tieferer Schatten) statt Kapsel — sonst „eckiger Inhalt im Pillen-Loch".
 
@@ -102,6 +102,8 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
 
 - Stock SwiftUI zuerst: `Form`-artige vertikale Gruppen, native `Picker`,
   `Toggle`, `TextField`, `TextEditor`, `.bordered` / `.borderedProminent` Buttons.
+- `RedeTabBar` ist Navigation, kein leiser Chip: aktiver Tab = solid `RedeBrand.violet` mit weißer
+  Schrift, inaktive Tabs behalten kräftige scheme-aware Sekundärfarbe. Kein violett-auf-violett.
 - **Eine Sektionskarte für alle Settings-Tabs**: `settingsGroupBackground()` (12pt-Radius,
   `primary.opacity(0.03)`-Fill, 0.06-Stroke, 12pt-Padding) ist die einzige Sektions-Fläche in den
   fünf Tabs. `SettingsSection` rendert Label, optionale Status-Pille, optionale Header-Aktion und
@@ -120,6 +122,8 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   erzeugen abweichende Button-Größen. Custom-Chrome, das wie ein Button aussehen muss (z. B.
   Menu-Labels), nutzt dieselben 11pt `.semibold`.
 - Status statt Erklärung: `BlitzStatusPill` für bereit/warnung/download/online/lokal/muted.
+- Active model rows use one selection marker only: the leading green check. Do not add a second
+  `aktiv`, `gewählt`, or `embedding` pill inside the same model row or picker.
 - Längere Hinweise nur hinter `InfoDisclosure`; Settings zeigen Zustand + nächste Aktion, keine
   dauerhafte Dokumentation.
 - `SectionLabel(text:)` für Abschnittsüberschriften.
@@ -130,9 +134,16 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
 ## Neue Muster (dieser Ausbau)
 
 - **Dynamische Modus-Karte** in den Einstellungen: Name-TextField + „Aktiv"-Toggle +
-  Hotkey-Recorder + Modell-Picker + „Verarbeitung: Online/Lokal"-Picker +
+  Hotkey-Recorder + Modell-Picker +
   System-Prompt-`TextEditor` + Reset/Löschen/Reihenfolge. Eigene Modi dürfen gelöscht und
-  verschoben werden; feste Standard-Slots nur zurückgesetzt.
+  verschoben werden; feste Standard-Slots nur zurückgesetzt. Rewrite-Modi (E-Mail, Prompt,
+  Social und Duplikate) sind nur bearbeitbar, wenn die global gewählte Engine bereit ist:
+  online = OpenAI-Key, lokal = llama.cpp/GGUF-Modell. Online und lokal werden nicht per Modus
+  gemischt; Freitext/Diktat bleibt immer bearbeitbar.
+- **Prompt-Verbesserung**: Systemprompt-Editoren bieten „verbessern" über `wand.and.stars`.
+  Die Pipeline nutzt denselben global aktiven Pfad wie die Rewrite-Modi: online nur OpenAI, lokal
+  nur llama.cpp. Sie schreibt nur den verbesserten Systemprompt zurück. Kein Diktat, kein
+  Auto-Paste, keine Archiv-/Memory-Nebenwirkung.
 - **Hotkey-Recorder**: Ein einzelnes Aufnahmefeld startet eine explizite Aufnahme. Alle erkannten
   Tasten werden live als Keycaps angezeigt; gespeichert wird erst über `Übernehmen`, `Esc` bricht
   ab. Während der Aufnahme sind Blitztext-Hotkeys global pausiert, damit vorhandene Belegungen
@@ -151,11 +162,12 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   lokal als feste Schreibperspektive (`Ich schreibe als ...`) sowie als Spracherkennungs-Hinweis
   verwendet. Das ist kein E-Mail-Memory, sondern Basis-Kontext für alle Rewrite-Modi;
   E-Mail-Kontext kann damit Absender/Empfänger sauberer aus `Von`/`An` ableiten.
-- **Onboarding-Journey (9 Schritte)**: start (Intro + Name) → speicherort → rechte →
+- **Onboarding-Journey (10 Schritte)**: start (Intro + Name) → speicherort → rechte →
   verarbeitung → modelle → modi → hotkeys (Halten/Umschalten-Entscheidung + read-only
-  Keycap-Liste der Modus-Hotkeys) → extras (Opt-ins: Autostart, Töne, Archiv & Memory) →
-  fertig (Recap inkl. Hotkey-Modus und Extras). Bearbeitung einzelner Hotkey-Kombinationen bleibt
-  in der Modus-Karte (Prompts-Tab) — das Onboarding zeigt sie nur.
+  Keycap-Liste der Modus-Hotkeys) → test-diktat (sicherer In-Wizard-Test ohne Auto-Paste) →
+  extras (Opt-ins: Autostart, Töne, Archiv & Memory) → fertig (Recap inkl. Hotkey-Modus und
+  Extras). Bearbeitung einzelner Hotkey-Kombinationen bleibt in der Modus-Karte (Modi-Tab) — das
+  Onboarding zeigt sie nur.
 - **Onboarding-Wizard-Chrome** (echtes Setup-Assistant-Muster, keine Settings-Sidebar):
   zentrierter Hero pro Schritt — 64pt-Icon-Tile (18pt-Radius, `tintFill`/`tintStroke` im
   Schritt-Akzent) + Headline (21pt bold rounded, rede-Voice mit Punkt: „lass uns reden.") +
@@ -165,18 +177,27 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   (`GlassProminentButtonStyle` mit trailing `chevron.right`). „später" als quiet-Button oben
   rechts. Headline/Subheadline leben als Step-Metadaten im `OnboardingViewModel`.
   Fenster ~660×700, min 620×640, Hochformat.
+  Step-Wechsel blenden per 0.16s Ease-In-Out; keine Push-/Slide-Transitions.
 - **Varianten-Karte in der Pille**: zwei gleich gewichtete Textkarten, je `Einfügen` und
   `Kopieren`. Keine automatische Paste, solange die Karte sichtbar ist.
 - **Verfügbarkeits-Badges**: vorhandene Icons `checkmark.circle.fill` (grün) /
   `arrow.down.circle.fill` (blau) / `exclamationmark.triangle.fill` (orange) wiederverwenden.
+- **Startseiten-Readiness**: Wenn aktive Modi wegen fehlendem OpenAI-Key, fehlendem Whisper oder
+  nicht geladenem lokalem LLM nicht startbar sind, zeigt die Startseite ein orangefarbenes
+  Info-Banner mit maximal zwei konkreten Hinweisen und CTA „modelle".
+- **OpenAI-Key-Hilfe**: Die Key-Karte erklärt knapp, dass ein ChatGPT-Abo nicht reicht, nennt die
+  vier Schritte zur OpenAI Platform und verlinkt Platform, API-Key-Seite, Quickstart und Preise.
+- **Exklusive Modellpfade**: Im Modelle-Tab werden nur die Karten des aktiven Pfads gezeigt.
+  Online zeigt OpenAI-Key/Online-Modelle; lokal zeigt Whisper + lokales Sprachmodell. Keine
+  gedimmten oder optionalen lokalen Modellkarten im Online-Pfad.
 - **Einheitliche Modellverwaltung**: Das „Lokale Modelle"-Fenster (`LocalModelsView`) verwaltet alle
   drei lokalen Modelltypen an einem Ort — Transkription (Whisper, `WhisperModelsSection`),
-  Umschreiben (Ollama-LLM) und Embedding. Jede Modellzeile folgt demselben Muster: grün/blau-Badge +
-  Name + Größe links, rechts Aktion(en) — `Nutzen`/`Aktiv`-Pille, `arrow.clockwise`-Icon-Button für
+  Umschreiben (llama.cpp/GGUF) und Embedding. Jede Modellzeile folgt demselben Muster: grün/blau-Badge +
+  Name + Größe links, rechts Aktion(en) — `Nutzen`, `arrow.clockwise`-Icon-Button für
   „Neu laden" und `DeleteModelButton` (Papierkorb mit Bestätigung). `DeleteModelButton` ist
   Closure-basiert und für alle Modelltypen identisch. Reihen liegen auf `.tokenCard(cornerRadius: 8)`
   (die app-weite Listen-Reihen-Fläche), je Engine eine `SectionLabel`-Gruppe. Embedding-Modelle zeigen nie „Nutzen" (das setzt nur das
-  Sprachmodell), sondern eine `Embedding`-Pille. Jeder Modelltyp muss löschbar und neu ladbar sein.
+  Sprachmodell). Jeder Modelltyp muss löschbar und neu ladbar sein.
 - **Offline-/Lokal-Hinweis**: orange Info-Banner-Muster wie `accessibilityHintBanner`.
 
 ## Regeln
@@ -300,7 +321,7 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
 - `enginePanel` im Popover: Footer-komprimiert als `BlitzStatusPill`, on-tap expandierbar.
 - Settings-Tabs: Status-Pills leben in den Sektions-Headern, nicht als duplizierende Top-Level-Reihe.
 - Lange Erklärungen: ausschließlich hinter `InfoDisclosure`. Kein dauerhafter Erklärungstext.
-- `setupNudgeBanner`: nur auf Tab 0 (Prompts), nicht tabs-übergreifend.
+- `setupNudgeBanner`: nur auf Tab 0 (Modi), nicht tabs-übergreifend.
 - `workflowHeader`: Modus-Name auf `.semibold` 13pt, Akzentfarbe auf Icon.
 - **Modelle-Tab = flache Kartenliste**: verarbeitung → OpenAI API Key → lokale transkription
   (Whisper) → lokales sprachmodell. Status-Pills sitzen in den Karten-Headern; die zum gewählten
@@ -321,7 +342,7 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
   Diktat → Akustisches Feedback → Einrichtung → Updates → Über & Lizenzen → Sauber Entfernen.
   Die Tastenkürzel-Sektion trägt EINE `SectionLabel`-Überschrift, dann die
   Halten/Umschalten-Entscheidung mit Erklärzeile, dann die read-only Modus-Tabelle plus
-  Querverweis „ändern … im tab prompts" — kein doppelter Recorder im System-Tab.
+  Querverweis „ändern … im tab modi" — kein doppelter Recorder im System-Tab.
 
 ### In-App-Copy bleibt Deutsch — durchgängig kleingeschrieben
 

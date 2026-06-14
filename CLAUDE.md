@@ -62,22 +62,22 @@ There are five fixed workflow slots defined by `WorkflowType`: `transcription`, 
 
 ### Rewrite pipeline
 
-Prompt construction is provider-agnostic in **`LLMService`**; network transport lives in provider types. Selection flows through `RewriteConfig` → `RewriteBackend` → `RewriteProvider` (`Services/Providers/RewriteProvider.swift`) → `OpenAIRewriteProvider` / `OllamaRewriteProvider`, with `RewriteModelRegistry` for model metadata. Keep prompt assembly out of the transport types.
+Prompt construction is provider-agnostic in **`LLMService`**; network transport lives in provider types. Selection flows through `RewriteConfig` → `RewriteBackend` → `RewriteProvider` (`Services/Providers/RewriteProvider.swift`) → `OpenAIRewriteProvider` / `LlamaCppRewriteProvider`, with `RewriteModelRegistry` for model metadata. Keep prompt assembly out of the transport types.
 
 ### Two AI backends, kept separate
 
 - **Online**: OpenAI Audio Transcriptions + Chat Completions, called directly with the user's own key (stored only in Keychain via `KeychainService`). 25 MB transcription upload limit — preserve the early-failure path.
-- **Local**: WhisperKit/CoreML for transcription (`LocalTranscriptionService`, `LocalModelManager`) and Ollama on `localhost:11434` for rewrite + embeddings (`OllamaService`, `OllamaRewriteProvider`, `OllamaEmbeddingProvider`). Local transcription readiness and local rewrite readiness are **separate concerns** — do not merge their checks.
+- **Local**: WhisperKit/CoreML for transcription (`LocalTranscriptionService`, `LocalModelManager`) and a bundled **llama.cpp** server on `127.0.0.1` (a free local port chosen at launch, managed by `LlamaCppRuntimeService`) for rewrite + embeddings (`LlamaCppRewriteProvider`, `LlamaCppEmbeddingProvider`; models via `LlamaCppModelCatalog` / `LlamaCppModelStore` / `LlamaCppDownloadService`, transport via `LlamaCppServerClient`). Local transcription readiness and local rewrite readiness are **separate concerns** — do not merge their checks.
 
 ### Memory & context (all opt-in, capped)
 
-Semantic email memory (`EmailSemanticMemoryStore`, `EmailMemoryRetriever`, embeddings via Ollama), vocabulary/term learning (`MemoryStore`, `MemoryCoordinator`, `FuzzyTermCorrector`), improvement mining (`ImprovementMiner`/`ImprovementLog`), and automatic field/selection context (`SelectionContextService`, `PasteContextAXReader`). These read or store user content — keep them opt-in, retention-aware, and clearly described in copy.
+Semantic email memory (`EmailSemanticMemoryStore`, `EmailMemoryRetriever`, embeddings via `LlamaCppEmbeddingProvider`), vocabulary/term learning (`MemoryStore`, `MemoryCoordinator`, `FuzzyTermCorrector`), improvement mining (`ImprovementMiner`/`ImprovementLog`), and automatic field/selection context (`SelectionContextService`, `PasteContextAXReader`). These read or store user content — keep them opt-in, retention-aware, and clearly described in copy.
 
 ## Critical project-specific rules
 
 These come from `agent.md`/`DESIGN.md` — the highest-leverage ones to internalize:
 
-- **Privacy honesty**: never claim a workflow is local/offline unless the code proves no audio/text leaves the Mac. Keep OpenAI calls direct (no hidden proxy/telemetry). Keep Ollama traffic on `localhost`. Use `URLSessionConfiguration.ephemeral`. Delete temp audio after processing/cancellation. Preserve copy-only fallback when auto-paste fails.
+- **Privacy honesty**: never claim a workflow is local/offline unless the code proves no audio/text leaves the Mac. Keep OpenAI calls direct (no hidden proxy/telemetry). Keep local llama.cpp traffic on `localhost`. Use `URLSessionConfiguration.ephemeral`. Delete temp audio after processing/cancellation. Preserve copy-only fallback when auto-paste fails.
 - **Codable backward compatibility**: new persisted settings need safe missing-key defaults plus round-trip + missing-key tests, so old settings files still decode.
 - **No App Sandbox**: the app runs unsandboxed; entitlements live in `Resources/BlitztextMac.entitlements` (audio input + network client only). Do not broaden entitlements casually.
 - **UI**: in-app text is German (informal, concise); code/comments/commits/docs are English. Menu bar popover is 410 pt wide. Reuse existing styles (`PopoverActionButtonStyle`, `SectionLabel`, `BlitzStatusPill`, `MenuBarTokens`, …) and preserve mode accent colors. Don't add brand colors/gradients without updating `DESIGN.md`.

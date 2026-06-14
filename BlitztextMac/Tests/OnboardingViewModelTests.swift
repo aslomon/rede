@@ -20,24 +20,26 @@ final class OnboardingViewModelTests: XCTestCase {
   // MARK: - Step shape
 
   func testJourneyStepsInExpectedOrder() {
-    XCTAssertEqual(OnboardingViewModel.stepCount, 9)
+    XCTAssertEqual(OnboardingViewModel.stepCount, 10)
     XCTAssertEqual(
       OnboardingViewModel.OnboardingStep.allCases,
       [
         .welcome, .installLocation, .permissions, .processing, .models, .modes, .hotkeys,
-        .extras, .finish,
+        .dictationTest, .extras, .finish,
       ])
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.welcome.displayIndex, 1)
-    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.displayIndex, 9)
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.displayIndex, 10)
   }
 
   func testJourneyStepsExposeShortMetadata() {
     // rede voice: rail titles are lowercase.
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.installLocation.title, "speicherort")
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.hotkeys.title, "hotkeys")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.dictationTest.title, "test")
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.extras.title, "extras")
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.permissions.systemImage, "hand.raised.fill")
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.hotkeys.systemImage, "keyboard")
+    XCTAssertEqual(OnboardingViewModel.OnboardingStep.dictationTest.systemImage, "mic.circle.fill")
     XCTAssertEqual(
       OnboardingViewModel.OnboardingStep.processing.primaryActionLabel, "auswahl prüfen")
     XCTAssertEqual(OnboardingViewModel.OnboardingStep.finish.primaryActionLabel, "fertig")
@@ -63,7 +65,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
     for step in [
       OnboardingViewModel.OnboardingStep.installLocation, .permissions, .modes, .hotkeys,
-      .extras, .finish,
+      .dictationTest, .extras, .finish,
     ] {
       vm.step = step
       XCTAssertTrue(vm.canAdvance(appState), "\(step) must always advance (soft gating)")
@@ -105,14 +107,23 @@ final class OnboardingViewModelTests: XCTestCase {
     XCTAssertTrue(vm.canAdvance(appState))
   }
 
-  func testModelsOnlineAlwaysAdvances() {
+  func testModelsOnlineWithKeyAdvancesWithoutLocalWhisper() {
     let appState = makeAppState()
     appState.appSettings.secureLocalModeEnabled = false
-    let vm = OnboardingViewModel(appState: appState)
+    let vm = OnboardingViewModel(appState: appState, isOpenAIKeyConfigured: { true })
     vm.step = .models
 
-    // Online: a local Whisper model is optional, so the step never blocks.
+    // Online with OpenAI: local Whisper is optional.
     XCTAssertTrue(vm.canAdvance(appState))
+  }
+
+  func testModelsWithoutKeyNeedsInstalledWhisper() {
+    let appState = makeAppState()
+    appState.appSettings.secureLocalModeEnabled = false
+    let vm = OnboardingViewModel(appState: appState, isOpenAIKeyConfigured: { false })
+    vm.step = .models
+
+    XCTAssertEqual(vm.canAdvance(appState), appState.selectedLocalModelIsInstalled)
   }
 
   func testModelsLocalNeedsInstalledModel() {
@@ -151,6 +162,8 @@ final class OnboardingViewModelTests: XCTestCase {
     vm.step = .modes
     vm.next()
     XCTAssertEqual(vm.step, .hotkeys)
+    vm.next()
+    XCTAssertEqual(vm.step, .dictationTest)
     vm.next()
     XCTAssertEqual(vm.step, .extras)
     vm.next()
@@ -197,12 +210,15 @@ final class OnboardingViewModelTests: XCTestCase {
     let vm = OnboardingViewModel(appState: appState)
     vm.emailPrompt = "  E-Mail Prompt  "
     vm.promptPrompt = "Prompt Prompt"
+    vm.socialPrompt = "Social Prompt"
     vm.persistPrompts(appState)
 
     XCTAssertEqual(
       appState.modeConfig(for: .textImprover).rewrite.systemPrompt, "E-Mail Prompt")
     XCTAssertEqual(
       appState.modeConfig(for: .dampfAblassen).rewrite.systemPrompt, "Prompt Prompt")
+    XCTAssertEqual(
+      appState.modeConfig(for: .emojiText).rewrite.systemPrompt, "Social Prompt")
   }
 
   // MARK: - finish()

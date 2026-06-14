@@ -94,4 +94,109 @@ final class LocalLLMRuntimeTests: XCTestCase {
     XCTAssertTrue(
       LlamaCppModelCatalog.embeddingModels.contains { $0.id == decoded.selectedEmbeddingModelName })
   }
+
+  @MainActor
+  func testLaunchAdoptsInstalledLlamaCppModelBeforePrewarm() throws {
+    let root = temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let store = LlamaCppModelStore(rootDirectory: root)
+    let model = try XCTUnwrap(LlamaCppModelCatalog.models.first)
+    try store.ensureRootExists()
+    let finalURL = try store.finalURL(for: model)
+    try Data("model".utf8).write(to: finalURL)
+    try store.writeVerifiedManifest(for: model, fileURL: finalURL)
+
+    let manager = LocalModelManager(store: store)
+    let state = AppState(
+      appSettings: AppSettings(),
+      localModelManager: manager,
+      prewarmEnginesAtLaunch: false
+    )
+
+    XCTAssertEqual(
+      state.appSettings.selectedLocalLLM,
+      LocalLLMSelection(runtime: .llamaCpp, modelID: model.id)
+    )
+    XCTAssertFalse(state.localRewritePreparing)
+  }
+
+  @MainActor
+  func testLaunchReplacesStaleLlamaCppSelectionWithInstalledModel() throws {
+    let root = temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let store = LlamaCppModelStore(rootDirectory: root)
+    let model = try XCTUnwrap(LlamaCppModelCatalog.models.first)
+    try store.ensureRootExists()
+    let finalURL = try store.finalURL(for: model)
+    try Data("model".utf8).write(to: finalURL)
+    try store.writeVerifiedManifest(for: model, fileURL: finalURL)
+
+    var settings = AppSettings()
+    settings.selectedLocalLLM = LocalLLMSelection(runtime: .llamaCpp, modelID: "missing-model")
+    let manager = LocalModelManager(store: store)
+    let state = AppState(
+      appSettings: settings,
+      localModelManager: manager,
+      prewarmEnginesAtLaunch: false
+    )
+
+    XCTAssertEqual(
+      state.appSettings.selectedLocalLLM,
+      LocalLLMSelection(runtime: .llamaCpp, modelID: model.id)
+    )
+  }
+
+  @MainActor
+  func testOnlineProcessingForcesOpenAIRewriteEvenIfModeStoredLocal() {
+    var settings = AppSettings()
+    settings.secureLocalModeEnabled = false
+    let state = AppState(appSettings: settings, prewarmEnginesAtLaunch: false)
+
+    var mode = ModeConfig.default(for: .textImprover)
+    mode.rewrite.rewriteBackend = .local
+
+    XCTAssertEqual(state.resolvedRewriteBackend(for: mode), .openai)
+  }
+
+  @MainActor
+  func testLocalProcessingForcesLocalRewriteEvenIfModeStoredOpenAI() {
+    var settings = AppSettings()
+    settings.secureLocalModeEnabled = true
+    let state = AppState(appSettings: settings, prewarmEnginesAtLaunch: false)
+
+    var mode = ModeConfig.default(for: .textImprover)
+    mode.rewrite.rewriteBackend = .openai
+
+    XCTAssertEqual(state.resolvedRewriteBackend(for: mode), .local)
+  }
+
+  @MainActor
+  func testOnlineLaunchDoesNotPrewarmInstalledLocalRewriteModel() throws {
+    let root = temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let store = LlamaCppModelStore(rootDirectory: root)
+    let model = try XCTUnwrap(LlamaCppModelCatalog.models.first)
+    try store.ensureRootExists()
+    let finalURL = try store.finalURL(for: model)
+    try Data("model".utf8).write(to: finalURL)
+    try store.writeVerifiedManifest(for: model, fileURL: finalURL)
+
+    var settings = AppSettings()
+    settings.secureLocalModeEnabled = false
+    settings.selectedLocalLLM = LocalLLMSelection(runtime: .llamaCpp, modelID: model.id)
+    let manager = LocalModelManager(store: store)
+    let state = AppState(
+      appSettings: settings,
+      localModelManager: manager,
+      prewarmEnginesAtLaunch: true
+    )
+
+    XCTAssertEqual(state.resolvedRewriteBackend(for: .textImprover), .openai)
+    XCTAssertFalse(state.localRewritePreparing)
+  }
+
+  private func temporaryDirectory() -> URL {
+    FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+  }
 }

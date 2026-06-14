@@ -237,7 +237,7 @@ struct AppSettings: Codable, Sendable {
   /// `hasSeenOnboarding`: gates the launch auto-open so closing the window early (without "Fertig")
   /// keeps it re-opening next launch until the wizard is actually completed.
   var hasCompletedOnboarding: Bool = false
-  var secureLocalModeEnabled: Bool = false
+  var secureLocalModeEnabled: Bool = true
   var selectedLocalTranscriptionModelName: String = LocalTranscriptionService
     .recommendedFastModelName
   var hasAutoSelectedFastLocalModel: Bool = false
@@ -304,7 +304,7 @@ struct AppSettings: Codable, Sendable {
     hasSeenOnboarding: Bool = false,
     userDisplayName: String = "",
     hasCompletedOnboarding: Bool = false,
-    secureLocalModeEnabled: Bool = false,
+    secureLocalModeEnabled: Bool = true,
     selectedLocalTranscriptionModelName: String = LocalTranscriptionService
       .recommendedFastModelName,
     hasAutoSelectedFastLocalModel: Bool = false,
@@ -387,7 +387,7 @@ struct AppSettings: Codable, Sendable {
     hasCompletedOnboarding =
       try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? false
     secureLocalModeEnabled =
-      try container.decodeIfPresent(Bool.self, forKey: .secureLocalModeEnabled) ?? false
+      try container.decodeIfPresent(Bool.self, forKey: .secureLocalModeEnabled) ?? true
     selectedLocalTranscriptionModelName =
       try container.decodeIfPresent(
         String.self,

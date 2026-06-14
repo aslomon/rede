@@ -7,8 +7,6 @@ import SwiftUI
 struct OnboardingWizardView: View {
   @Bindable var appState: AppState
   @State private var viewModel: OnboardingViewModel
-  /// Tracks direction for asymmetric push transitions.
-  @State private var navigatingForward = true
   @Environment(\.colorScheme) private var colorScheme
 
   /// Closes the wizard window (the "später" link and the red close button share this path).
@@ -31,7 +29,7 @@ struct OnboardingWizardView: View {
       VStack(spacing: 0) {
         ScrollView {
           // Hero + step controls move together as ONE page: .id per step gives the container a
-          // fresh identity so the directional push transition covers the whole page.
+          // fresh identity so the fade transition covers the whole page.
           VStack(spacing: 0) {
             heroHeader
               .padding(.top, 52)
@@ -45,12 +43,7 @@ struct OnboardingWizardView: View {
           }
           .frame(maxWidth: .infinity)
           .id(viewModel.step)
-          .transition(
-            .asymmetric(
-              insertion: .push(from: navigatingForward ? .trailing : .leading),
-              removal: .push(from: navigatingForward ? .leading : .trailing)
-            )
-          )
+          .transition(.opacity)
         }
 
         footer
@@ -66,7 +59,7 @@ struct OnboardingWizardView: View {
       }
     }
     .frame(minWidth: 620, minHeight: 640)
-    .animation(.spring(response: 0.32, dampingFraction: 0.82), value: viewModel.step)
+    .animation(.easeInOut(duration: 0.16), value: viewModel.step)
     // Glass backdrop for the entire wizard window.
     .blitztextSurface()
     // rede voice: SF Rounded across the whole wizard window, matching the popover root.
@@ -127,6 +120,8 @@ struct OnboardingWizardView: View {
       ModesStepView(appState: appState, viewModel: viewModel)
     case .hotkeys:
       HotkeysStepView(appState: appState)
+    case .dictationTest:
+      DictationTestStepView(appState: appState)
     case .extras:
       ExtrasStepView(appState: appState)
     case .finish:
@@ -207,7 +202,6 @@ struct OnboardingWizardView: View {
   // MARK: - Actions
 
   private func back() {
-    navigatingForward = false  // set direction before triggering step change
     viewModel.back()
   }
 
@@ -220,7 +214,6 @@ struct OnboardingWizardView: View {
       viewModel.finish(appState)
       onClose()
     } else {
-      navigatingForward = true  // set direction before triggering step change
       viewModel.next()
     }
   }

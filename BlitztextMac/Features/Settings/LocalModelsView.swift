@@ -230,7 +230,6 @@ struct LocalModelsView: View {
       }
       Spacer()
       if isActive(llamaCppModel: model) {
-        BlitzStatusPill(state: .ready, label: "aktiv")
         Button {
           appState.appSettings.selectedLocalLLM = LocalLLMSelection()
         } label: {
@@ -293,9 +292,7 @@ struct LocalModelsView: View {
         }
         Spacer()
         if installed {
-          if isActive(llamaCppModel: model) {
-            BlitzStatusPill(state: .ready, label: "aktiv")
-          } else {
+          if !isActive(llamaCppModel: model) {
             Button {
               selectLlamaCpp(model)
             } label: {
@@ -410,8 +407,6 @@ struct LocalModelsView: View {
           }
           Spacer()
           if installed {
-            // DESIGN.md: embedding models never show "nutzen" — only the Embedding pill + delete.
-            BlitzStatusPill(state: .ready, label: "embedding")
             DeleteModelButton(
               displayName: model.displayName,
               freedSizeText: SystemCapabilities.formatGB(model.downloadGB),

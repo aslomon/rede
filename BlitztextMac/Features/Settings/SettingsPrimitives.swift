@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Settings primitives
 //
-// Shared building blocks for the five settings tabs (prompts · modelle · vokabular · archiv ·
+// Shared building blocks for the five settings tabs (modi · modelle · vokabular · archiv ·
 // system). They keep grouping, empty-state guidance and status badges consistent across tabs and
 // codify the DESIGN.md conventions (SectionLabel, card radii, du-form lowercase copy).
 
@@ -138,9 +138,9 @@ struct EmptyStateCard: View {
 
 // MARK: - Model select row
 
-/// Compact selectable model row for inline selection in the Modelle tab (Whisper + GGUF): a
-/// green check for the active model, name + detail, and a "nutzen" action otherwise. Mirrors the
-/// row pattern of the Lokale-Modelle window so selection looks identical everywhere.
+/// Compact selectable model row for inline selection in the Modelle tab (Whisper + GGUF): the
+/// active model gets one marker only, the leading green check. Inactive rows expose "nutzen".
+/// Mirrors the row pattern of the Lokale-Modelle window so selection looks identical everywhere.
 struct ModelSelectRow: View {
   let title: String
   let subtitle: String?
@@ -168,9 +168,7 @@ struct ModelSelectRow: View {
 
       Spacer(minLength: 8)
 
-      if isActive {
-        BlitzStatusPill(state: .ready, label: "aktiv")
-      } else {
+      if !isActive {
         Button("nutzen", action: select)
           .buttonStyle(PopoverActionButtonStyle(.secondary))
           .accessibilityLabel("\(title) nutzen")

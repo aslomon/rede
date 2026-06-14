@@ -4,10 +4,10 @@ import SwiftUI
 /// key, the local Whisper transcription engine and the local llama.cpp rewrite model. Models that
 /// are already on disk show as directly selectable rows (one tap = active); downloading more lives
 /// behind a disclosure so the card stays calm. Status pills live in the card headers (DESIGN.md);
-/// the card not matching the chosen processing path is dimmed but stays configurable.
+/// only the cards matching the chosen processing path are visible.
 struct ModelsSettingsView: View {
   @Bindable var appState: AppState
-  /// Reserved for cross-tab navigation from empty-state CTAs (kept for parity with Prompts tab).
+  /// Reserved for cross-tab navigation from empty-state CTAs (kept for parity with Modi tab).
   let selectTab: (Int) -> Void
 
   /// Bumped by the "prüfen" header action to force a fresh disk read of the installed WhisperKit
@@ -36,17 +36,12 @@ struct ModelsSettingsView: View {
     VStack(alignment: .leading, spacing: 20) {
       processingCard
 
-      // The card not matching the chosen processing path is dimmed so the active choice is
-      // obvious — still interactive on purpose.
-      openAICard
-        .opacity(isLocal ? 0.45 : 1)
-
-      whisperCard
-        .opacity(isLocal ? 1 : 0.45)
-
-      // Never dimmed: the local rewrite model powers per-mode "lokal" rewriting in BOTH
-      // processing paths (a mode can rewrite locally while transcription runs online).
-      localLLMCard
+      if isLocal {
+        whisperCard
+        localLLMCard
+      } else {
+        openAICard
+      }
     }
     .padding(16)
     .animation(.easeInOut(duration: 0.2), value: isLocal)
@@ -235,11 +230,11 @@ struct ModelsSettingsView: View {
     SettingsSection(
       "lokales sprachmodell",
       icon: "text.bubble",
-      caption: "formuliert texte lokal um — nutzbar in jedem modus, unabhängig vom online-modus.",
+      caption: "formuliert texte lokal um — nur aktiv, wenn verarbeitung auf lokal steht.",
       trailing: { llmStatusPill }
     ) {
       // The section header above carries the status pill; the picker renders only the rows.
-      LocalLLMModelPicker(appState: appState, showsStatusHeader: false)
+      LocalLLMModelPicker(appState: appState)
     }
   }
 

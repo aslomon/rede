@@ -245,7 +245,7 @@ struct SystemSettingsView: View {
 
   // MARK: - Tastenkürzel
   // One section heading, then the hold/toggle decision with its explainer, then the read-only
-  // per-mode table. Editing a combination lives in the mode card (Prompts tab) — the caption
+  // per-mode table. Editing a combination lives in the mode card (Modi tab) — the caption
   // says so instead of duplicating a recorder here.
 
   private var hotkeysSection: some View {
@@ -284,7 +284,7 @@ struct SystemSettingsView: View {
         }
       }
 
-      Text("ändern kannst du jede kombination pro modus im tab prompts.")
+      Text("ändern kannst du jede kombination pro modus im tab modi.")
         .font(.system(size: 10.5))
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)

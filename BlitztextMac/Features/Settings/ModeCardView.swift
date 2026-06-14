@@ -11,6 +11,8 @@ struct ModeCardView: View {
   /// Progressive disclosure: tone / prompt / context / reply / memory / reset live behind this.
   @State private var showAdvanced = false
   @State private var showEditor = false
+  @State var isImprovingPrompt = false
+  @State var promptImprovementError: String?
 
   init(appState: AppState, type: WorkflowType) {
     self.appState = appState
@@ -25,7 +27,7 @@ struct ModeCardView: View {
   }
 
   var config: ModeConfig { appState.modeConfig(for: modeID) ?? appState.modeConfig(for: type) }
-  private var forcedOffline: Bool { appState.appSettings.secureLocalModeEnabled }
+  private var isLocalProcessing: Bool { appState.appSettings.secureLocalModeEnabled }
   var effectiveBackend: RewriteBackend { appState.resolvedRewriteBackend(for: config) }
 
   /// Mirrors `ModeConfig.isAdvancedNonDefault` for the live config — drives the "angepasst" dot.
@@ -43,6 +45,10 @@ struct ModeCardView: View {
 
   var supportsAutomaticFieldContext: Bool {
     type == .textImprover || type == .dampfAblassen
+  }
+
+  var canEditMode: Bool {
+    !isRewriteMode || appState.hasActiveRewriteEngine
   }
 
   func bind<V>(_ keyPath: WritableKeyPath<ModeConfig, V>) -> Binding<V> {
@@ -79,9 +85,14 @@ struct ModeCardView: View {
     .settingsGroupBackground()
     .onAppear {
       // A freshly created mode opens straight into its editor so the user can rename/configure it.
-      if appState.newlyCreatedModeID == modeID {
+      if appState.newlyCreatedModeID == modeID, canEditMode {
         showEditor = true
         appState.newlyCreatedModeID = nil
+      }
+    }
+    .onChange(of: appState.hasActiveRewriteEngine) { _, hasEngine in
+      if isRewriteMode && !hasEngine {
+        withAnimation(.easeInOut(duration: 0.16)) { showEditor = false }
       }
     }
   }
@@ -92,7 +103,7 @@ struct ModeCardView: View {
       HotkeyRecorderView(appState: appState, modeID: modeID)
 
       if isRewriteMode {
-        backendPicker
+        processingRouteSummary
 
         if effectiveBackend == .openai {
           modelPicker
@@ -114,7 +125,9 @@ struct ModeCardView: View {
   private var summaryContent: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
-        if isRewriteMode {
+        if isRewriteMode && !canEditMode {
+          BlitzStatusPill(state: .warning, label: "modell fehlt")
+        } else if isRewriteMode {
           BlitzStatusPill(
             state: backendPillState, label: effectiveBackend == .local ? "lokal" : "online")
         } else {
@@ -142,6 +155,11 @@ struct ModeCardView: View {
   private var summaryLine: String {
     if !isRewriteMode {
       return appState.workflowSubtitle(for: config)
+    }
+    if !canEditMode {
+      return isLocalProcessing
+        ? "erst lokales LLM laden, dann modus bearbeiten."
+        : "erst OpenAI-Key verbinden, dann modus bearbeiten."
     }
     if type == .emojiText {
       return "emoji-dichte: \(config.rewrite.emojiDensity.displayName)."
@@ -259,6 +277,13 @@ struct ModeCardView: View {
   @ViewBuilder
   private var advancedContent: some View {
     if type == .emojiText {
+      systemPromptEditor
+      if hasCustomPrompt {
+        Text("emoji-dichte ist deaktiviert, solange eine eigene anweisung gesetzt ist.")
+          .font(.system(size: 10))
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
       variantChoiceToggle
     } else if isRewriteMode {
       // (1) Custom prompt editor always at top
@@ -318,6 +343,7 @@ struct ModeCardView: View {
       Spacer(minLength: 8)
       // Pencil opens editor; checkmark closes it. Pencil only activates when not already editing (spec change 7)
       Button {
+        guard canEditMode else { return }
         withAnimation(.easeInOut(duration: 0.16)) {
           if showEditor {
             showEditor = false
@@ -326,15 +352,20 @@ struct ModeCardView: View {
           }
         }
       } label: {
-        Image(systemName: showEditor ? "checkmark" : "pencil")
+        Image(systemName: canEditMode ? (showEditor ? "checkmark" : "pencil") : "lock")
       }
       .buttonStyle(PopoverIconButtonStyle(showEditor ? .primary : .quiet))
-      .help(showEditor ? "bearbeitung schließen" : "modus bearbeiten")
-      .accessibilityLabel(showEditor ? "Bearbeitung schließen" : "Modus bearbeiten")
+      .disabled(!canEditMode)
+      .help(
+        canEditMode
+          ? (showEditor ? "bearbeitung schließen" : "modus bearbeiten")
+          : (isLocalProcessing ? "erst lokales LLM laden" : "erst OpenAI-Key verbinden"))
+      .accessibilityLabel(canEditMode ? "Modus bearbeiten" : "Modus gesperrt")
       Toggle("aktiv", isOn: bind(\.isEnabled))
         .toggleStyle(.switch)
         .controlSize(.mini)
         .labelsHidden()
+        .disabled(!canEditMode)
     }
   }
 
@@ -372,35 +403,28 @@ struct ModeCardView: View {
     }
   }
 
-  // MARK: - Backend
+  // MARK: - Processing route
 
-  private var backendPicker: some View {
+  private var processingRouteSummary: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text("verarbeitung")
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
-      Picker(
-        "",
-        selection: forcedOffline
-          ? .constant(RewriteBackend.local) : bind(\.rewrite.rewriteBackend)
-      ) {
-        ForEach(RewriteBackend.allCases) { backend in
-          Text(backend.displayName).tag(backend)
-        }
+
+      HStack(spacing: 6) {
+        BlitzStatusPill(state: isLocalProcessing ? .local : .online, label: isLocalProcessing ? "lokal" : "online")
+        Text(isLocalProcessing ? "global: Whisper + llama.cpp" : "global: OpenAI Whisper + OpenAI-Modell")
+          .font(.system(size: 10.5))
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
       }
-      .labelsHidden()
-      .controlSize(.small)
-      .pickerStyle(.menu)
-      .disabled(forcedOffline)
 
       InfoDisclosure("datenfluss") {
-        if forcedOffline {
-          Text("sicherer lokaler modus erzwingt lokale verarbeitung.")
-        } else if effectiveBackend == .local {
-          Text("lokal auf diesem Mac über llama.cpp, ohne cloud.")
-        } else {
-          Text("text wird zur formulierung an die OpenAI-API gesendet.")
-        }
+        Text(
+          isLocalProcessing
+            ? "globale verarbeitung steht auf lokal: diktat läuft über Whisper auf diesem Mac, umformung über llama.cpp."
+            : "globale verarbeitung steht auf online: Whisper und umformung laufen über die OpenAI-API."
+        )
       }
     }
   }

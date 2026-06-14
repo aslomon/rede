@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - rede tab bar (icon + label pills)
 //
 // THE navigation control between destinations (settings tabs, archive facets). Horizontal pills:
-// concept icon next to a lowercase label, the active tab in RedeBrand.violet on a violet tint
-// capsule. Value choices stay native segmented pickers (text-only) — see DESIGN.md
+// concept icon next to a lowercase label, the active tab as a solid brand-violet capsule with white
+// text. Value choices stay native segmented pickers (text-only) — see DESIGN.md
 // "segmented = wertauswahl, RedeTabBar = navigation".
 //
 // Known trade-off vs. the native segmented control: no arrow-key cycling; the items are regular
@@ -49,7 +49,7 @@ struct RedeTabBar<Tag: Hashable>: View {
           .lineLimit(1)
           .minimumScaleFactor(0.8)
       }
-      .foregroundStyle(isActive ? AnyShapeStyle(RedeBrand.violet) : AnyShapeStyle(.secondary))
+      .foregroundStyle(isActive ? AnyShapeStyle(.white) : AnyShapeStyle(inactiveForeground))
       .padding(.horizontal, 4)
       .padding(.vertical, 5)
       .frame(maxWidth: .infinity, minHeight: 28)
@@ -69,16 +69,19 @@ struct RedeTabBar<Tag: Hashable>: View {
   private func pillBackground(isActive: Bool, isHovered: Bool) -> some View {
     if isActive {
       Capsule(style: .continuous)
-        .fill(MenuBarTokens.tintFill(RedeBrand.violet, colorScheme: colorScheme))
+        .fill(RedeBrand.violet)
         .overlay(
           Capsule(style: .continuous)
-            .strokeBorder(
-              MenuBarTokens.tintStroke(RedeBrand.violet, colorScheme: colorScheme), lineWidth: 0.5)
+            .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.22 : 0.18), lineWidth: 0.5)
         )
     } else if isHovered {
       Capsule(style: .continuous)
-        .fill(Color.primary.opacity(0.04))
+        .fill(Color.primary.opacity(colorScheme == .dark ? 0.10 : 0.06))
     }
+  }
+
+  private var inactiveForeground: Color {
+    colorScheme == .dark ? Color.white.opacity(0.78) : Color.black.opacity(0.68)
   }
 
   @ViewBuilder

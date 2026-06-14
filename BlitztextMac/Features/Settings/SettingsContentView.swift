@@ -10,7 +10,7 @@ struct SettingsContentView: View {
       RedeTabBar(
         selection: $appState.settingsTabSelection,
         items: [
-          RedeTabItem(tag: 0, label: "prompts", icon: "rectangle.stack"),
+          RedeTabItem(tag: 0, label: "modi", icon: "rectangle.stack"),
           RedeTabItem(tag: 1, label: "modelle", icon: "shippingbox"),
           RedeTabItem(tag: 2, label: "vokabular", icon: "character.book.closed"),
           RedeTabItem(tag: 3, label: "archiv", icon: "archivebox"),
@@ -25,7 +25,7 @@ struct SettingsContentView: View {
         VStack(spacing: 0) {
           switch appState.settingsTabSelection {
           case 0:
-            // Setup nudge is only shown on the Prompts tab (DESIGN.md: setupNudgeBanner tab 0 only)
+            // Setup nudge is only shown on the Modi tab (DESIGN.md: setupNudgeBanner tab 0 only)
             if !appState.isConfigured {
               setupNudgeBanner
                 .padding(.horizontal, 16)
@@ -53,12 +53,12 @@ struct SettingsContentView: View {
   }
 
   /// Programmatic tab switch handed to child tabs so their empty-state CTAs can jump the user to
-  /// the tab that unblocks a feature (e.g. "Zu Modelle" from the Prompts tab).
+  /// the tab that unblocks a feature (e.g. "Zu Modelle" from the Modi tab).
   private func selectTab(_ index: Int) {
     appState.settingsTabSelection = index
   }
 
-  /// Always land on Prompts (tab 0), the primary tab — the other three are one tap away in the
+  /// Always land on Modi (tab 0), the primary tab — the other three are one tap away in the
   /// always-visible tab bar. The `setupNudgeBanner` shows on EVERY tab while unconfigured,
   /// so guidance no longer needs to hijack the landing tab to System (which hid the other tabs).
   private var defaultTabSelection: Int { 0 }
