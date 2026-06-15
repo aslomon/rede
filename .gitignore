@@ -13,6 +13,9 @@ build/
 # macOS
 .DS_Store
 
+# Tooling artifacts
+.playwright-mcp/
+
 # Local app artifacts
 Blitztext.app
 rede.app

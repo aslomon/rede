@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Blitztext is a **native macOS menu bar app** (Swift 5.10, SwiftUI + AppKit), not a web app. It is a local-first dictation, transcription, rewrite, and local-AI workflow tool. There is no hosted backend, account system, sync layer, or telemetry. Do not apply Next.js/Supabase/web conventions here.
 
-`agent.md` is the detailed contributor guide (style, privacy rules, common change patterns, hazards) and `DESIGN.md` is the mandatory design system. **Read `agent.md` before changing logic and `DESIGN.md` before any UI work.** This file is the quick orientation; those two are the source of truth.
+`agent.md` is the detailed contributor guide (style, privacy rules, common change patterns, hazards) and `DESIGN.md` is the mandatory design system. **Read `agent.md` before changing logic and `DESIGN.md` before any UI work.** This file is the quick orientation; those two are the source of truth. `AGENTS.md` is a shorter quick-reference covering the same ground (structure, build commands, style, commit/PR conventions) — keep it consistent with `agent.md` when either changes.
 
 ## Build, test, run
 
