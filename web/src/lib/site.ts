@@ -8,13 +8,13 @@ export const site = {
   /** public URL once deployed (used for metadata / OG). */
   url: "https://rede.app",
   /** GitHub repository (source + releases). */
-  github: "https://github.com/aslomon/blitztext-app",
+  github: "https://github.com/aslomon/rede",
   /** Latest release page — the download button links here until a fixed asset URL exists. */
-  releases: "https://github.com/aslomon/blitztext-app/releases/latest",
+  releases: "https://github.com/aslomon/rede/releases/latest",
   /** Direct .dmg asset (fill in once a release asset name is fixed). */
-  download: "https://github.com/aslomon/blitztext-app/releases/latest",
+  download: "https://github.com/aslomon/rede/releases/latest",
   /** Sparkle auto-update feed (mirrors Info.plist SUFeedURL). */
-  appcast: "https://aslomon.github.io/rede-app/appcast.xml",
+  appcast: "https://aslomon.github.io/rede/appcast.xml",
   /** Minimum supported macOS version shown in the UI. */
   minMacOS: "macOS 14",
   license: "MIT",

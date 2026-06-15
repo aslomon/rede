@@ -57,7 +57,7 @@ vercel --prod    # production
 ### Sparkle auto-update feed
 
 The macOS app's `Info.plist` points `SUFeedURL` at
-`https://aslomon.github.io/rede-app/appcast.xml`. Two options:
+`https://aslomon.github.io/rede/appcast.xml`. Two options:
 
 1. **Keep the feed on GitHub Pages** (current `Info.plist`): publish `appcast.xml`
    there independently of this Vercel site. Simplest — no app change needed.

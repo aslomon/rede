@@ -25,7 +25,7 @@
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>SUFeedURL</key>
-	<string>https://aslomon.github.io/rede-app/appcast.xml</string>
+	<string>https://aslomon.github.io/rede/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>2f1gkx8oQJ+c9Z7hvLCS/83VAQK5rDcbghdVVAKjxlM=</string>
 	<key>SUEnableAutomaticChecks</key>
