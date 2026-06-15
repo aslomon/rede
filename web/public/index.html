@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Static host has no Accept-Language proxy: default to German, relative so
+         it resolves under the /rede base path → /rede/de/. -->
+    <meta http-equiv="refresh" content="0; url=de/" />
+    <link rel="canonical" href="de/" />
+    <title>rede</title>
+    <style>
+      html {
+        background: #0e0b1a;
+        color: #f4f2fb;
+        font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+      }
+      body {
+        display: flex;
+        min-height: 100vh;
+        margin: 0;
+        align-items: center;
+        justify-content: center;
+      }
+      a {
+        color: #ccff1a;
+      }
+    </style>
+  </head>
+  <body>
+    <p>rede. weiter zu <a href="de/">rede</a> …</p>
+    <script>
+      location.replace("de/");
+    </script>
+  </body>
+</html>

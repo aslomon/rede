@@ -5,8 +5,8 @@
 
 export const site = {
   name: "rede",
-  /** public URL once deployed (used for metadata / OG). */
-  url: "https://rede.app",
+  /** public URL once deployed (GitHub Pages project site, used for metadata / OG). */
+  url: "https://aslomon.github.io/rede",
   /** GitHub repository (source + releases). */
   github: "https://github.com/aslomon/rede",
   /** Latest release page — the download button links here until a fixed asset URL exists. */
