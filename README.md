@@ -43,9 +43,10 @@ Speak into any text field, get clean text back. Rewrite e-mails, prompts and mes
 
 ## 🌐 Website
 
-A bilingual (DE/EN) marketing + docs site lives in [`web/`](web/) — a Next.js 16 app mirroring the
-in-app design system (`DESIGN.md`). It covers the modes, the privacy story, screenshots, a download
-section and setup docs.
+**Live:** **[aslomon.github.io/rede](https://aslomon.github.io/rede/)** — a bilingual (DE/EN) marketing +
+docs site, source in [`web/`](web/) (Next.js 16, static export to GitHub Pages, mirroring the in-app
+design system `DESIGN.md`). It covers the modes, the privacy story, screenshots, a download section and
+setup docs, and is auto-deployed from `main` via [`.github/workflows/deploy-web.yml`](.github/workflows/deploy-web.yml).
 
 ```bash
 cd web && pnpm install && pnpm dev   # → http://localhost:3000
