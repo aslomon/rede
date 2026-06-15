@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+/* ================================================================== *
+ * rede — web design system v2 (mirrors BlitztextMac/DESIGN.md)
+ * Dark-first "voice-first / electric". Ink ground, Electric Violet
+ * ambient field, Acid Lime as the live signal. SF Rounded via ui-rounded.
+ * ================================================================== */
+
+@theme {
+  /* brand */
+  --color-ink: #0e0b1a;
+  --color-ink-2: #15102b;
+  --color-violet: #6e56f8;
+  --color-violet-soft: #8e7bff;
+  --color-lime: #ccff1a;
+  --color-cloud: #f4f2fb;
+
+  /* mode accents — one per workflow slot */
+  --color-mode-diktat: #4c8dff;
+  --color-mode-lokal: #34d399;
+  --color-mode-text: #a78bfa;
+  --color-mode-dampf: #ff9e57;
+  --color-mode-emoji: #38e0e0;
+
+  /* type — native SF Rounded for the Mac audience, graceful fallback */
+  --font-sans:
+    ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", -apple-system,
+    BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, monospace;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --panel: rgba(255, 255, 255, 0.025);
+  --hairline: rgba(255, 255, 255, 0.09);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+}
+
+* {
+  border-color: var(--hairline);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-cloud);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(
+      58rem 58rem at 8% -10%,
+      rgba(110, 86, 248, 0.26),
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 44rem at 96% 2%,
+      rgba(204, 255, 26, 0.06),
+      transparent 55%
+    ),
+    radial-gradient(
+      72rem 52rem at 50% 118%,
+      rgba(110, 86, 248, 0.14),
+      transparent 60%
+    );
+  background-attachment: fixed;
+}
+
+/* film grain for depth */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--color-lime);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-violet-soft);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ----------------------------- layout ----------------------------- */
+
+@utility shell {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding-inline: 1.25rem;
+}
+
+@utility section {
+  padding-block: clamp(4.5rem, 9vw, 7.5rem);
+}
+
+/* opaque lifted band to break the dark monotony between sections */
+@utility panel {
+  background: var(--panel);
+  border-block: 0.5px solid var(--hairline);
+}
+
+@utility hairline-t {
+  border-top: 0.5px solid var(--hairline);
+}
+
+/* --------------------------- type scale --------------------------- */
+
+@utility t-display {
+  font-weight: 700;
+  font-size: clamp(2.75rem, 7vw, 5.25rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+@utility t-h1 {
+  font-weight: 700;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+@utility t-h2 {
+  font-weight: 700;
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+@utility t-h3 {
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+@utility t-lead {
+  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-cloud) 60%, transparent);
+  text-wrap: pretty;
+}
+
+@utility t-body {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--color-cloud) 58%, transparent);
+  text-wrap: pretty;
+}
+
+@utility t-small {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-cloud) 50%, transparent);
+}
+
+@utility t-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-violet-soft);
+}
+
+@utility t-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+/* --------------------------- surfaces ----------------------------- */
+
+@utility glass {
+  background: var(--surface);
+  border: 0.5px solid var(--hairline);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+}
+
+@utility glass-strong {
+  background: var(--surface-2);
+  border: 0.5px solid var(--hairline-strong);
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+}
+
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: var(--surface);
+  border: 0.5px solid var(--hairline);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+@utility signal {
+  color: var(--color-lime);
+}
+
+@utility text-electric {
+  background: linear-gradient(
+    180deg,
+    var(--color-cloud) 0%,
+    var(--color-violet-soft) 135%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility brand-dot {
+  color: var(--color-lime);
+}
+
+/* --------------------------- animation ---------------------------- */
+
+@keyframes rede-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rede-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes rede-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes rede-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.rede-rise {
+  opacity: 0;
+  animation: rede-rise 0.7s var(--ease-out-soft) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .rede-rise {
+    animation: none;
+    opacity: 1;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

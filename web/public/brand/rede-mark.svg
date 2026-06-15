@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- rede mark (soft): violet speech bubble + tail carrying an acid-lime voice waveform.
+       The soft mist ground is the Icon Composer fill layer (see icon.json). -->
+  <rect x="100" y="230" width="824" height="470" rx="140" fill="#6E56F8"/>
+  <path d="M300 640 L520 640 L250 882 Z" fill="#6E56F8"/>
+  <path d="M344 465 q56 -100 112 0 t112 0 t112 0" fill="none" stroke="#CCFF1A" stroke-width="62" stroke-linecap="round"/>
+</svg>
