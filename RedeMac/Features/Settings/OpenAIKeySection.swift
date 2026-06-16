@@ -31,7 +31,7 @@ struct OpenAIKeySection: View {
       HStack(spacing: 8) {
         SectionLabel(text: "OpenAI API Key", icon: "key.fill")
         if showsStatusPill {
-          BlitzStatusPill(
+          RedeStatusPill(
             state: appState.hasOpenAIKey ? .online : .warning,
             label: appState.hasOpenAIKey ? "online bereit" : "OpenAI fehlt"
           )

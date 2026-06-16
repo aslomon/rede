@@ -20,13 +20,13 @@ struct ArchiveSettingsView: View {
   // MARK: - Archive
 
   /// Header pill mirrors the archive state at a glance: muted "aus", or the live entry count.
-  private var archivePill: BlitzStatusPill {
+  private var archivePill: RedeStatusPill {
     guard appState.isArchiveEnabled else {
-      return BlitzStatusPill(state: .muted, label: "aus")
+      return RedeStatusPill(state: .muted, label: "aus")
     }
     let count = appState.archiveStore.entries.count
-    if count == 0 { return BlitzStatusPill(state: .ready, label: "aktiv") }
-    return BlitzStatusPill(state: .ready, label: count == 1 ? "1 eintrag" : "\(count) einträge")
+    if count == 0 { return RedeStatusPill(state: .ready, label: "aktiv") }
+    return RedeStatusPill(state: .ready, label: count == 1 ? "1 eintrag" : "\(count) einträge")
   }
 
   private var archiveSection: some View {

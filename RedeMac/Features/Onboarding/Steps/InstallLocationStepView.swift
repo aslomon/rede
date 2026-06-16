@@ -16,7 +16,7 @@ struct InstallLocationStepView: View {
       OnboardingCard(accent: isInApplications ? nil : .orange) {
         VStack(alignment: .leading, spacing: 10) {
           HStack(spacing: 8) {
-            BlitzStatusPill(
+            RedeStatusPill(
               state: isInApplications ? .ready : .warning,
               label: isInApplications ? "sitzt" : "verschieben"
             )
@@ -62,7 +62,7 @@ struct InstallLocationStepView: View {
       if !RedeInstallLocationService.otherInstalledBundleURLs.isEmpty {
         OnboardingCard(accent: .orange) {
           VStack(alignment: .leading, spacing: 8) {
-            BlitzStatusPill(state: .warning, label: "mehrere kopien")
+            RedeStatusPill(state: .warning, label: "mehrere kopien")
             Text("weitere rede-kopien können doppelte login-items auslösen.")
               .font(.system(size: 11))
               .foregroundStyle(.secondary)

@@ -2,7 +2,7 @@ import Foundation
 
 /// Pure, on-device, deterministic fuzzy correction of the user's KNOWN terms (confirmed Memory
 /// terms + Eigennamen). It snaps a CLEAR near-miss spelling Whisper produced — e.g. "Rinert" →
-/// "Rinnert", "Blitztex" → "rede" — to the canonical term, preserving the term's casing.
+/// "Rinnert", "Kubernets" → the canonical term — to the canonical term, preserving the term's casing.
 ///
 /// CONSERVATIVE BY DESIGN. A false positive corrupts the user's text, so the bias is firmly toward
 /// NOT correcting. The matcher only fires when a word (or 2-word span) is an unambiguous near-miss
@@ -118,7 +118,7 @@ enum FuzzyTermCorrector {
 
   // MARK: - Matching
 
-  /// Tries a 2-word span first (names can be split, e.g. "Blitz Text"), then the single word.
+  /// Tries a 2-word span first (names can be split, e.g. "Kuber netes"), then the single word.
   /// Emits the canonical term in place of the matched core(s) and returns how many tokens were
   /// consumed; on no match emits the token verbatim and consumes one.
   private static func appendCorrection(

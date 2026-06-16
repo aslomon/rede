@@ -96,7 +96,7 @@ struct ModelsSettingsView: View {
       action: appState.isDownloadingLocalModel
         ? nil : (label: "prüfen", perform: { transcriptionRecheckToken += 1 }),
       trailing: {
-        BlitzStatusPill(
+        RedeStatusPill(
           state: installedWhisperModels.isEmpty ? .download : .local,
           label: installedWhisperModels.isEmpty ? "Whisper laden" : "Whisper lokal"
         )
@@ -238,15 +238,15 @@ struct ModelsSettingsView: View {
     }
   }
 
-  private var llmStatusPill: BlitzStatusPill {
+  private var llmStatusPill: RedeStatusPill {
     let manager = appState.localModelManager
     let selection = appState.appSettings.selectedLocalLLM
     if selection.isConfigured, manager.installedLlamaCppModel(for: selection.modelID) != nil {
-      return BlitzStatusPill(state: .ready, label: "gewählt")
+      return RedeStatusPill(state: .ready, label: "gewählt")
     }
     if manager.llamaCppInstalled.isEmpty {
-      return BlitzStatusPill(state: .download, label: "laden")
+      return RedeStatusPill(state: .download, label: "laden")
     }
-    return BlitzStatusPill(state: .warning, label: "auswählen")
+    return RedeStatusPill(state: .warning, label: "auswählen")
   }
 }

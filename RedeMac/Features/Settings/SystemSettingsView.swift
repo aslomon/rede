@@ -68,7 +68,7 @@ struct SystemSettingsView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
         SectionLabel(text: "installation & start", icon: "arrow.down.app")
-        BlitzStatusPill(
+        RedeStatusPill(
           state: currentInstallLocation == .applications ? .ready : .warning,
           label: currentInstallLocation == .applications ? "sitzt" : "prüfen"
         )
@@ -207,7 +207,7 @@ struct SystemSettingsView: View {
         if let hint = UpdateService.updateHintText(
           forVersion: appState.updateService.availableUpdateVersion)
         {
-          BlitzStatusPill(state: .download, label: hint)
+          RedeStatusPill(state: .download, label: hint)
         }
       }
 

@@ -277,7 +277,7 @@ struct LocalModelsView: View {
             Text(model.displayName)
               .font(.system(size: 12.5, weight: .semibold))
             if isRecommended(model) {
-              BlitzStatusPill(state: .download, label: "empfohlen")
+              RedeStatusPill(state: .download, label: "empfohlen")
             }
           }
           Text(model.blurb)

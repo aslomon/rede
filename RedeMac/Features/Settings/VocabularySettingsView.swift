@@ -211,7 +211,7 @@ struct VocabularySettingsView: View {
           .toggleStyle(.switch)
           .controlSize(.small)
         Spacer()
-        BlitzStatusPill(state: memoryPillState, label: appState.unifiedMemoryStatusLabel)
+        RedeStatusPill(state: memoryPillState, label: appState.unifiedMemoryStatusLabel)
       }
 
       if appState.isUnifiedMemoryEnabled {
@@ -272,7 +272,7 @@ struct VocabularySettingsView: View {
       HStack(spacing: 8) {
         Text("E-Mail-Memory")
           .font(.system(size: 11.5, weight: .semibold))
-        BlitzStatusPill(state: emailMemoryPillState, label: appState.semanticEmailMemoryStatusLabel)
+        RedeStatusPill(state: emailMemoryPillState, label: appState.semanticEmailMemoryStatusLabel)
         Spacer(minLength: 0)
       }
 
@@ -314,14 +314,14 @@ struct VocabularySettingsView: View {
     }
   }
 
-  private var emailMemoryPillState: BlitzStatusPill.State {
+  private var emailMemoryPillState: RedeStatusPill.State {
     if !appState.appSettings.semanticEmailMemoryEnabled { return .muted }
     if appState.semanticEmailMemoryIsReady { return .ready }
     if appState.semanticEmailEmbeddingIsPreparing { return .download }
     return .warning
   }
 
-  private var memoryPillState: BlitzStatusPill.State {
+  private var memoryPillState: RedeStatusPill.State {
     if !appState.isUnifiedMemoryEnabled { return .muted }
     if appState.semanticEmailEmbeddingIsPreparing { return .download }
     if appState.appSettings.semanticEmailMemoryEnabled, !appState.semanticEmailEmbeddingIsReady {

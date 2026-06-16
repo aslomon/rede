@@ -17,7 +17,7 @@ struct AccessibilityPermissionSection: View {
     VStack(alignment: .leading, spacing: 8) {
       SectionLabel(text: "bedienungshilfen", icon: "accessibility")
 
-      BlitzStatusPill(state: isGranted ? .ready : .warning, label: isGranted ? "erkannt" : "fehlt")
+      RedeStatusPill(state: isGranted ? .ready : .warning, label: isGranted ? "erkannt" : "fehlt")
 
       HStack(alignment: .top, spacing: 8) {
         VStack(alignment: .leading, spacing: 3) {

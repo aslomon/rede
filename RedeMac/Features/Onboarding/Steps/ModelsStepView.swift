@@ -44,7 +44,7 @@ struct ModelsStepView: View {
 
         // Download-in-progress status pill above controls (change 10)
         if appState.isDownloadingLocalModel {
-          BlitzStatusPill(state: .download, label: "download läuft — bitte warten")
+          RedeStatusPill(state: .download, label: "download läuft — bitte warten")
         }
 
         stateRow
@@ -66,7 +66,7 @@ struct ModelsStepView: View {
         HStack(spacing: 6) {
           SectionLabel(text: "online-modelle", icon: "key.fill")
           Spacer()
-          BlitzStatusPill(
+          RedeStatusPill(
             state: appState.hasOpenAIKey ? .online : .warning,
             label: appState.hasOpenAIKey ? "OpenAI bereit" : "OpenAI fehlt"
           )

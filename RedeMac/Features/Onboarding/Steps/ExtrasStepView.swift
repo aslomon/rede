@@ -98,7 +98,7 @@ struct ExtrasStepView: View {
         HStack(spacing: 8) {
           SectionLabel(text: "archiv & memory", icon: "brain")
           if appState.isUnifiedMemoryEnabled {
-            BlitzStatusPill(state: .local, label: "lokal aktiv")
+            RedeStatusPill(state: .local, label: "lokal aktiv")
           }
           Spacer()
           Toggle("archiv und memory aktivieren", isOn: $appState.isUnifiedMemoryEnabled)

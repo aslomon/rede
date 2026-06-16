@@ -518,7 +518,7 @@ private struct AppFooter: View {
   var body: some View {
     HStack(spacing: 8) {
       if appState.isConfigured {
-        BlitzStatusPill(state: .ready, label: "läuft")
+        RedeStatusPill(state: .ready, label: "läuft")
       }
 
       Spacer()

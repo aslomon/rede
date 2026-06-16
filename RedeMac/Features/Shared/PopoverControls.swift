@@ -141,7 +141,7 @@ struct PopoverIconButtonStyle: ButtonStyle {
   }
 }
 
-struct BlitzStatusPill: View {
+struct RedeStatusPill: View {
   enum State {
     case ready
     case warning

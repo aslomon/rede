@@ -57,7 +57,7 @@ struct ModesStepView: View {
             .accessibilityHidden(true)
           SectionLabel(text: title)
           Spacer()
-          BlitzStatusPill(state: .ready, label: "preset")
+          RedeStatusPill(state: .ready, label: "preset")
         }
 
         Text(helpText)
@@ -111,7 +111,7 @@ struct ModesStepView: View {
             .accessibilityHidden(true)
           SectionLabel(text: "Social")
           Spacer()
-          BlitzStatusPill(state: .ready, label: "preset")
+          RedeStatusPill(state: .ready, label: "preset")
         }
 
         Text("wie viele emojis soll der Social-Modus einstreuen?")

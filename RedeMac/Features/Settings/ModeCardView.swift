@@ -126,15 +126,15 @@ struct ModeCardView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
         if isRewriteMode && !canEditMode {
-          BlitzStatusPill(state: .warning, label: "modell fehlt")
+          RedeStatusPill(state: .warning, label: "modell fehlt")
         } else if isRewriteMode {
-          BlitzStatusPill(
+          RedeStatusPill(
             state: backendPillState, label: effectiveBackend == .local ? "lokal" : "online")
         } else {
-          BlitzStatusPill(state: .online, label: "freitext")
+          RedeStatusPill(state: .online, label: "freitext")
         }
         if isAdvancedNonDefault {
-          BlitzStatusPill(state: .warning, label: "angepasst")
+          RedeStatusPill(state: .warning, label: "angepasst")
         }
         Spacer(minLength: 0)
       }
@@ -148,7 +148,7 @@ struct ModeCardView: View {
     }
   }
 
-  private var backendPillState: BlitzStatusPill.State {
+  private var backendPillState: RedeStatusPill.State {
     effectiveBackend == .local ? .local : .online
   }
 
@@ -412,7 +412,7 @@ struct ModeCardView: View {
         .foregroundStyle(.secondary)
 
       HStack(spacing: 6) {
-        BlitzStatusPill(state: isLocalProcessing ? .local : .online, label: isLocalProcessing ? "lokal" : "online")
+        RedeStatusPill(state: isLocalProcessing ? .local : .online, label: isLocalProcessing ? "lokal" : "online")
         Text(isLocalProcessing ? "global: Whisper + llama.cpp" : "global: OpenAI Whisper + OpenAI-Modell")
           .font(.system(size: 10.5))
           .foregroundStyle(.secondary)
@@ -445,7 +445,7 @@ struct ModeCardView: View {
           Button {
             appState.loadAvailableModels()
           } label: {
-            BlitzStatusPill(
+            RedeStatusPill(
               state: .warning, label: appState.isLoadingModels ? "lädt …" : "modelle laden")
           }
           .buttonStyle(.plain)

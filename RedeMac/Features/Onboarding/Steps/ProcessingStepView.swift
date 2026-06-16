@@ -49,7 +49,7 @@ struct ProcessingStepView: View {
     selected: Bool,
     icon: String,
     accent: Color,
-    pillState: BlitzStatusPill.State,
+    pillState: RedeStatusPill.State,
     title: String,
     detail: String,
     action: @escaping () -> Void
@@ -70,7 +70,7 @@ struct ProcessingStepView: View {
               .font(.system(size: 12.5, weight: .semibold))
               .foregroundStyle(.primary)
             if selected {
-              BlitzStatusPill(state: pillState, label: "gewählt")
+              RedeStatusPill(state: pillState, label: "gewählt")
             }
           }
           Text(detail)
