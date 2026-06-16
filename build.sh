@@ -323,10 +323,10 @@ ensure_xcodebuild_available() {
 }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$SCRIPT_DIR/BlitztextMac"
-PROJECT_FILE="$PROJECT_DIR/BlitztextMac.xcodeproj"
-DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-blitztextmac-build"
-ENTITLEMENTS_PATH="$PROJECT_DIR/Resources/BlitztextMac.entitlements"
+PROJECT_DIR="$SCRIPT_DIR/RedeMac"
+PROJECT_FILE="$PROJECT_DIR/RedeMac.xcodeproj"
+DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-redemac-build"
+ENTITLEMENTS_PATH="$PROJECT_DIR/Resources/RedeMac.entitlements"
 cd "$PROJECT_DIR"
 
 preflight_llamacpp_helper_requirement
@@ -353,8 +353,8 @@ echo "🔨 Baue rede ..."
 # merged binary (as Release already is) keeps `--debug` builds launchable outside Xcode. No-op for
 # Release. Does NOT affect Xcode's own interactive builds/previews (this only constrains build.sh).
 xcodebuild \
-    -project BlitztextMac.xcodeproj \
-    -scheme BlitztextMac \
+    -project RedeMac.xcodeproj \
+    -scheme RedeMac \
     -destination 'platform=macOS' \
     -configuration "$BUILD_CONFIGURATION" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
