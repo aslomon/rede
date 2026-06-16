@@ -1,6 +1,7 @@
-> **Herkunft:** Dieses Repository ist der eigenstaendige Spin-off "rede" des Open-Source-Projekts
-> Blitztext (MIT, (c) Blitztext contributors). Interne Typ-/Verzeichnisnamen behalten bewusst das
-> Blitztext-Praefix, damit Upstream-Merges guenstig bleiben. Nutzersichtbares Branding ist "rede".
+> **About:** rede is a standalone, local-first macOS menu-bar app (dictation, transcription,
+> local-AI rewrite). It began as a fork but has since been heavily rewritten and renamed — the
+> codebase no longer carries any legacy prefix. Origin & MIT license attribution live in
+> `README.md` and `LICENSE`.
 
 # CLAUDE.md
 
@@ -8,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Blitztext is a **native macOS menu bar app** (Swift 5.10, SwiftUI + AppKit), not a web app. It is a local-first dictation, transcription, rewrite, and local-AI workflow tool. There is no hosted backend, account system, sync layer, or telemetry. Do not apply Next.js/Supabase/web conventions here.
+rede is a **native macOS menu bar app** (Swift 5.10, SwiftUI + AppKit), not a web app. It is a local-first dictation, transcription, rewrite, and local-AI workflow tool. There is no hosted backend, account system, sync layer, or telemetry. Do not apply Next.js/Supabase/web conventions here.
 
 `agent.md` is the detailed contributor guide (style, privacy rules, common change patterns, hazards) and `DESIGN.md` is the mandatory design system. **Read `agent.md` before changing logic and `DESIGN.md` before any UI work.** This file is the quick orientation; those two are the source of truth. `AGENTS.md` is a shorter quick-reference covering the same ground (structure, build commands, style, commit/PR conventions) — keep it consistent with `agent.md` when either changes.
 
@@ -25,22 +26,22 @@ All scripts are non-interactive. Requires full Xcode 16+ and [XcodeGen](https://
 
 Key facts:
 
-- **The Xcode project is generated from `BlitztextMac/project.yml`.** `build.sh`/`test.sh` run `xcodegen generate` first. Manual `.xcodeproj` edits are NOT durable — change `project.yml` instead. After adding/moving Swift files, the generator must re-include them (sources are folder-based: `App`, `Features`, `Services`, `Views`, `Resources`, `Tests`).
+- **The Xcode project is generated from `RedeMac/project.yml`.** `build.sh`/`test.sh` run `xcodegen generate` first. Manual `.xcodeproj` edits are NOT durable — change `project.yml` instead. After adding/moving Swift files, the generator must re-include them (sources are folder-based: `App`, `Features`, `Services`, `Views`, `Resources`, `Tests`).
 - `build.sh` produces a **universal binary** (`arm64 x86_64`) via `clean build` and verifies it with `lipo`.
 - `test.sh` pins tests to **arm64 only** (`ARCHS=arm64`) because WhisperKit/ArgmaxOSS ships an arm64-only test-time binary. Don't remove this pin.
-- Signing: `build.sh` uses a stable local identity ("Blitztext Local Dev") if installed via `scripts/create-dev-cert.sh`, else falls back to ad-hoc. Stable signing keeps the CDHash constant so Accessibility (TCC) grants survive rebuilds.
+- Signing: `build.sh` uses a stable local identity ("rede Local Dev") if installed via `scripts/create-dev-cert.sh`, else falls back to ad-hoc. Stable signing keeps the CDHash constant so Accessibility (TCC) grants survive rebuilds.
 
 ### Running a single test
 
 `test.sh` runs everything. To run one test class or method, invoke `xcodebuild` directly with `-only-testing` (regenerate the project first if files changed):
 
 ```bash
-cd BlitztextMac && xcodegen generate
+cd RedeMac && xcodegen generate
 xcodebuild test \
-  -project BlitztextMac.xcodeproj -scheme BlitztextMac -configuration Debug \
+  -project RedeMac.xcodeproj -scheme RedeMac -configuration Debug \
   -destination 'platform=macOS,arch=arm64' ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
   -derivedDataPath ../.derivedData-tests \
-  -only-testing:BlitztextMacTests/ModeConfigDefaultsTests
+  -only-testing:RedeMacTests/ModeConfigDefaultsTests
 # append /testMethodName to target a single method
 ```
 
@@ -54,7 +55,7 @@ Layering is **App → Features → Services**, enforced by convention (see `agen
 - **`Features/`** — SwiftUI surfaces: `Workflows/`, `MenuBar/`, `Onboarding/`, `Settings/`, `Shared/`. Business rules must not live inside SwiftUI body builders.
 - **`Services/`** — reusable domain behavior: recording, transcription, rewrite providers, hotkeys, storage, permissions, context capture, memory.
 - **`Views/`** — reusable visual components (waveform, pill).
-- **`Tests/`** — XCTest target `BlitztextMacTests`, focused on pure logic, Codable defaults/migrations, prompts, and decision helpers.
+- **`Tests/`** — XCTest target `RedeMacTests`, focused on pure logic, Codable defaults/migrations, prompts, and decision helpers.
 
 ### Workflow model (load-bearing invariant)
 
@@ -79,7 +80,7 @@ These come from `agent.md`/`DESIGN.md` — the highest-leverage ones to internal
 
 - **Privacy honesty**: never claim a workflow is local/offline unless the code proves no audio/text leaves the Mac. Keep OpenAI calls direct (no hidden proxy/telemetry). Keep local llama.cpp traffic on `localhost`. Use `URLSessionConfiguration.ephemeral`. Delete temp audio after processing/cancellation. Preserve copy-only fallback when auto-paste fails.
 - **Codable backward compatibility**: new persisted settings need safe missing-key defaults plus round-trip + missing-key tests, so old settings files still decode.
-- **No App Sandbox**: the app runs unsandboxed; entitlements live in `Resources/BlitztextMac.entitlements` (audio input + network client only). Do not broaden entitlements casually.
+- **No App Sandbox**: the app runs unsandboxed; entitlements live in `Resources/RedeMac.entitlements` (audio input + network client only). Do not broaden entitlements casually.
 - **UI**: in-app text is German (informal, concise); code/comments/commits/docs are English. Menu bar popover is 410 pt wide. Reuse existing styles (`PopoverActionButtonStyle`, `SectionLabel`, `BlitzStatusPill`, `MenuBarTokens`, …) and preserve mode accent colors. Don't add brand colors/gradients without updating `DESIGN.md`.
 - **TCC fragility**: rebuilding/re-signing can break Accessibility permission. Preserve the stable local-signing behavior in `build.sh`.
 - Use `Logger` from `os` for diagnostics — no `print` in production code. Surface user-facing errors as concise German `LocalizedError` messages.

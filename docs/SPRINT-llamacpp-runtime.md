@@ -14,7 +14,7 @@ Reasons:
 - A helper process avoids Swift/C++ ABI risk and in-process memory lifecycle complexity.
 - `llama-server` exposes OpenAI-compatible endpoints, matching the current provider shape.
 - Packaging a replaceable helper is easier to pin, sign, test, and upgrade than embedding a static library first.
-- Ollama can remain as a fallback runtime while Blitztext-local llama.cpp becomes the default path.
+- Ollama can remain as a fallback runtime while rede-local llama.cpp becomes the default path.
 
 Do not start with MLX or direct `libllama` bindings. MLX can become a later Apple-Silicon optimization path; direct bindings can be reconsidered after the process-based runtime proves product value.
 
@@ -31,34 +31,34 @@ Primary references:
 
 ### Stable Extension Points
 
-- `BlitztextMac/Services/Providers/RewriteProvider.swift`
+- `RedeMac/Services/Providers/RewriteProvider.swift`
   - Keep `RewriteProvider`.
   - Keep `RewriteOutcome`.
   - Add `LlamaCppRewriteProvider`.
-- `BlitztextMac/App/AppState.swift`
+- `RedeMac/App/AppState.swift`
   - Current routing point: `rewriteProvider(for:)`.
   - Current readiness gate: `rewriteBackendReady(for:)`.
-- `BlitztextMac/Features/Workflows/*Workflow.swift`
+- `RedeMac/Features/Workflows/*Workflow.swift`
   - Workflows already accept `any RewriteProvider`.
   - No rewrite workflow rewrite should be required.
-- `BlitztextMac/Services/LLMService.swift`
+- `RedeMac/Services/LLMService.swift`
   - Prompt-building remains provider-neutral.
 
 ### Ollama-Specific Areas To Abstract
 
-- `BlitztextMac/Services/LocalModelManager.swift`
+- `RedeMac/Services/LocalModelManager.swift`
   - Currently an Ollama manager despite generic name.
-- `BlitztextMac/Services/OllamaService.swift`
+- `RedeMac/Services/OllamaService.swift`
   - Tags, pull, delete, installed models.
-- `BlitztextMac/Services/OllamaInstallerService.swift`
+- `RedeMac/Services/OllamaInstallerService.swift`
   - External Ollama installation/start.
-- `BlitztextMac/Services/OllamaModelCatalog.swift`
+- `RedeMac/Services/OllamaModelCatalog.swift`
   - Ollama tags, not GGUF URLs.
-- `BlitztextMac/Services/SystemCapabilities.swift`
+- `RedeMac/Services/SystemCapabilities.swift`
   - Recommendations currently tied to `OllamaModelCatalog.Model`.
-- `BlitztextMac/Features/Workflows/WorkflowProtocol.swift`
+- `RedeMac/Features/Workflows/WorkflowProtocol.swift`
   - `AppSettings.selectedLocalLLMModelName` stores only an Ollama tag.
-- `BlitztextMac/Features/Workflows/ModeConfig.swift`
+- `RedeMac/Features/Workflows/ModeConfig.swift`
   - `RewriteBackend.local` exists, but no local runtime choice.
 - UI:
   - `LocalModelsView.swift`
@@ -80,10 +80,10 @@ Primary references:
 
 Ownership:
 
-- `BlitztextMac/Services/LocalLLMRuntime.swift`
-- `BlitztextMac/Features/Workflows/WorkflowProtocol.swift`
-- `BlitztextMac/Tests/LocalLLMRuntimeTests.swift`
-- `BlitztextMac/Tests/AppSettingsCodableTests.swift`
+- `RedeMac/Services/LocalLLMRuntime.swift`
+- `RedeMac/Features/Workflows/WorkflowProtocol.swift`
+- `RedeMac/Tests/LocalLLMRuntimeTests.swift`
+- `RedeMac/Tests/AppSettingsCodableTests.swift`
 
 Responsibilities:
 
@@ -95,11 +95,11 @@ Responsibilities:
 
 Ownership:
 
-- `BlitztextMac/Services/LocalModelManager.swift`
-- `BlitztextMac/Services/OllamaService.swift`
-- `BlitztextMac/Services/OllamaModelCatalog.swift`
-- `BlitztextMac/Tests/LocalModelStateTests.swift`
-- `BlitztextMac/Tests/OllamaModelManagementTests.swift`
+- `RedeMac/Services/LocalModelManager.swift`
+- `RedeMac/Services/OllamaService.swift`
+- `RedeMac/Services/OllamaModelCatalog.swift`
+- `RedeMac/Tests/LocalModelStateTests.swift`
+- `RedeMac/Tests/OllamaModelManagementTests.swift`
 
 Responsibilities:
 
@@ -111,10 +111,10 @@ Responsibilities:
 
 Ownership:
 
-- `BlitztextMac/Services/LlamaCppRuntimeService.swift`
-- `BlitztextMac/Services/LlamaCppServerClient.swift`
-- `BlitztextMac/Tests/LlamaCppRuntimeTests.swift`
-- `BlitztextMac/Tests/LlamaCppServerClientTests.swift`
+- `RedeMac/Services/LlamaCppRuntimeService.swift`
+- `RedeMac/Services/LlamaCppServerClient.swift`
+- `RedeMac/Tests/LlamaCppRuntimeTests.swift`
+- `RedeMac/Tests/LlamaCppServerClientTests.swift`
 
 Responsibilities:
 
@@ -128,12 +128,12 @@ Responsibilities:
 
 Ownership:
 
-- `BlitztextMac/Services/LlamaCppModelCatalog.swift`
-- `BlitztextMac/Services/LlamaCppModelStore.swift`
-- `BlitztextMac/Services/LlamaCppDownloadService.swift`
-- `BlitztextMac/Services/AppSupportPaths.swift`
-- `BlitztextMac/Tests/LlamaCppModelManagementTests.swift`
-- `BlitztextMac/Tests/LlamaCppDownloadServiceTests.swift`
+- `RedeMac/Services/LlamaCppModelCatalog.swift`
+- `RedeMac/Services/LlamaCppModelStore.swift`
+- `RedeMac/Services/LlamaCppDownloadService.swift`
+- `RedeMac/Services/AppSupportPaths.swift`
+- `RedeMac/Tests/LlamaCppModelManagementTests.swift`
+- `RedeMac/Tests/LlamaCppDownloadServiceTests.swift`
 
 Responsibilities:
 
@@ -146,11 +146,11 @@ Responsibilities:
 
 Ownership:
 
-- `BlitztextMac/Services/Providers/RewriteProvider.swift`
-- `BlitztextMac/App/AppState.swift`
-- `BlitztextMac/Tests/LlamaCppRewriteProviderTests.swift`
-- `BlitztextMac/Tests/RewriteBackendDecodeTests.swift`
-- `BlitztextMac/Tests/ArchiveReuseTests.swift`
+- `RedeMac/Services/Providers/RewriteProvider.swift`
+- `RedeMac/App/AppState.swift`
+- `RedeMac/Tests/LlamaCppRewriteProviderTests.swift`
+- `RedeMac/Tests/RewriteBackendDecodeTests.swift`
+- `RedeMac/Tests/ArchiveReuseTests.swift`
 
 Responsibilities:
 
@@ -163,12 +163,12 @@ Responsibilities:
 
 Ownership:
 
-- `BlitztextMac/Features/Settings/LocalModelsView.swift`
-- `BlitztextMac/Features/Settings/LocalModelRowView.swift`
-- `BlitztextMac/Features/Settings/LocalLLMModelPicker.swift`
-- `BlitztextMac/Features/Settings/ModelsSettingsView.swift`
-- `BlitztextMac/Features/Onboarding/Steps/ModelsStepView.swift`
-- `BlitztextMac/Features/Settings/ModeCardView.swift`
+- `RedeMac/Features/Settings/LocalModelsView.swift`
+- `RedeMac/Features/Settings/LocalModelRowView.swift`
+- `RedeMac/Features/Settings/LocalLLMModelPicker.swift`
+- `RedeMac/Features/Settings/ModelsSettingsView.swift`
+- `RedeMac/Features/Onboarding/Steps/ModelsStepView.swift`
+- `RedeMac/Features/Settings/ModeCardView.swift`
 - `DESIGN.md`
 
 Responsibilities:
@@ -183,9 +183,9 @@ Responsibilities:
 Ownership:
 
 - `build.sh`
-- `BlitztextMac/project.yml`
+- `RedeMac/project.yml`
 - `scripts/`
-- `BlitztextMac/Resources/BlitztextMac.entitlements`
+- `RedeMac/Resources/RedeMac.entitlements`
 
 Responsibilities:
 
@@ -440,7 +440,7 @@ Code-review gate:
 
 ### Sprint 5: GGUF Model Store, Catalog, And Download
 
-Goal: let Blitztext manage llama.cpp GGUF models without Ollama.
+Goal: let rede manage llama.cpp GGUF models without Ollama.
 
 Tasks:
 
@@ -511,7 +511,7 @@ Code-review gate:
 
 ### Sprint 6: Runtime-Neutral Local Model UI
 
-Goal: present local LLMs as a Blitztext feature, not an Ollama feature.
+Goal: present local LLMs as a rede feature, not an Ollama feature.
 
 Tasks:
 
@@ -522,7 +522,7 @@ Tasks:
 - Update onboarding `ModelsStepView`.
 - Update `ModeCardView` local copy.
 - Add runtime filter/toggle:
-  - Blitztext lokal (llama.cpp)
+  - rede lokal (llama.cpp)
   - Ollama fallback
 - Show runtime-specific actions:
   - llama.cpp: download model, start local runtime, loading, ready
@@ -558,7 +558,7 @@ Code-review gate:
 
 ### Sprint 7: Packaging And Helper Bundling
 
-Goal: ship `llama-server` inside Blitztext builds.
+Goal: ship `llama-server` inside rede builds.
 
 Tasks:
 
@@ -594,11 +594,11 @@ Tests / commands:
 ```bash
 ./test.sh
 ./build.sh --release --with-llamacpp
-test -x Blitztext.app/Contents/MacOS/llama-server
-codesign --verify --deep --strict --verbose=2 Blitztext.app
-codesign --verify --strict --verbose=2 Blitztext.app/Contents/MacOS/llama-server
-lipo -archs Blitztext.app/Contents/MacOS/Blitztext
-lipo -archs Blitztext.app/Contents/MacOS/llama-server
+test -x rede.app/Contents/MacOS/llama-server
+codesign --verify --deep --strict --verbose=2 rede.app
+codesign --verify --strict --verbose=2 rede.app/Contents/MacOS/llama-server
+lipo -archs rede.app/Contents/MacOS/rede
+lipo -archs rede.app/Contents/MacOS/llama-server
 ```
 
 Acceptance criteria:
@@ -623,8 +623,8 @@ Tasks:
 
 - Add optional `LlamaCppIntegrationTests`.
 - Use env vars:
-  - `BLITZTEXT_LLAMA_SERVER`
-  - `BLITZTEXT_TEST_GGUF`
+  - `REDE_LLAMA_SERVER`
+  - `REDE_TEST_GGUF`
 - Skip integration tests if env vars absent.
 - Add manual QA checklist.
 - Add runtime self-test:
@@ -834,7 +834,7 @@ Do not run all implementation agents at once. Use this sequence:
 
 ## Current Worktree State
 
-- Worktree: `/Users/jasonrinnert/blitztext-app-llamacpp`
+- Worktree: `/Users/jasonrinnert/rede-llamacpp`
 - Branch: `codex/llamacpp-runtime`
 - Existing planning docs:
   - `docs/PLAN-llamacpp-runtime.md`

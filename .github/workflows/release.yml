@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 env:
-  SPARKLE_VERSION: "2.9.3" # keep in sync with BlitztextMac/project.yml
+  SPARKLE_VERSION: "2.9.3" # keep in sync with RedeMac/project.yml
 
 jobs:
   release:

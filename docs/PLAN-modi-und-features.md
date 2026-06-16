@@ -1,4 +1,4 @@
-# Blitztext — Plan: Konfigurierbare Modi, Offline-LLM & Feature-Ausbau
+# rede — Plan: Konfigurierbare Modi, Offline-LLM & Feature-Ausbau
 
 > Status: **Entwurf / zur Entscheidung**. Erstellt am 2026-06-04 aus einem Multi-Agent-Design-Workflow
 > (7 geerdete Feature-Designs → Synthese → adversarisches Scope-Review). Alles baut **additiv** auf dem
@@ -10,8 +10,8 @@
 
 Geprüft an der Laufzeit:
 
-- ✅ OpenAI-Key im Keychain (`app.blitztext.preview.credentials`), Mikrofon **und** Bedienungshilfen erlaubt.
-- ❗️ **`secureLocalModeEnabled = true`** in `~/Library/Application Support/Blitztext/settings.json`.
+- ✅ OpenAI-Key im Keychain (`app.rede.preview.credentials`), Mikrofon **und** Bedienungshilfen erlaubt.
+- ❗️ **`secureLocalModeEnabled = true`** in `~/Library/Application Support/rede/settings.json`.
 
 In `AppState.isWorkflowAvailable` gilt:
 
@@ -165,7 +165,7 @@ Deckt den ausdrücklichen Offline-Wunsch (Qwen/Gemma-Klasse) ab.
 - `SelectionContextService.swift`: AX-Read (`kAXSelectedText` / Umfeld `kAXValue`+`kAXSelectedTextRange`, Char-Caps
   ~4000/~1500), nur im Speicher, **nie persistiert**; synchron in `startWorkflow` erfasst, überall mit
   `activePasteTarget` geleert. `ReplyContextMode` injiziert einen abgegrenzten Kontextblock in den System-Prompt —
-  **nur** für Blitztext+, Default `.off`, mit Privacy-Hinweis (markierter Text geht an OpenAI, außer offline).
+  **nur** für rede+, Default `.off`, mit Privacy-Hinweis (markierter Text geht an OpenAI, außer offline).
 
 ### Phase 3 — Privacy-Archiv + On-Device-Vokabular-Lernen (Backlog) · Aufwand **XL**
 
@@ -225,7 +225,7 @@ Die schwereren Opt-in-Datenfeatures zuletzt; default **AUS**, Daten nur mit expl
 3. **Umfang/Start** — nur Phase 1 jetzt, oder Phase 1 **und** 2 (Offline) zusammen?
 4. **Offline-Erzwingen** — soll `forceOfflineMode` (an) automatisch Apple FM fürs Umschreiben wählen, oder Backend
    pro Modus unabhängig und nur hart auf lokal cappen? (Empfehlung: hart cappen, FM auto-wählen wenn vorhanden.)
-5. **Reply-Kontext** — nur Blitztext+ zuerst, oder auch „Dampf ablassen" (ruhig auf wütende Mail antworten)?
+5. **Reply-Kontext** — nur rede+ zuerst, oder auch „Dampf ablassen" (ruhig auf wütende Mail antworten)?
 
 ---
 

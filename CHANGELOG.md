@@ -111,15 +111,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Auto-Install on Switch**: Selecting "Lokal · Sicher" now automatically installs the selected local model (Whisper + Ollama) if not yet installed
   - **Configurable Offline Setup**: Users can still configure OpenAI key (or vice versa) ahead of time despite dimming, for smooth mode switching
 - **Menu Bar Headers Redesign**: Complete visual overhaul across Main, Settings, and Workflow headers
-  - **Brand Identity**: Integrated Blitztext brand logo (BrandMark component) into Main and Settings headers for consistent visual anchor
-  - **Main Header**: Reorganized from multi-line to single clean row: `[Logo] Blitztext [Bereit Status] … [⚙]` with inline status pill (removed separate status line)
+  - **Brand Identity**: Integrated rede brand logo (BrandMark component) into Main and Settings headers for consistent visual anchor
+  - **Main Header**: Reorganized from multi-line to single clean row: `[Logo] rede [Bereit Status] … [⚙]` with inline status pill (removed separate status line)
   - **Settings Header**: New format: `[← Back] [Logo] Settings [Right Actions]` with brand mark for consistency
   - **Workflow Header**: Preserved existing mode-icon design; logo integration optional for future refinement
   - **Simplified Layout**: Removed header divider (no visual separation); transparent background using standard surface color
-- **Window Headers with BrandMark**: Added Blitztext brand logo (18pt BrandMark) to three window headers
+- **Window Headers with BrandMark**: Added rede brand logo (18pt BrandMark) to three window headers
   - **Transcription Archive Header**: Logo now displays before "Transkriptions-Archiv" title for visual consistency
   - **Local Models Header**: Logo now displays before "Lokale Modelle" title for visual consistency
-  - **Onboarding Header**: Logo now displays before "Blitztext einrichten" title for visual consistency
+  - **Onboarding Header**: Logo now displays before "rede einrichten" title for visual consistency
   - **BrandMark Accessibility**: Made BrandMark component public (module-level) for reuse across window headers (previously private to MenuBarView)
 - **Local Whisper Model Loading**: Enhanced user feedback during model initialization
   - **Model Loading State**: Added `localModelPreparing` flag to surface slow first-load initialization (ANE compilation on large models can take minutes)
@@ -129,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Paste Context Section**: Updated privacy disclosure text from "Lokal protokolliert (0600)" to "Lokal protokolliert (nur du)" for consistency
 - **Improvements List**: Removed clear button from bottom of improvements list (clutter reduction)
 - **Onboarding Wizard Layout Redesign**: Complete restructuring from horizontal top-header + content layout to left-rail + content design
-  - **Brand Rail (Left)**: New persistent left sidebar (196pt width) displaying Blitztext logo, full step list with icons, current step highlighting (accent color + background), completed steps marked with checkmark, and "Schritt X von Y" counter at bottom
+  - **Brand Rail (Left)**: New persistent left sidebar (196pt width) displaying rede logo, full step list with icons, current step highlighting (accent color + background), completed steps marked with checkmark, and "Schritt X von Y" counter at bottom
   - **Step List Visual Hierarchy**: Current step emphasizes name in semibold with accent color background; completed steps show green checkmark; upcoming steps appear faded; all steps navigable via click
   - **Content Area (Right)**: Removed top header entirely; content now full-width with consistent glass surface throughout; footer buttons remain at bottom
   - **Visual Cohesion**: Wizard now reads as one uniform surface rather than a page with separate header; unified glass backdrop across entire window
@@ -147,7 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **BrandMark Component**: New reusable SVG logo renderer for menu bar headers; loads Blitztext brand icon from bundled resource with template rendering for foreground tinting
+- **BrandMark Component**: New reusable SVG logo renderer for menu bar headers; loads rede brand icon from bundled resource with template rendering for foreground tinting
 - **LocalTranscriptionService Model Selection Helper**: New `selectionAfterDeleting()` static method to intelligently choose the next model after deletion, preserving current selection if still available or falling back to recommended/remaining models
 - **LocalTranscriptionService Model Deletion**: New `deleteModel()` method to safely remove installed Whisper models from disk and unload from in-memory pipeline
 - **Liquid Glass Design System (macOS 26+)**: Centralized Glass-effect component library with native `.glassEffect` support and intelligent fallbacks
@@ -190,7 +190,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **MenuBarStyle Glass Modifiers**: Eliminated duplicate `BlitztextSurface`, `PillGlassModifier`, and `CardGlassModifier` definitions by consolidating into unified LiquidGlass.swift module
+- **MenuBarStyle Glass Modifiers**: Eliminated duplicate `RedeSurface`, `PillGlassModifier`, and `CardGlassModifier` definitions by consolidating into unified LiquidGlass.swift module
 - **glassRowBackground Hover Behavior**: Disabled interactive morphing Liquid Glass hover effect (macOS 26+) in favor of calm, static accent tint on all macOS versions; interactive morphing was overly animated for dense utility lists and conflicted with nested glass in popovers
 - **Grammar Fix**: Corrected "1 Einträge" → "1 Eintrag" singular form in email semantic memory status label
 - **ModeCardView Advanced Controls Alignment**: Fixed DisclosureGroup wrapping that left-aligned wide controls but centered narrow ones; now all controls line up flush left via explicit leading VStack
@@ -261,7 +261,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **MenuBarStyle Glass Modifiers**: Consolidated duplicate `BlitztextSurface`, `PillGlassModifier`, and `CardGlassModifier` definitions into unified LiquidGlass.swift module to eliminate code duplication and simplify macOS version targeting
+- **MenuBarStyle Glass Modifiers**: Consolidated duplicate `RedeSurface`, `PillGlassModifier`, and `CardGlassModifier` definitions into unified LiquidGlass.swift module to eliminate code duplication and simplify macOS version targeting
 - **AppState Code Formatting**: Improved indentation consistency and multi-line parameter alignment across workflow instantiation and helper methods
 - **Accessibility Fallback Flow**: No longer just flashes red when accessibility permission is missing; now gracefully transitions to copy-only pill with guiding text
 - **Recording Pill Visibility**: Resolved NSHostingView sizing collapse where pill was invisible due to missing constraints
@@ -294,7 +294,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `requestPermissionPrompt()` & `openSystemSettings()`: Explicit user-driven grant request and system settings navigation
     - Transition detection: only fires `onChange` on actual `AXIsProcessTrusted()` state changes, not every poll cycle
   - **build.sh**: Stable local code-signing with optional ad-hoc fallback
-    - `resolve_codesign_identity()`: Detects "Blitztext Local Dev" identity and validates it can actually sign (covers key-access blockers)
+    - `resolve_codesign_identity()`: Detects "rede Local Dev" identity and validates it can actually sign (covers key-access blockers)
     - `sign_app_bundle()`: Dual-mode signing—stable mode (hardened runtime + entitlements, constant CDHash across rebuilds → TCC grants survive) vs. ad-hoc fallback
     - Guides users to optional `scripts/create-dev-cert.sh` for persistent TCC grant survival
   - **AppSettings.hadAccessibilityGrant**: New persistence flag to track if accessibility was ever observed; enables stale-grant UX hints
@@ -312,7 +312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SelectionContextService.swift**: Captures selection context (filename, window title, content type) for intelligent prompt adaptation
 - **ModeCardView.swift**: UI component for browsing and selecting rewriting modes with visual mode presentation; added Memory context toggle for rewrite modes
 - **DESIGN.md**: Comprehensive architecture and design documentation covering mode system, provider implementations, and UI patterns
-- **docs/PLAN-v2.md**: Implementation plan for Blitztext v2 with phased feature roadmap (stable signing, accessibility grants, local LLM, Prompts tab)
+- **docs/PLAN-v2.md**: Implementation plan for rede v2 with phased feature roadmap (stable signing, accessibility grants, local LLM, Prompts tab)
 - **docs/PLAN-modi-und-features.md**: Detailed planning document for the mode system infrastructure and feature implementation
 - **LLMError**: New error cases `modelUnavailable` and `localModelUnavailable` for better error handling and user feedback
 - **Recording Pill Overlay**: Floating top-center UI pill for visual recording feedback
@@ -336,7 +336,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AppState.swift**:
   - Added `localModelManager` property to back the standalone "Lokale Modelle" window
   - Added `.openLocalModelsWindow` notification name for communicating window open requests
-- **BlitztextMacApp.swift**:
+- **RedeMacApp.swift**:
   - Instantiated `localModelsWindowController` in AppDelegate to manage the model manager window
   - Added notification observer for `.openLocalModelsWindow` to show the model manager window and close popover
 - **ModeCardView.swift**:

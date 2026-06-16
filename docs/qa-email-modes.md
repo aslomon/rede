@@ -19,7 +19,7 @@ email memory, or the recording pill.
   a conflict warning.
 - Disable a shortcut. The mode remains usable from the menu, but the global shortcut no longer
   starts it.
-- Restart Blitztext and confirm shortcut labels and behavior survive settings reload.
+- Restart rede and confirm shortcut labels and behavior survive settings reload.
 
 ## Semantic Email Memory
 

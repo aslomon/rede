@@ -154,7 +154,7 @@ The build pulls one Swift Package automatically: [`argmax-oss-swift`](https://gi
 ## 🛠️ Build & run from source
 
 Requires full **Xcode 16+** and [**XcodeGen**](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
-The Xcode project is generated from `BlitztextMac/project.yml` — edit that, not the `.xcodeproj`.
+The Xcode project is generated from `RedeMac/project.yml` — edit that, not the `.xcodeproj`.
 
 ```bash
 git clone https://github.com/aslomon/rede.git
@@ -184,7 +184,7 @@ test dictation. Slower walkthrough: [docs/setup.md](docs/setup.md), [docs/local-
 Layered **App → Features → Services**, native Swift + SwiftUI + AppKit:
 
 ```text
-BlitztextMac/
+RedeMac/
   App/        Lifecycle, paste handling, menu-bar/pill/onboarding/local-models windows, AppState
   Features/   Workflows, menu-bar UI, onboarding, settings, local-model UI
   Services/   Recording, transcription (WhisperKit + OpenAI), the llama.cpp runtime/catalog/download/
@@ -195,7 +195,6 @@ docs/         Setup, privacy, local models, roadmap and planning notes
 web/          Bilingual marketing + docs website (Next.js, static-exported to GitHub Pages)
 ```
 
-> Internal type/folder names keep the `Blitztext` prefix on purpose, to keep upstream merges cheap.
 > The user-facing brand is **rede**.
 
 ---

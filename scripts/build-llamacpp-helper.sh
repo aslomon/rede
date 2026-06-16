@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Builds a pinned universal macOS llama.cpp `llama-server` helper for Blitztext packaging.
+# Builds a pinned universal macOS llama.cpp `llama-server` helper for rede packaging.
 # Default path uses official llama.cpp macOS release tarballs and combines arm64+x64 via lipo.
 # Generated files stay in .derivedData-llamacpp-helper/ and are not tracked.
 

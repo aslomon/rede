@@ -18,10 +18,10 @@
 
 ## Requirements Restatement
 
-- Blitztext should check for updates **automatically once per day** and on **manual request**.
+- rede should check for updates **automatically once per day** and on **manual request**.
 - The end state is a **full auto-installer**: download, verify, install, relaunch — Sparkle-class UX.
-- The update source is the fork **`aslomon/blitztext-app`** (not upstream `cmagnussen/blitztext-app`).
-- The fork stays alive and publicly visible under the Blitztext name — it is the feature base and
+- The update source is the fork **`aslomon/rede`** (not upstream `cmagnussen/blitztext-app`).
+- The fork stays alive and publicly visible under the rede name — it is the feature base and
   matters for another project of the owner. The public product is a **separate app named `rede`**
   (lowercase wordmark; the German word for speech): own repo, branding, and bundle identity,
   distributed directly and optionally via the **Mac App Store** later. Features land in the fork
@@ -33,24 +33,24 @@
 
 ## Current State (verified in repo)
 
-- Version lives in `BlitztextMac/project.yml` (`MARKETING_VERSION 1.5`, `CURRENT_PROJECT_VERSION 15`)
+- Version lives in `RedeMac/project.yml` (`MARKETING_VERSION 1.5`, `CURRENT_PROJECT_VERSION 15`)
   → `Info.plist` (`CFBundleShortVersionString` / `CFBundleVersion`). Not shown anywhere in the UI yet.
 - No releases exist yet on either remote; the app is built locally via `build.sh`.
-- Signing is local-stable ("Blitztext Local Dev" cert) or ad-hoc. No Developer ID, no notarization.
+- Signing is local-stable ("rede Local Dev" cert) or ad-hoc. No Developer ID, no notarization.
   `build.sh` documents that a notarized release needs Developer ID + the
   `com.apple.security.cs.disable-library-validation` entitlement on the bundled `llama-server` helper.
 - The app is **unsandboxed** (`com.apple.security.app-sandbox: false`) and a **menu bar accessory app**
   (`LSUIElement = true` in `Resources/Info.plist`).
-- `BlitztextInstallLocationService` already implements bundle replacement + relaunch primitives.
+- `redeInstallLocationService` already implements bundle replacement + relaunch primitives.
 - `LaunchAtLoginService` is the established pattern for small `@Observable @MainActor` system services.
 - Settings persist via `AppSettings` (Codable, `decodeIfPresent` migrations, tests in
   `AppSettingsCodableTests`).
 - Legal: **MIT license** permits redistribution, modification, and selling. **`TRADEMARKS.md` requires
   a published fork to use its own name, icon, and branding.** Public distribution must not carry the
-  Blitztext brand — hence the `rede` spin-off (Phase 5).
-- Identity-sensitive identifiers: bundle ID `app.blitztext.mac`, Keychain service
-  `app.blitztext.preview.credentials` (`KeychainService`), data dir `Application Support/Blitztext/`
-  (`AppSupportPaths`), product name `Blitztext`, dev cert CN "Blitztext Local Dev".
+  rede brand — hence the `rede` spin-off (Phase 5).
+- Identity-sensitive identifiers: bundle ID `app.rede.mac`, Keychain service
+  `app.rede.preview.credentials` (`KeychainService`), data dir `Application Support/rede/`
+  (`AppSupportPaths`), product name `rede`, dev cert CN "rede Local Dev".
 - Hotkeys use `NSEvent` global monitors (`flagsChanged`) plus a CGEventTap that rides Accessibility
   trust; paste synthesis uses the same trust. Relevant for the Mac App Store feasibility assessment.
 
@@ -63,7 +63,7 @@
 - **D2 — GitHub Releases on the fork are the source of truth.** Tag = version. Update zips are
   release assets. The `appcast.xml` is published via GitHub Pages from a dedicated branch
   (`gh-pages`) so it never creates merge noise against upstream:
-  `https://aslomon.github.io/blitztext-app/appcast.xml`.
+  `https://aslomon.github.io/rede/appcast.xml`.
 - **D3 — Sparkle is hidden behind an `UpdateService` abstraction** (pattern: `LaunchAtLoginService`)
   and compiled behind a `SPARKLE_ENABLED` Swift compilation condition. Reason: the Mac App Store
   forbids self-updating apps, so a future MAS target must compile Sparkle out entirely. Views and
@@ -77,11 +77,11 @@
   `docs/privacy.md`. `SUEnableSystemProfiling` is never set (no profile data leaves the Mac).
   `SUVerifyUpdateBeforeExtraction` = YES (strict verification before unarchiving).
 - **D6 — The public product is a spin-off app `rede`, not an in-place rebrand of the fork.**
-  The fork keeps the Blitztext name for development and personal builds; marketed binaries must not
-  use the Blitztext brand (`TRADEMARKS.md`). `rede` derives from the fork (the fork stays a git
+  The fork keeps the rede name for development and personal builds; marketed binaries must not
+  use the rede brand (`TRADEMARKS.md`). `rede` derives from the fork (the fork stays a git
   remote; branding lives in a thin layer so merges stay cheap) and ships MIT attribution to the
   "Blitztext contributors". A fresh app identity means **no end-user migrations at all** — only the
-  developer's own machines optionally import their Blitztext data once.
+  developer's own machines optionally import their rede data once.
 - **D7 — Direct distribution (Developer ID + notarization + Sparkle) is the primary channel.**
   The Mac App Store is an optional later variant with documented feature compromises (Phase 6).
 
@@ -118,7 +118,7 @@
   2. `./build.sh --release --llamacpp-helper=… --llamacpp-helper-sha256=…` (universal).
   3. Sign with the stable identity (Developer ID once Phase 3 lands; until then local cert).
   4. Notarize + staple (Phase 3).
-  5. `ditto -c -k --sequesterRsrc --keepParent Blitztext.app Blitztext-<version>.zip`.
+  5. `ditto -c -k --sequesterRsrc --keepParent rede.app rede-<version>.zip`.
   6. `sign_update` → `sparkle:edSignature` + `length`.
   7. Create GitHub release on the fork with the zip as asset; update `appcast.xml` on `gh-pages`
      (enclosure URLs point at the release assets; German release notes from the CHANGELOG).
@@ -196,7 +196,7 @@ per version; nothing steals focus while dictating.
 MIT permits reuse including commercial distribution, regardless of how much of the code changed. The
 only obligations: keep the MIT license text + "Blitztext contributors" copyright notice in
 distributed copies (an in-app acknowledgements surface is the standard way), and do not use the
-Blitztext name/icon/branding (`TRADEMARKS.md`). `rede` starts as a fresh app identity, so end users
+rede name/icon/branding (`TRADEMARKS.md`). `rede` starts as a fresh app identity, so end users
 never migrate anything.
 
 | #   | Task                                                                                                                                                                                                                                                 |
@@ -206,7 +206,7 @@ never migrate anything.
 | 5.3 | New bundle ID + product name + dev cert CN / Developer ID; own appcast feed and product URLs                                                                                                                                                         |
 | 5.4 | License compliance surface in-app (About/acknowledgements): MIT notices for Blitztext contributors, WhisperKit, llama.cpp, Sparkle; license metadata for downloaded GGUF/CoreML models                                                               |
 | 5.5 | Optional one-shot importer for the developer's own machines (settings.json, Keychain key, downloaded models). End users start fresh; TCC is granted fresh for the new bundle ID anyway                                                               |
-| 5.6 | German UI copy sweep where "Blitztext" appears as product name; README/landing for `rede`                                                                                                                                                            |
+| 5.6 | German UI copy sweep where "rede" appears as product name; README/landing for `rede`                                                                                                                                                            |
 
 ### Phase 6 — `rede` on the Mac App Store (exploratory, decide after 1–5)
 

@@ -4,7 +4,7 @@
 
 ## Project Structure & Module Organization
 
-This repository contains `rede`, a native macOS menu bar app. Main source code lives in `BlitztextMac/`:
+This repository contains `rede`, a native macOS menu bar app. Main source code lives in `RedeMac/`:
 
 - `App/`: app entry point, window/controllers, shared app state.
 - `Features/`: SwiftUI feature areas such as onboarding, settings, menu bar, workflows, and shared UI.
@@ -13,7 +13,7 @@ This repository contains `rede`, a native macOS menu bar app. Main source code l
 - `Resources/`: entitlements, `Info.plist`, assets, icons, and app resources.
 - `Tests/`: XCTest unit tests named `FeatureOrServiceTests.swift`.
 
-Project generation is driven by `BlitztextMac/project.yml`. Generated `.xcodeproj` and `.derivedData-*` directories are build artifacts.
+Project generation is driven by `RedeMac/project.yml`. Generated `.xcodeproj` and `.derivedData-*` directories are build artifacts.
 
 ## Build, Test, and Development Commands
 
@@ -34,7 +34,7 @@ For UI work, read `DESIGN.md` first and follow its visual system.
 
 ## Testing Guidelines
 
-Add or update XCTest coverage for behavior changes, especially parsing, persistence, privacy boundaries, local models, and formatting helpers. Place tests in `BlitztextMac/Tests` and import with `@testable import Blitztext`. Run `./test.sh`; run `./build.sh --debug` when touching app wiring, resources, signing, or project configuration.
+Add or update XCTest coverage for behavior changes, especially parsing, persistence, privacy boundaries, local models, and formatting helpers. Place tests in `RedeMac/Tests` and import with `@testable import rede`. Run `./test.sh`; run `./build.sh --debug` when touching app wiring, resources, signing, or project configuration.
 
 ## Commit & Pull Request Guidelines
 

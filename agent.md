@@ -1,6 +1,6 @@
-> **Herkunft:** Dieses Repository ist der eigenstaendige Spin-off "rede" des Open-Source-Projekts
-> Blitztext (MIT, (c) Blitztext contributors). Interne Typ-/Verzeichnisnamen behalten bewusst das
-> Blitztext-Praefix, damit Upstream-Merges guenstig bleiben. Nutzersichtbares Branding ist "rede".
+> **About:** rede is a standalone, local-first macOS menu-bar app. It began as a fork but has been
+> heavily rewritten and renamed — the codebase no longer carries any legacy prefix. Origin & MIT
+> license attribution live in `README.md` and `LICENSE`.
 
 # Agent Guide
 
@@ -8,11 +8,11 @@ This repository is a native macOS menu bar app, not a web app. Treat the local c
 
 ## Project Snapshot
 
-- Product: Blitztext, a local-first macOS dictation, transcription, rewrite, and local AI workflow app.
+- Product: rede, a local-first macOS dictation, transcription, rewrite, and local AI workflow app.
 - Platform: macOS 14+, Swift 5.10, SwiftUI with AppKit integration.
-- Project generation: XcodeGen via `BlitztextMac/project.yml`.
-- Main target: `BlitztextMac`, built as `Blitztext.app`.
-- Tests: XCTest target `BlitztextMacTests`.
+- Project generation: XcodeGen via `RedeMac/project.yml`.
+- Main target: `RedeMac`, built as `rede.app`.
+- Tests: XCTest target `RedeMacTests`.
 - External Swift package: `argmax-oss-swift` / WhisperKit, pinned in `project.yml`.
 - Remote services: OpenAI audio transcription and chat completions, called directly from the app with the user's own API key.
 - Local services: WhisperKit/CoreML model folders for transcription and the bundled llama.cpp runtime (a `localhost` server, started as a subprocess) for local rewriting and e-mail-memory embeddings.
@@ -21,7 +21,7 @@ This repository is a native macOS menu bar app, not a web app. Treat the local c
 ## Repository Layout
 
 ```text
-BlitztextMac/
+RedeMac/
   App/          App lifecycle, popover/window controllers, AppState orchestration
   Features/     SwiftUI features: workflows, menu bar UI, onboarding, settings
   Services/     Recording, transcription, rewrite providers, storage, permissions, context
@@ -49,7 +49,7 @@ Before changing code:
 1. Check the worktree with `git status --short`.
 2. Read the relevant files before editing; do not infer architecture from filenames alone.
 3. For UI/design work, read `DESIGN.md` first and update it when making new durable visual decisions.
-4. Check whether related tests already exist in `BlitztextMac/Tests`.
+4. Check whether related tests already exist in `RedeMac/Tests`.
 5. Preserve unrelated user changes. Never reset, checkout, or delete unowned work as a shortcut.
 
 Use `rg` / `rg --files` for local search.

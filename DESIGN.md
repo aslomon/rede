@@ -1,8 +1,6 @@
 # rede — Design System
 
-Visuelle Sprache der Menüleisten-App **rede** (Spin-off des Blitztext-Designsystems; interne
-Komponentennamen behalten das Blitz-Präfix für günstige Upstream-Merges). Neue UI muss sich hier
-einfügen.
+Visuelle Sprache der Menüleisten-App **rede**. Neue UI muss sich hier einfügen.
 
 ## Marke — „Voice-First / Electric"
 
@@ -37,23 +35,23 @@ Ein SF Symbol pro Konzept, app-weit identisch — Icons erklären, die Überschr
 Sektions-Header (`SectionLabel(text:icon:)` / `SettingsSection(_:icon:)`) tragen ihr Konzept-Icon
 (10pt, `.semibold`, `.secondary` — gleiche Farbe wie das Label, nie lauter als der Text).
 
-| Konzept | Symbol | | Konzept | Symbol |
-|---|---|---|---|---|
-| diktat/mikrofon | `mic` / `mic.fill` | | memory | `brain` |
-| Whisper/transkription | `waveform` | | identität | `person.crop.circle` |
-| sprachmodell (LLM) | `text.bubble` | | begriffe | `character.book.closed` |
-| verarbeitung | `cpu` | | ersetzungen | `arrow.left.arrow.right` |
-| OpenAI-Key/zugangsdaten | `key.fill` | | archiv | `archivebox` |
-| hotkeys | `keyboard` | | statistik | `chart.bar` |
-| modi | `rectangle.stack` | | kontext | `scope` |
-| bedienungshilfen | `accessibility` | | lernen/verbessern | `wand.and.stars` |
-| installation | `arrow.down.app` | | updates | `arrow.triangle.2.circlepath` |
-| töne | `speaker.wave.2` | | embedding | `point.3.connected.trianglepath.dotted` |
-| autostart | `power` | | einrichtung | `sparkles` |
-| über/lizenzen | `info.circle` | | entfernen (destruktiv) | `trash` |
-| system | `gearshape` (nie `gear`) | | verlauf | `clock.arrow.circlepath` |
-| zeitplan/täglich | `calendar` | | pausen kürzen | `scissors` |
-| autokorrektur begriffe | `textformat.abc.dottedunderline` | | varianten | `square.split.2x1` |
+| Konzept                 | Symbol                           |     | Konzept                | Symbol                                  |
+| ----------------------- | -------------------------------- | --- | ---------------------- | --------------------------------------- |
+| diktat/mikrofon         | `mic` / `mic.fill`               |     | memory                 | `brain`                                 |
+| Whisper/transkription   | `waveform`                       |     | identität              | `person.crop.circle`                    |
+| sprachmodell (LLM)      | `text.bubble`                    |     | begriffe               | `character.book.closed`                 |
+| verarbeitung            | `cpu`                            |     | ersetzungen            | `arrow.left.arrow.right`                |
+| OpenAI-Key/zugangsdaten | `key.fill`                       |     | archiv                 | `archivebox`                            |
+| hotkeys                 | `keyboard`                       |     | statistik              | `chart.bar`                             |
+| modi                    | `rectangle.stack`                |     | kontext                | `scope`                                 |
+| bedienungshilfen        | `accessibility`                  |     | lernen/verbessern      | `wand.and.stars`                        |
+| installation            | `arrow.down.app`                 |     | updates                | `arrow.triangle.2.circlepath`           |
+| töne                    | `speaker.wave.2`                 |     | embedding              | `point.3.connected.trianglepath.dotted` |
+| autostart               | `power`                          |     | einrichtung            | `sparkles`                              |
+| über/lizenzen           | `info.circle`                    |     | entfernen (destruktiv) | `trash`                                 |
+| system                  | `gearshape` (nie `gear`)         |     | verlauf                | `clock.arrow.circlepath`                |
+| zeitplan/täglich        | `calendar`                       |     | pausen kürzen          | `scissors`                              |
+| autokorrektur begriffe  | `textformat.abc.dottedunderline` |     | varianten              | `square.split.2x1`                      |
 
 Aktions-Verben auf Buttons (als `Label`): laden = `arrow.down.circle.fill`, prüfen/neu laden =
 `arrow.clockwise`, löschen = `trash` (alle destruktiven Aktionen inkl. `DestructiveClearButton`),
@@ -146,7 +144,7 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   Auto-Paste, keine Archiv-/Memory-Nebenwirkung.
 - **Hotkey-Recorder**: Ein einzelnes Aufnahmefeld startet eine explizite Aufnahme. Alle erkannten
   Tasten werden live als Keycaps angezeigt; gespeichert wird erst über `Übernehmen`, `Esc` bricht
-  ab. Während der Aufnahme sind Blitztext-Hotkeys global pausiert, damit vorhandene Belegungen
+  ab. Während der Aufnahme sind rede-Hotkeys global pausiert, damit vorhandene Belegungen
   nicht auslösen. Unterstützt Modifier-only, einzelne Taste, Modifier + Taste und mehrere Tasten.
   Konflikte erscheinen direkt unter dem betroffenen Modus und blockieren `Übernehmen`.
   Tastenkürzel bleiben monospaced, aber nicht dominant.
@@ -218,7 +216,7 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
 **Glass = schwebendes Chrome. Tokens = Inhaltsflächen.** Konkret:
 
 - Liquid Glass erhalten nur Views, deren DIREKTER Parent ein schwebender Backdrop ist: das
-  Popover (`BlitztextSurface`), die Recording-Pille, die Onboarding-Fenster-Wurzel — plus die
+  Popover (`redeSurface`), die Recording-Pille, die Onboarding-Fenster-Wurzel — plus die
   direkt darauf liegenden Banner/Karten (`accessibilityHintBanner`, `setupNudgeBanner`,
   `truncationBanner`, `OnboardingCard`) und Keycaps (`liquidGlassKeycap`).
 - ALLES, was in einer Sektionskarte (`settingsGroupBackground`/`SettingsSection`) oder in
@@ -230,7 +228,7 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
 
 ### Regel: Glass nicht stapeln
 
-Ein Glass-Layer pro Surface-Ebene. Im Popover: `BlitztextSurface` (Fenster-Backdrop) = Layer 1, direkt aufliegende Banner = Layer 2 — Schluss. Innerhalb von Sektionskarten existiert KEIN Glass (siehe Flächen-Hierarchie oben); Chips, Toggles, Picker erben den Systemlook.
+Ein Glass-Layer pro Surface-Ebene. Im Popover: `redeSurface` (Fenster-Backdrop) = Layer 1, direkt aufliegende Banner = Layer 2 — Schluss. Innerhalb von Sektionskarten existiert KEIN Glass (siehe Flächen-Hierarchie oben); Chips, Toggles, Picker erben den Systemlook.
 
 ### Lesbarkeit auf Glas (HARD CONSTRAINT)
 
@@ -242,7 +240,7 @@ mit `separatorColor`-Hairline, nie auf `primary.opacity(0.03)`-Wäschen (in Dark
 
 ### Gating-Strategie (HARD CONSTRAINT)
 
-Alle `@available(macOS 26.0, *)` Guards **ausschließlich** in `BlitztextMac/Features/Shared/LiquidGlass.swift`. Views rufen nur benannte Wrapper-Modifier auf:
+Alle `@available(macOS 26.0, *)` Guards **ausschließlich** in `RedeMac/Features/Shared/LiquidGlass.swift`. Views rufen nur benannte Wrapper-Modifier auf:
 
 ```
 .liquidGlassCard(accent:cornerRadius:)
@@ -274,7 +272,7 @@ Jeder Wrapper hat einen expliziten Fallback:
 
 ### Glass-Kit API Surface
 
-Definiert in `BlitztextMac/Features/Shared/LiquidGlass.swift`. Alle existierenden Definitionen (`PillGlassModifier`, `CardGlassModifier`, `BlitztextSurface`, `liquidGlassCard`, `liquidGlassCapsule`) bleiben erhalten und werden ergänzt um:
+Definiert in `RedeMac/Features/Shared/LiquidGlass.swift`. Alle existierenden Definitionen (`PillGlassModifier`, `CardGlassModifier`, `redeSurface`, `liquidGlassCard`, `liquidGlassCapsule`) bleiben erhalten und werden ergänzt um:
 
 1. **`liquidGlassTintedCard(accent:cornerRadius:)`** — für farbige Banner/Karten (orange Warnings, blaue Recommendations)
 2. **`liquidGlassInfoBanner(accent:cornerRadius:)`** — semantisch identisch zu `liquidGlassTintedCard`, expliziter Name für Banner-Kontexte

@@ -1,4 +1,4 @@
-# Blitztext — Plan v2 (Lokales LLM, Anpassen-Redesign, Signatur-Fix, Transkriptions-Archiv & Memory)
+# rede — Plan v2 (Lokales LLM, Anpassen-Redesign, Signatur-Fix, Transkriptions-Archiv & Memory)
 
 > Status: **Entwurf / zur Entscheidung**, 2026-06-04. Baut additiv auf dem ausgelieferten Phase 1+2 auf
 > (ModeConfig, RewriteProvider-Seam, `secureLocalModeEnabled` als Offline-Master). Kein Rewrite.
@@ -23,15 +23,15 @@
 CDHash → macOS-TCC hat die Freigabe gegen den **alten** Code-Requirement gespeichert → `AXIsProcessTrusted()`
 liefert `false`, obwohl der Toggle in den Systemeinstellungen „an" aussieht.
 
-- **`scripts/create-dev-cert.sh`** (idempotent): selbst-signiertes Code-Signing-Zertifikat „Blitztext Local Dev"
+- **`scripts/create-dev-cert.sh`** (idempotent): selbst-signiertes Code-Signing-Zertifikat „rede Local Dev"
   per `openssl` (extendedKeyUsage=critical,codeSigning) → `pkcs12 -legacy` → `security import` in den Login-Keychain
   mit `-T /usr/bin/codesign`. Verifikation per Wegwerf-Test-Signatur (nicht `find-identity`). **Kein bezahlter
   Apple-Developer-Account nötig.**
-- **`build.sh`**: `CODESIGN_IDENTITY="Blitztext Local Dev"`; beide `codesign --force --sign -` (Zeilen 142, 158)
-  → `--force --options runtime --entitlements Resources/BlitztextMac.entitlements --sign "$CODESIGN_IDENTITY"`.
+- **`build.sh`**: `CODESIGN_IDENTITY="rede Local Dev"`; beide `codesign --force --sign -` (Zeilen 142, 158)
+  → `--force --options runtime --entitlements Resources/RedeMac.entitlements --sign "$CODESIGN_IDENTITY"`.
   Danach **Assert**: `codesign -d -r-` muss `certificate leaf` (nicht `cdhash`) enthalten — sonst laut abbrechen,
   kein stiller Ad-hoc-Fallback.
-- **Einmalig** beim ersten stabilen Build: alten „Blitztext"-Eintrag unter Bedienungshilfen/Mikrofon/
+- **Einmalig** beim ersten stabilen Build: alten „rede"-Eintrag unter Bedienungshilfen/Mikrofon/
   Eingabeüberwachung entfernen (`–`) und neu hinzufügen. Danach bleiben Freigaben über Rebuilds erhalten.
 - **In-App** (`AccessibilityPermissionService` + `AppState` + `AccessSettingsView`): `AXIsProcessTrusted()`
   bei App-Aktivierung/Popover-Öffnen erneut prüfen (bounded Poll ~10s statt der fixen 1s/3s-`asyncAfter`),
@@ -81,7 +81,7 @@ Echter herunterladbarer On-Device-LLM-Pfad fürs Umschreiben, überall nur **„
   - **Qwen-Alternative:** `mlx-community/Qwen3.5-4B-MLX-4bit` (~2,9 GB).
   - _(Exakte Repo-IDs + Größen zur Implementierungszeit erneut verifizieren.)_
 - **Neue Bausteine:** `LocalLLMService` (Actor, analog `LocalTranscriptionService`: Modell-Liste, Download/
-  Install/Progress, gecachter `ModelContainer`, Speicher unter `Application Support/Blitztext/models/llm/`),
+  Install/Progress, gecachter `ModelContainer`, Speicher unter `Application Support/rede/models/llm/`),
   `LocalLLMRewriteProvider: RewriteProvider` (`ChatSession(container, instructions: systemPrompt).respond(to:)`).
   Prompt-Bau bleibt in `LLMService`.
 - **Factory:** `rewriteProvider(.local)` → MLX-Provider wenn Modell installiert; sonst auf macOS 26
@@ -108,7 +108,7 @@ generierte, strukturierte Memory**, die den Modi **immer als Kontext** mitgegebe
 
 - Speichert pro Lauf: Datum, Modus, Dauer, **Roh-Transkript** + Endtext + Backend. _(Audio kommt in 4c.)_
 - **Nach Tagen browsbar**: alle Transkriptionen der letzten 90 Tage ansehen, Roh- vs. Endtext sehen.
-- Speicher unter `Application Support/Blitztext/archive/` (`history.json`), POSIX 0600.
+- Speicher unter `Application Support/rede/archive/` (`history.json`), POSIX 0600.
   **Opt-in, default AUS** (Privacy-Default „nichts wird gespeichert" bleibt, bis du aktivierst).
 - Hook: `onRun` am `Workflow`-Protokoll (default-nil, nur bei aktiviertem Archiv verdrahtet) — Text only, kein Audio.
 

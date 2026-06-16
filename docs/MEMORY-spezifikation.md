@@ -1,4 +1,4 @@
-# Blitztext — Memory-Subsystem: Tiefen-Spezifikation
+# rede — Memory-Subsystem: Tiefen-Spezifikation
 
 > Aus Multi-Agent-Analyse (Facetten: Extraktion, Update-Takt, Kontext-Injektion, vergleichbare Systeme).
 > Beantwortet: funktioniert das Design? · Update-Takt? · worauf achten? · Best Practices?

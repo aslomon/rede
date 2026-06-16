@@ -2,19 +2,19 @@
 
 ## Requirements Restatement
 
-- Blitztext should eventually run local rewrite LLMs without requiring users to install Ollama.
+- rede should eventually run local rewrite LLMs without requiring users to install Ollama.
 - The preferred embedded path should use llama.cpp, specifically a bundled `llama-server` helper process for the first production-ready implementation.
 - Ollama should not be removed in a single step. It should remain available as a fallback/legacy runtime while llama.cpp is introduced.
 - The existing rewrite prompt logic must stay provider-agnostic. `RewriteProvider` should remain the boundary for OpenAI, Ollama, and llama.cpp.
 - The local model UI should become runtime-neutral: users choose "local language model", not an Ollama-only concept.
-- Model downloads must be user-friendly, resumable where possible, checksum-aware, and stored under Blitztext application support.
+- Model downloads must be user-friendly, resumable where possible, checksum-aware, and stored under rede application support.
 - All changes should be built in this worktree on branch `codex/llamacpp-runtime`, then reviewed before merging to `main`.
 
 ## Decision
 
 Use **bundled `llama-server` as a helper process** for the first llama.cpp implementation.
 
-Do not start with in-process Swift/C++ bindings or a static llama.cpp library. The helper-process approach keeps Blitztext's Swift app simple, preserves the existing HTTP provider pattern, avoids C++ ABI and lifecycle issues, and lets us replace or pin the llama.cpp binary independently.
+Do not start with in-process Swift/C++ bindings or a static llama.cpp library. The helper-process approach keeps rede's Swift app simple, preserves the existing HTTP provider pattern, avoids C++ ABI and lifecycle issues, and lets us replace or pin the llama.cpp binary independently.
 
 Official basis:
 
@@ -71,7 +71,7 @@ Introduce runtime-neutral local LLM types:
   - restarts after crash when appropriate
   - exposes base URL to `LlamaCppRewriteProvider`
 - `LlamaCppModelStore`
-  - stores GGUF files under `Application Support/Blitztext/models/llamacpp`
+  - stores GGUF files under `Application Support/rede/models/llamacpp`
   - detects complete vs partial downloads
   - removes models
   - reports disk usage
@@ -82,7 +82,7 @@ Introduce runtime-neutral local LLM types:
   - moves atomically to final file
   - reports progress
 - `LlamaCppModelCatalog`
-  - curated GGUF entries for Blitztext rewrite use cases
+  - curated GGUF entries for rede rewrite use cases
   - starts small: 1.5B-4B instruct models
   - includes RAM/disk guidance
 - `LlamaCppServerClient`
@@ -205,7 +205,7 @@ Acceptance criteria:
 
 - Rename user-facing language from Ollama-only to local runtime-neutral copy:
   - "Lokales Sprachmodell"
-  - "Runtime: Blitztext lokal (llama.cpp)"
+  - "Runtime: rede lokal (llama.cpp)"
   - "Fallback: Ollama"
 - Keep advanced/developer access to Ollama.
 - Update `LocalModelsView`, `LocalModelRowView`, `LocalLLMModelPicker`, `ModelsSettingsView`, and onboarding copy.
@@ -227,7 +227,7 @@ Acceptance criteria:
 - Pin a llama.cpp release/build id.
 - Add a repeatable script to fetch/build `llama-server`.
 - Add checksums for the helper binary.
-- Copy helper into `Blitztext.app/Contents/MacOS/llama-server`.
+- Copy helper into `rede.app/Contents/MacOS/llama-server`.
 - Update signing script so the helper is signed with the app.
 - Verify universal target strategy:
   - preferred: universal helper if available/buildable
@@ -296,30 +296,30 @@ Do not run all agents immediately against the same files. Split ownership by fil
 ## Initial File Ownership Proposal
 
 - Runtime abstraction:
-  - `BlitztextMac/Services/LocalLLMRuntime.swift`
-  - `BlitztextMac/Features/Workflows/WorkflowProtocol.swift`
-  - `BlitztextMac/Tests/AppSettingsCodableTests.swift`
+  - `RedeMac/Services/LocalLLMRuntime.swift`
+  - `RedeMac/Features/Workflows/WorkflowProtocol.swift`
+  - `RedeMac/Tests/AppSettingsCodableTests.swift`
 - llama.cpp runtime:
-  - `BlitztextMac/Services/LlamaCppRuntimeService.swift`
-  - `BlitztextMac/Services/LlamaCppServerClient.swift`
-  - `BlitztextMac/Tests/LlamaCppRuntimeTests.swift`
+  - `RedeMac/Services/LlamaCppRuntimeService.swift`
+  - `RedeMac/Services/LlamaCppServerClient.swift`
+  - `RedeMac/Tests/LlamaCppRuntimeTests.swift`
 - Model store/catalog/download:
-  - `BlitztextMac/Services/LlamaCppModelCatalog.swift`
-  - `BlitztextMac/Services/LlamaCppModelStore.swift`
-  - `BlitztextMac/Services/LlamaCppDownloadService.swift`
-  - `BlitztextMac/Tests/LlamaCppModelManagementTests.swift`
+  - `RedeMac/Services/LlamaCppModelCatalog.swift`
+  - `RedeMac/Services/LlamaCppModelStore.swift`
+  - `RedeMac/Services/LlamaCppDownloadService.swift`
+  - `RedeMac/Tests/LlamaCppModelManagementTests.swift`
 - Provider:
-  - `BlitztextMac/Services/Providers/RewriteProvider.swift`
-  - `BlitztextMac/App/AppState.swift`
+  - `RedeMac/Services/Providers/RewriteProvider.swift`
+  - `RedeMac/App/AppState.swift`
 - UI:
-  - `BlitztextMac/Features/Settings/LocalModelsView.swift`
-  - `BlitztextMac/Features/Settings/LocalModelRowView.swift`
-  - `BlitztextMac/Features/Settings/LocalLLMModelPicker.swift`
-  - `BlitztextMac/Features/Settings/ModelsSettingsView.swift`
-  - `BlitztextMac/Features/Onboarding/Steps/ModelsStepView.swift`
+  - `RedeMac/Features/Settings/LocalModelsView.swift`
+  - `RedeMac/Features/Settings/LocalModelRowView.swift`
+  - `RedeMac/Features/Settings/LocalLLMModelPicker.swift`
+  - `RedeMac/Features/Settings/ModelsSettingsView.swift`
+  - `RedeMac/Features/Onboarding/Steps/ModelsStepView.swift`
 - Packaging:
   - `build.sh`
-  - `BlitztextMac/project.yml`
+  - `RedeMac/project.yml`
   - `scripts/`
 
 ## Estimated Complexity
