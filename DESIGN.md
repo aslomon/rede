@@ -119,7 +119,7 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   KEINE `.font(...)`-Modifier an Buttons oder in Button-Labels — äußere sind wirkungslos, innere
   erzeugen abweichende Button-Größen. Custom-Chrome, das wie ein Button aussehen muss (z. B.
   Menu-Labels), nutzt dieselben 11pt `.semibold`.
-- Status statt Erklärung: `BlitzStatusPill` für bereit/warnung/download/online/lokal/muted.
+- Status statt Erklärung: `RedeStatusPill` für bereit/warnung/download/online/lokal/muted.
 - Active model rows use one selection marker only: the leading green check. Do not add a second
   `aktiv`, `gewählt`, or `embedding` pill inside the same model row or picker.
 - Längere Hinweise nur hinter `InfoDisclosure`; Settings zeigen Zustand + nächste Aktion, keine
@@ -316,7 +316,7 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
 ### Informationsarchitektur-Regeln (app-weit)
 
 - **Status → primäre Aktion → optionale Details** gilt auf jeder Seite und in jeder Karte.
-- `enginePanel` im Popover: Footer-komprimiert als `BlitzStatusPill`, on-tap expandierbar.
+- `enginePanel` im Popover: Footer-komprimiert als `RedeStatusPill`, on-tap expandierbar.
 - Settings-Tabs: Status-Pills leben in den Sektions-Headern, nicht als duplizierende Top-Level-Reihe.
 - Lange Erklärungen: ausschließlich hinter `InfoDisclosure`. Kein dauerhafter Erklärungstext.
 - `setupNudgeBanner`: nur auf Tab 0 (Modi), nicht tabs-übergreifend.

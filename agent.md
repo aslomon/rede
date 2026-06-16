@@ -120,7 +120,7 @@ Follow `DESIGN.md` exactly.
 - UI text inside the app is German, informal, and concise.
 - The menu bar popover is 410 pt wide.
 - Use native SwiftUI/AppKit controls first: `Picker`, `Toggle`, `TextField`, `TextEditor`, `GroupBox`-style groups, and standard button styles already present in the repo.
-- Reuse project styles such as `PopoverActionButtonStyle`, `PopoverIconButtonStyle`, `SectionLabel`, `BlitzStatusPill`, `InfoDisclosure`, and `MenuBarTokens`.
+- Reuse project styles such as `PopoverActionButtonStyle`, `PopoverIconButtonStyle`, `SectionLabel`, `RedeStatusPill`, `InfoDisclosure`, and `MenuBarTokens`.
 - Use SF Symbols for icons.
 - Preserve the mode accent colors:
   - transcription: blue

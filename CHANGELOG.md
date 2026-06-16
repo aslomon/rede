@@ -159,7 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Popover Engine Panel**: Redesigned with collapsed `BlitzStatusPill` footer (status → action → details); workflow rows now use morphing glass-hover effects; status unified as pill throughout
+- **Popover Engine Panel**: Redesigned with collapsed `RedeStatusPill` footer (status → action → details); workflow rows now use morphing glass-hover effects; status unified as pill throughout
 - **Prompts & Modes UI**:
   - `ModeCardView` upgraded with glass-card background and visual mode accent stripe
   - Hotkey recorder buttons now fixed-position with improved visibility
