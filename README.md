@@ -2,9 +2,11 @@
 
 # 💬 rede
 
-**A native macOS menu-bar app for dictation, transcription and AI rewriting that runs entirely on your Mac.**
+### Sprich. Es wird Text. Auf deinem Mac, für deinen Mac.
 
-Speak into any text field, get clean text back. Rewrite e-mails, prompts and messages with a local LLM — no cloud, no account, no telemetry. Bring your own OpenAI key only if you _want_ the online path.
+**A native macOS menu-bar app that turns your voice into finished text — a clean e-mail, a sharp AI prompt, a social post — using a local LLM that runs entirely on your machine.**
+
+No account. No cloud requirement. No telemetry. Bring your own OpenAI key only if you _want_ the online path.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black?logo=apple)
 ![Universal](https://img.shields.io/badge/Universal-arm64%20%2B%20x86__64-blue)
@@ -13,46 +15,87 @@ Speak into any text field, get clean text back. Rewrite e-mails, prompts and mes
 ![llama.cpp](https://img.shields.io/badge/Local%20AI-llama.cpp-purple)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
 
+**[↓ Download](https://github.com/aslomon/rede/releases/latest)** · **[🌐 Website](https://aslomon.github.io/rede/)** · **[📸 Screenshots](#-screenshots)** · **[🛠️ Build from source](#️-build--run-from-source)**
+
 </div>
 
-> **Origin.** rede is the standalone spin-off of the open-source **Blitztext** menu-bar app by
-> [cmagnussen](https://github.com/cmagnussen/blitztext-app) (MIT, © Blitztext contributors). It started
-> as a simple speech-to-text helper and grew into a full local-AI writing workflow — a bundled
-> **llama.cpp** runtime, a dynamic GGUF model catalog with hardware-aware recommendations, semantic
-> memory and a redesigned interface. The in-app UI is German by design; the project is documented in
-> English. Internal type/folder names keep the `Blitztext` prefix on purpose, to keep upstream merges
-> cheap — the user-facing brand is **rede**.
->
-> No hosted backend, no warranty, no support guarantee. The point isn't a one-click finished product —
-> it's a _hackable_, complete example of how a small native macOS app combines dictation, local models,
-> rewrite modes, memory and context. Clone it, build it, read the code, change it.
+> 🇩🇪 The app UI is **German** (informal, by design). Code, docs and this README are English.
 
 ---
 
-## ✨ Highlights
+## Why rede is not "just another dictation app"
 
-- 🎙️ **Dictate anywhere** — global hotkey, live recording pill, instant paste into the focused app.
-- 🧠 **Rewrite locally** — turn rough speech into clean e-mails, prompts or messages with an on-device LLM.
-- 📦 **Bundled llama.cpp runtime** — no separate install, no `ollama pull`, no Docker. The app ships and manages everything.
-- 🗂️ **Dynamic model catalog** — curated GGUF models, a **live Hugging Face feed** that auto-discovers new models, and a field to drop in **any `.gguf` URL** yourself.
-- 🎯 **Hardware-aware recommendation** — rede reads your RAM and suggests the best model that fits (e.g. _Qwen3-32B_ on a 48 GB Mac, _Qwen3-1.7B_ on an 8 GB Mac).
-- 🔒 **Genuinely private** — in local mode nothing leaves the machine. Online calls go straight to OpenAI with _your_ key, stored only in the Keychain.
-- ⌨️ **Per-mode hotkeys**, ✍️ **custom modes**, 🧩 **vocabulary learning**, and opt-in **semantic e-mail memory** — all local.
+Most Mac dictation tools stop at speech-to-text. rede starts there and keeps going: it **transcribes**,
+then **rewrites** what you said into the thing you actually need — and it does the AI part **locally**,
+on a model it downloads and runs itself. It **learns your words**, **remembers how you write**, and
+**recommends the right model for your exact Mac**. It's free, open source (MIT), and German-first.
+
+The honest one-liner: **a local-AI writing workflow that happens to start with your voice.**
 
 ---
 
-## 🌐 Website
+## 🔥 What makes it special
 
-**Live:** **[aslomon.github.io/rede](https://aslomon.github.io/rede/)** — a bilingual (DE/EN) marketing +
-docs site, source in [`web/`](web/) (Next.js 16, static export to GitHub Pages, mirroring the in-app
-design system `DESIGN.md`). It covers the modes, the privacy story, screenshots, a download section and
-setup docs, and is auto-deployed from `main` via [`.github/workflows/deploy-web.yml`](.github/workflows/deploy-web.yml).
+### 🧠 A bundled local-AI runtime — zero setup
 
-```bash
-cd web && pnpm install && pnpm dev   # → http://localhost:3000
-```
+Local rewriting runs on a **bundled [llama.cpp](https://github.com/ggml-org/llama.cpp) server** the app
+starts on `127.0.0.1`. **No Ollama, no Docker, no `pip install`, no separate runtime.** rede downloads
+GGUF model files, checksum-verifies them, and runs them itself — and so does transcription
+(**WhisperKit / Core ML**, on device). In local mode, **nothing leaves your Mac.**
 
-Deployment notes (GitHub Pages / Vercel + the Sparkle appcast feed) are in [`web/README.md`](web/README.md).
+### 🗂️ A model catalog that grows by itself — and picks the right model _for your Mac_
+
+This is the part nobody else does:
+
+- **Curated, checksum-pinned models** covering every Mac size (Qwen3 1.7B→32B, Gemma 3 4B→27B).
+- **A live Hugging Face feed** that auto-discovers brand-new GGUFs from trusted orgs — models like
+  Gemma 4 or gpt-oss show up **without an app update**. Junk repos are filtered, oversized models
+  hidden, LFS hashes verified on download.
+- **Any `.gguf` URL** — paste a link to a niche fine-tune and run it on the spot.
+- **Hardware-aware recommendation** — rede reads your chip, RAM and free disk and tells you the best
+  model that _fits comfortably_: _Qwen3-32B_ on a 48 GB Mac, _Qwen3-1.7B_ on an 8 GB Mac. Models that
+  won't run are hidden; tight-but-usable ones are shown but not pushed.
+
+### 🧩 Memory that actually learns from you (all local, all opt-in)
+
+- **Semantic e-mail memory** — opt in, and the more you dictate, the better it gets. A **local vector
+  store** (a `nomic-embed-text` GGUF on a second llama.cpp server) embeds your finished drafts so rede
+  can recall **how you phrased similar cases before** and feed that back as quiet background context.
+  Capped, retention-aware, never uploaded.
+- **Vocabulary & term learning** — your names, jargon and domain terms are learned and injected into
+  future prompts, with **fuzzy correction** for words Whisper mangles.
+- **Correction learning** — rede mines the edits you make to its output and gets better at _your_ style
+  over time.
+
+### 🎯 Five purpose-built modes — speech in, the _finished thing_ out
+
+Not five settings — five different finished artifacts. Each is a hotkey; each is fully configurable.
+
+### ✍️ The thoughtful details
+
+- **Two-variant preview** — turn it on per mode and a rewrite pauses with **two versions** in the
+  floating pill; pick the one you like.
+- **Context awareness** — modes can optionally read the focused field, your text selection and
+  content-type hints to ground the rewrite.
+- **Improve-your-prompt** — every mode's system prompt is yours to edit, with a one-click
+  "verbessern" that sharpens it using the same local/online engine.
+- **It just pastes** — the result lands in the field you're already in, with a copy-only fallback if
+  paste is blocked. Opt-in everything; calm defaults.
+
+---
+
+## 🎛️ The five modes
+
+| Mode             | Default hotkey      | Speech in → finished thing out                                                              |
+| ---------------- | ------------------- | ------------------------------------------------------------------------------------------- |
+| **Diktat**       | `fn + Shift`        | Pure speech → clean text via OpenAI. Nothing else.                                          |
+| **Diktat lokal** | `fn + Shift + Ctrl` | Speech → text fully on-device with Whisper. No audio leaves your Mac.                       |
+| **E-Mail**       | `fn + Ctrl`         | Rough spoken notes → a structured, ready-to-send e-mail (reads Sie/Du, uses field context). |
+| **Prompt**       | `fn + Option`       | A dictated task → a precise prompt for AI coding agents like Claude Code or Codex.          |
+| **Social**       | `fn + Cmd`          | Spoken text → a social post with tasteful emoji (density adjustable).                       |
+
+Rename any mode, rebind its hotkey, switch its backend (online/local), rewrite its system prompt, set
+tone & context, toggle memory/enrichment — or duplicate it for a different client or context.
 
 ---
 
@@ -61,101 +104,18 @@ Deployment notes (GitHub Pages / Vercel + the Sparkle appcast feed) are in [`web
 |                     Menu bar                      |                        Local models                        |                       Modes                       |
 | :-----------------------------------------------: | :--------------------------------------------------------: | :-----------------------------------------------: |
 | ![Menu bar popover](docs/screenshots/menubar.png) | ![Local models manager](docs/screenshots/local-models.png) | ![Mode configuration](docs/screenshots/modes.png) |
-|       Pick a mode, see its hotkey & backend       |    Install, activate/deactivate & recommend GGUF models    | Tune prompts, tone, memory & enrichment per mode  |
+|       Pick a mode, see its hotkey & backend       |   Install, activate & recommend GGUF models for your Mac   |  Tune prompt, tone, memory & enrichment per mode  |
 
 ---
 
-## 🧭 What it does
+## 🔐 Privacy — by proof, not by promise
 
-rede lives in the menu bar. Each **mode** is a hotkey that records your voice, transcribes it, and
-optionally rewrites it — then pastes the result straight into whatever app you're using. Five fixed
-slots, each fully configurable:
-
-| Mode             | Default hotkey      | What it does                                                                            |
-| ---------------- | ------------------- | --------------------------------------------------------------------------------------- |
-| **Diktat**       | `fn + Shift`        | Pure speech → text via OpenAI. Nothing else.                                            |
-| **Diktat lokal** | `fn + Shift + Ctrl` | Speech → text fully on-device with Whisper. No audio leaves your Mac.                   |
-| **E-Mail**       | `fn + Ctrl`         | Spoken notes → a clearly structured, ready-to-send e-mail (reads Sie/Du, uses context). |
-| **Prompt**       | `fn + Option`       | Dictated task → a precise prompt for AI coding agents like Claude Code or Codex.        |
-| **Social**       | `fn + Cmd`          | Spoken text → a social post with tasteful emoji (density adjustable).                   |
-
-Every mode is **fully configurable** — rename it, rebind its hotkey, pick its backend (online/local),
-write a custom system prompt, set tone & context, and toggle memory/enrichment. Duplicate a mode to
-keep separate setups for different clients or contexts.
-
----
-
-## 🧠 Local AI — the core of rede
-
-Local rewriting runs on a **bundled [llama.cpp](https://github.com/ggml-org/llama.cpp) server** that the
-app starts as a subprocess on `127.0.0.1`. There is **no Ollama and no external runtime** — rede
-downloads GGUF model files, verifies them, and runs them itself.
-
-### A model catalog that grows by itself
-
-The **Local Models** window organizes everything in one place — installed models on top
-(activate / deactivate / delete), with the full catalog behind a collapsible _"Weitere Modelle laden"_
-section. That section has **three sources**:
-
-1. **Curated** — a hand-picked, checksum-pinned set covering every Mac size (Qwen3 · 1.7B–32B, Gemma 3 · 4B–27B).
-2. **Live Hugging Face feed** — surfaces the newest GGUFs from trusted orgs automatically, _without an app update_. Junk repos are filtered, oversized models hidden, and the LFS hash is verified on download.
-3. **Your own URL** — paste a direct link to any `.gguf` file and download it on the spot.
-
-### It recommends the right model for _your_ Mac
-
-rede reads your chip, RAM and free disk and ranks the catalog by quality _within your budget_. Models
-that wouldn't run are hidden; tight-but-usable ones are shown without being recommended.
-
-### Privacy of the local path
-
-- The llama.cpp server binds to `localhost` only, with a per-launch API key.
-- Audio is transcribed locally via **WhisperKit / Core ML**; temp audio is deleted after processing.
-- Nothing is uploaded, logged or phoned home. Use the app fully offline.
-
----
-
-## ☁️ Online path (optional)
-
-Set a mode's backend to **Online** and rede uses the **OpenAI API directly** with your own key:
-
-- Transcription via OpenAI Audio Transcriptions (25 MB upload limit, enforced early).
-- Rewriting via Chat Completions.
-- The key lives **only in the macOS Keychain** — no proxy, no telemetry in between.
-
-You can mix per mode: dictate locally, rewrite online, or the reverse.
-
----
-
-## 🔄 Updates
-
-The app checks for new versions once a day (and on demand in **Einstellungen → System → Updates**)
-against this repository's release feed, powered by [Sparkle](https://sparkle-project.org). Honest scope:
-one HTTPS request for the appcast — the user agent carries the app version, nothing else. No system
-profile, no identifiers, and the daily check has an off switch. Update archives are EdDSA-signed and
-verified before extraction. Details in [docs/privacy.md](docs/privacy.md), release flow in
-[docs/release-process.md](docs/release-process.md).
-
----
-
-## 🧩 Memory, vocabulary & context (all opt-in, all local)
-
-- **Semantic e-mail memory that learns** — opt in, and the more e-mails you dictate, the better it gets. A local vector store (a **nomic-embed-text** GGUF on a second llama.cpp server) embeds your finished drafts and recalls how you phrased _similar cases before_. Capped, retention-aware, never uploaded.
-- **Two-variant preview — toggleable** — switch it on per mode and a rewrite pauses in the floating pill with **two versions**; pick the one you like.
-- **Vocabulary & term learning** — frequently used names and domain terms are learned and injected into future prompts, with fuzzy correction.
-- **Context awareness** — modes can optionally include the focused window, your current text selection, and content-type hints.
-
----
-
-## 🔐 Privacy & security
+You don't have to trust a marketing claim; **the code is open, read it.**
 
 - **Local-first & fail-closed** — local modes never silently fall back to the cloud.
 - **No App Sandbox by design**, but a tight entitlement set (audio input + network client only).
 - **`URLSessionConfiguration.ephemeral`** for network calls; temp audio deleted after use.
 - **Keychain-only** storage for your OpenAI key. **No accounts, no analytics, no hosted backend.**
-
-Read [docs/privacy.md](docs/privacy.md) before using with sensitive content.
-
-### Data flow
 
 ```text
 Online transcription:  Your Mac → OpenAI Audio Transcriptions API
@@ -166,6 +126,18 @@ E-mail embeddings:     Your Mac → bundled llama.cpp embedding server (localhos
 Model downloads:       Hugging Face → your Mac (checksum-verified GGUF files)
 ```
 
+The online path (optional) goes **straight to OpenAI with your own key** — no proxy, no telemetry in
+between. Mix per mode: dictate locally, rewrite online, or the reverse. Read
+[docs/privacy.md](docs/privacy.md) before using with sensitive content.
+
+---
+
+## 🔄 Updates
+
+A daily (and on-demand) check against the release feed, powered by [Sparkle](https://sparkle-project.org):
+one HTTPS request for the appcast carrying only the app version — no profile, no identifiers, and an off
+switch. Update archives are **EdDSA-signed** and verified before extraction.
+
 ---
 
 ## ✅ Requirements
@@ -175,7 +147,7 @@ Model downloads:       Hugging Face → your Mac (checksum-verified GGUF files)
 - For the **online path**: your own OpenAI API key.
 - **Microphone** permission, and **Accessibility** permission for direct paste.
 
-The build pulls one Swift Package automatically: [`argmax-oss-swift`](https://github.com/argmaxinc/argmax-oss-swift) (WhisperKit) for on-device transcription.
+The build pulls one Swift Package automatically: [`argmax-oss-swift`](https://github.com/argmaxinc/argmax-oss-swift) (WhisperKit).
 
 ---
 
@@ -189,28 +161,21 @@ git clone https://github.com/aslomon/rede.git
 cd rede
 
 # 1. Build the bundled llama.cpp helper (universal binary + companion dylibs)
-./scripts/build-llamacpp-helper.sh
-# → prints the helper path and its SHA256
+./scripts/build-llamacpp-helper.sh        # → prints the helper path and its SHA256
 
 # 2. Build, install to /Applications and launch — bundling that helper
 ./build.sh --debug --install --run \
   --llamacpp-helper="<path-from-step-1>" \
   --llamacpp-helper-sha256="<sha-from-step-1>"
 
-# Release build:
-./build.sh --release --llamacpp-helper="…" --llamacpp-helper-sha256="…"
-
-# Tests (pinned to arm64):
-./test.sh
+./build.sh --release --llamacpp-helper="…" --llamacpp-helper-sha256="…"   # release build
+./test.sh                                                                  # tests (arm64)
 ```
 
-For quick UI iteration without the local runtime, build with `--allow-missing-llamacpp-helper` (local
-rewrite is then unavailable). The generated `.app` is ad-hoc signed for local development only — a public
-release needs Developer ID signing + notarization.
-
-On first launch: grant **Microphone** (and **Accessibility** for direct paste), optionally enter your
-**OpenAI key**, and open **Local Models** to download a GGUF model. Slower walkthrough in
-[docs/setup.md](docs/setup.md) and [docs/local-models.md](docs/local-models.md).
+For quick UI iteration without the runtime, add `--allow-missing-llamacpp-helper` (local rewrite is then
+unavailable). The dev `.app` is ad-hoc signed; a public release needs Developer ID signing + notarization.
+On first launch, the onboarding wizard walks you through permissions, processing path, models and a safe
+test dictation. Slower walkthrough: [docs/setup.md](docs/setup.md), [docs/local-models.md](docs/local-models.md).
 
 ---
 
@@ -222,43 +187,32 @@ Layered **App → Features → Services**, native Swift + SwiftUI + AppKit:
 BlitztextMac/
   App/        Lifecycle, paste handling, menu-bar/pill/onboarding/local-models windows, AppState
   Features/   Workflows, menu-bar UI, onboarding, settings, local-model UI
-  Services/   Recording, transcription (WhisperKit + OpenAI), the llama.cpp runtime/catalog/
-              download/embedding stack, hotkeys, storage, memory, context capture
+  Services/   Recording, transcription (WhisperKit + OpenAI), the llama.cpp runtime/catalog/download/
+              embedding stack, memory (semantic e-mail store, vocabulary, correction mining), hotkeys,
+              storage, context capture
   Tests/      XCTest suite for pure logic, Codable migrations, prompts and decisions
-web/          Bilingual marketing + docs website (Next.js 16, Tailwind v4)
-build.sh      Local build + signing; scripts/build-llamacpp-helper.sh builds the runtime
 docs/         Setup, privacy, local models, roadmap and planning notes
+web/          Bilingual marketing + docs website (Next.js, static-exported to GitHub Pages)
 ```
 
-Installed models are **self-describing via on-disk manifests**, so curated, Hugging-Face-fetched and
-custom-URL models all download, list and run through the same path.
+> Internal type/folder names keep the `Blitztext` prefix on purpose, to keep upstream merges cheap.
+> The user-facing brand is **rede**.
 
 ---
 
-## 🤝 Contributing & support
+## 🤝 Contributing
 
 Contributions are welcome — especially anything that makes the project easier to build, understand or
-fork. Please read [CONTRIBUTING.md](CONTRIBUTING.md). There's no formal support promise; see
-[SUPPORT.md](SUPPORT.md) for how to ask for help without sharing secrets, and [ROADMAP.md](ROADMAP.md)
-for direction.
+fork. See [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md) (how to ask without sharing
+secrets) and [ROADMAP.md](ROADMAP.md).
 
----
+## 📄 License & origin
 
-## 📄 License
-
-Code is released under the **MIT License** — see [LICENSE](LICENSE). Project names, logos and app icons
-are not automatically granted as trademarks; see [TRADEMARKS.md](TRADEMARKS.md).
-
-Local models are downloaded from **Hugging Face** under their respective licenses (Apache-2.0, Gemma
-Terms, etc.). The bundled runtime is **llama.cpp** by ggml-org. Based on the original open-source
-**Blitztext** by [cmagnussen](https://github.com/cmagnussen/blitztext-app).
-
-## Legal / Impressum & Datenschutz
-
-This is an experimental, non-commercial open-source project, provided as-is under the MIT License
-without warranty or support. Impressum and privacy notice for the companion website live under
-`web/` (`/[locale]/impressum`, `/[locale]/datenschutz`) — fill in the real provider details before a
-public launch.
+MIT — see [LICENSE](LICENSE); names/logos/icons are not trademarks (see [TRADEMARKS.md](TRADEMARKS.md)).
+The bundled runtime is **llama.cpp** by ggml-org; models come from **Hugging Face** under their own
+licenses. rede is the standalone, heavily extended spin-off of the original open-source **Blitztext** by
+[cmagnussen](https://github.com/cmagnussen/blitztext-app). Impressum & privacy for the website live under
+`web/` (`/[locale]/impressum`, `/[locale]/datenschutz`) — fill in real details before a public launch.
 
 <div align="center">
 
