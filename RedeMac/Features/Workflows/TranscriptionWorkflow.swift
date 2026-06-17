@@ -5,10 +5,6 @@ import Observation
 
 private let transcriptionLogger = Logger(subsystem: "app.rede.mac", category: "Transcription")
 
-private func elapsedMilliseconds(since start: Date, until end: Date = Date()) -> Int {
-  Int((end.timeIntervalSince(start) * 1000).rounded())
-}
-
 @Observable
 @MainActor
 final class TranscriptionWorkflow: Workflow {
@@ -67,7 +63,14 @@ final class TranscriptionWorkflow: Workflow {
 
   func stop() {
     if recorder.isRecording {
+      let stopStartedAt = Date()
       recorder.stopRecording()
+      WorkflowLatencyDiagnostics.logStage(
+        .recordingStop,
+        mode: type,
+        backend: backend,
+        startedAt: stopStartedAt
+      )
       guard
         !TranscriptionQualityService.shouldRejectRecording(duration: recorder.lastRecordingDuration)
       else {
@@ -75,7 +78,7 @@ final class TranscriptionWorkflow: Workflow {
         phase = .error(TranscriptionQualityService.noSpeechMessage)
         return
       }
-      transcribe()
+      transcribe(totalStartedAt: stopStartedAt)
     } else {
       transcriptionTask?.cancel()
       phase = .idle
@@ -95,7 +98,7 @@ final class TranscriptionWorkflow: Workflow {
   var audioLevel: Float { recorder.audioLevel }
   var didTruncateAtMaxDuration: Bool { recorder.didStopAtMaxDuration }
 
-  private func transcribe() {
+  private func transcribe(totalStartedAt: Date) {
     guard let url = recorder.recordingURL else {
       phase = .error("Keine Aufnahme vorhanden.")
       return
@@ -105,69 +108,70 @@ final class TranscriptionWorkflow: Workflow {
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
     let requestLanguage = language
-    let stopTime = Date()
+    let shouldTrimSilence = AudioRecorder.silenceTrimmingEnabled
+    let mode = type
+    let transcriptionBackend = backend
+    let selectedLocalModelName = localModelName
+    let dictationDictionary = dictionary
+    let correctionTerms = fuzzyTerms
 
     transcriptionTask = Task(priority: .userInitiated) {
-      // Optionally cut long pauses first; `audioURL` is the original when trimming is off/failed.
-      let audioURL = await AudioRecorder.audioForTranscription(original: url)
-      defer {
-        try? FileManager.default.removeItem(at: url)
-        if audioURL != url { try? FileManager.default.removeItem(at: audioURL) }
-      }
-
       let requestStart = Date()
+      let worker = Task.detached(priority: .userInitiated) {
+        try await WorkflowTranscriptionProcessor.transcribeAndClean(
+          originalAudioURL: url,
+          mode: mode,
+          backend: transcriptionBackend,
+          vocabularyHints: vocabularyHints,
+          language: requestLanguage,
+          localModelName: selectedLocalModelName,
+          dictionary: dictationDictionary,
+          fuzzyTerms: correctionTerms,
+          silenceTrimmingEnabled: shouldTrimSilence
+        )
+      }
       do {
-        let text: String
-        switch backend {
-        case .remote:
-          text = try await TranscriptionService.transcribe(
-            audioURL: audioURL,
-            customTerms: vocabularyHints,
-            language: requestLanguage
-          )
-        case .local:
-          text = try await LocalTranscriptionService.shared.transcribe(
-            audioURL: audioURL,
-            language: requestLanguage,
-            modelName: localModelName,
-            customTerms: vocabularyHints
-          )
+        let processed = try await withTaskCancellationHandler {
+          try await worker.value
+        } onCancel: {
+          worker.cancel()
         }
         try Task.checkCancellation()
 
-        let responseReceivedAt = Date()
-        let cleaned = FuzzyTermCorrector.correct(
-          DictationPostProcessor.process(
-            TranscriptionQualityService.cleanedTranscript(text), dictionary: dictionary),
-          terms: fuzzyTerms)
         guard
           !TranscriptionQualityService.isLikelyArtifact(
-            cleaned, recordingDuration: recordingDuration)
+            processed.cleanedText, recordingDuration: recordingDuration)
         else {
           transcriptionLogger.info(
-            "Transcription rejected short artifact after \(elapsedMilliseconds(since: stopTime)) ms"
+            "Transcription rejected short artifact after \(WorkflowLatencyDiagnostics.milliseconds(since: totalStartedAt), privacy: .public) ms"
           )
           phase = .error(TranscriptionQualityService.noSpeechMessage)
           return
         }
 
         transcriptionLogger.info(
-          "Transcription ready in \(elapsedMilliseconds(since: stopTime, until: responseReceivedAt)) ms (request \(elapsedMilliseconds(since: requestStart, until: responseReceivedAt)) ms)"
+          "Transcription ready in \(WorkflowLatencyDiagnostics.milliseconds(since: totalStartedAt, until: processed.transcriptionCompletedAt), privacy: .public) ms (request \(WorkflowLatencyDiagnostics.milliseconds(since: requestStart, until: processed.transcriptionCompletedAt), privacy: .public) ms)"
         )
-        phase = .done(cleaned)
+        phase = .done(processed.cleanedText)
         onRun?(
           ArchiveRunRecord(
-            mode: type,
-            rawTranscript: cleaned,
-            finalText: cleaned,
-            backend: backend,
+            mode: mode,
+            rawTranscript: processed.cleanedText,
+            finalText: processed.cleanedText,
+            backend: transcriptionBackend,
             durationSec: recordingDuration
           )
         )
-        onOutput?(cleaned)
+        onOutput?(processed.cleanedText)
+        WorkflowLatencyDiagnostics.logStage(
+          .total,
+          mode: mode,
+          backend: transcriptionBackend,
+          startedAt: totalStartedAt
+        )
       } catch {
         transcriptionLogger.error(
-          "Transcription failed after \(elapsedMilliseconds(since: stopTime)) ms: \(error.localizedDescription, privacy: .private)"
+          "Transcription failed after \(WorkflowLatencyDiagnostics.milliseconds(since: totalStartedAt), privacy: .public) ms: \(error.localizedDescription, privacy: .private)"
         )
         phase = .error(error.localizedDescription)
       }

@@ -1,6 +1,10 @@
 import Foundation
 import os
 
+private func rewriteProviderMilliseconds(since start: Date, until end: Date = Date()) -> Int {
+  Int((end.timeIntervalSince(start) * 1000).rounded())
+}
+
 // MARK: - Rewrite outcome
 
 /// Result of a single rewrite call. Carries the produced `text` plus the model that was REQUESTED
@@ -37,7 +41,7 @@ struct RewriteOutcome: Equatable, Sendable {
 
 /// Text the user had selected / surrounding the cursor in the frontmost app,
 /// captured at recording start. In-memory only — never persisted.
-struct SelectionContext {
+struct SelectionContext: Sendable {
   var selectedText: String
   var surroundingText: String
   var appBundleID: String?
@@ -191,13 +195,18 @@ struct OpenAIRewriteProvider: RewriteProvider {
     request.timeoutInterval = 45
     request.httpBody = try JSONEncoder().encode(payload)
 
+    let startedAt = Date()
     let (data, response) = try await Self.session.data(for: request)
+    let elapsedMilliseconds = rewriteProviderMilliseconds(since: startedAt)
 
     guard let httpResponse = response as? HTTPURLResponse else {
       throw LLMError.networkError("Keine gültige Antwort")
     }
 
     guard httpResponse.statusCode == 200 else {
+      Self.logger.info(
+        "stage=openai_rewrite model=\(model, privacy: .public) status=\(httpResponse.statusCode, privacy: .public) elapsed_ms=\(elapsedMilliseconds, privacy: .public)"
+      )
       let parsed = Self.errorPayload(from: data)
       // Model-not-found / unsupported → surface as modelUnavailable so we can fall back.
       if httpResponse.statusCode == 404
@@ -210,6 +219,9 @@ struct OpenAIRewriteProvider: RewriteProvider {
       }
       throw LLMError.apiError(parsed?.message ?? "Status \(httpResponse.statusCode)")
     }
+    Self.logger.info(
+      "stage=openai_rewrite model=\(model, privacy: .public) status=200 elapsed_ms=\(elapsedMilliseconds, privacy: .public)"
+    )
 
     let result = try JSONDecoder().decode(ChatResponse.self, from: data)
     guard let content = result.choices?.first?.message?.content,

@@ -60,6 +60,7 @@ final class AppState {
   @ObservationIgnored private var localRewritePrewarmTask: Task<Void, Never>?
   @ObservationIgnored private var suppressLocalRewritePrewarm = false
   var onMenuBarStatusChange: ((MenuBarStatus) -> Void)?
+  var onWorkflowStartBlocked: ((String) -> Void)?
   /// Invoked when a finished run could NOT be auto-pasted (no Accessibility right / no target /
   /// focus race lost). Carries the dictated text so the floating pill can expand and show it in a
   /// scrollable card with a copy action — instead of the text silently sitting only on the clipboard.
@@ -1226,7 +1227,7 @@ final class AppState {
       page = .settings
       return
     }
-    startMode(config.id, source: .manual)
+    guard startMode(config.id, source: .manual) else { return }
     // Only dismiss when a workflow actually started — an unavailable mode routes to .settings and
     // must keep the popover open there.
     guard let active = activeWorkflow, activeModeID == config.id else { return }
@@ -1247,12 +1248,28 @@ final class AppState {
     startMode(type.rawValue, source: source)
   }
 
-  func startMode(_ modeID: ModeConfig.ID, source: WorkflowLaunchSource = .manual) {
+  @discardableResult
+  func stopActiveRecordingIfCurrentMode(_ modeID: ModeConfig.ID) -> Bool {
+    guard let activeWorkflow,
+      activeModeID == modeID,
+      activeWorkflow.isRecording,
+      case .running = activeWorkflow.phase
+    else {
+      return false
+    }
+    activeWorkflow.stop()
+    return true
+  }
+
+  @discardableResult
+  func startMode(_ modeID: ModeConfig.ID, source: WorkflowLaunchSource = .manual) -> Bool {
+    guard !rejectStartIfWorkflowIsBusy() else { return false }
+
     guard let config = modeConfig(for: modeID), isWorkflowAvailable(config) else {
       if source == .manual {
         page = .settings
       }
-      return
+      return false
     }
 
     activeWorkflow?.stop()
@@ -1369,7 +1386,27 @@ final class AppState {
     }
 
     page = source.presentsWorkflowPage ? .workflow : .main
+    return true
   }
+
+  private func rejectStartIfWorkflowIsBusy() -> Bool {
+    guard let activeWorkflow, activeWorkflow.phase.blocksNewWorkflowStart else { return false }
+    onWorkflowStartBlocked?(workflowBusyMessage(for: activeWorkflow))
+    return true
+  }
+
+  private func workflowBusyMessage(for workflow: any Workflow) -> String {
+    if workflow.isRecording { return "aufnahme läuft bereits" }
+    if case .variantChoice = workflow.phase { return "bitte erst eine version wählen" }
+    return "rede verarbeitet noch"
+  }
+
+  #if DEBUG
+    func installActiveWorkflowForTesting(_ workflow: any Workflow, modeID: ModeConfig.ID) {
+      activeWorkflow = workflow
+      activeModeID = modeID
+    }
+  #endif
 
   func isWorkflowAvailable(_ type: WorkflowType) -> Bool {
     isWorkflowAvailable(modeConfig(for: type))
@@ -1912,7 +1949,15 @@ final class AppState {
   }
 
   private func handleWorkflowOutput(_ text: String) {
+    let latencyContext = activeWorkflowLatencyContext()
+    let handoffStartedAt = Date()
     pasteAtCursor(text, target: activePasteTarget)
+    WorkflowLatencyDiagnostics.logStage(
+      .pasteCopyHandoff,
+      mode: latencyContext.mode,
+      backend: latencyContext.backend,
+      startedAt: handoffStartedAt
+    )
     if activeLaunchSource == .hotkeyBackground {
       page = .main
     }
@@ -1953,6 +1998,15 @@ final class AppState {
   /// (incrementally, off the main actor), and logs WHERE it landed (Office Memory). All opt-in;
   /// this only runs when wired above (i.e. while the archive is enabled).
   private func handleWorkflowRun(_ record: ArchiveRunRecord) {
+    let archiveStartedAt = Date()
+    defer {
+      WorkflowLatencyDiagnostics.logStage(
+        .archiveWrite,
+        mode: record.mode,
+        backend: record.backend,
+        startedAt: archiveStartedAt
+      )
+    }
     // Sensitive-Field Guard: a run pasted into a secure/password field must leave NO trace — its
     // text (possibly a password) is never archived, context-logged or folded into Memory.
     guard !(activePasteTarget?.isSecureField ?? false) else {
@@ -2042,10 +2096,30 @@ final class AppState {
     else {
       return
     }
+    let copyStartedAt = Date()
     NSPasteboard.general.clearContents()
     NSPasteboard.general.setString(variant.text, forType: .string)
+    WorkflowLatencyDiagnostics.logStage(
+      .pasteCopyHandoff,
+      mode: pending.mode,
+      backend: pending.backend,
+      startedAt: copyStartedAt
+    )
     pendingVariantChoice = nil
     scheduleWorkflowCleanup(after: 0.2)
+  }
+
+  private func activeWorkflowLatencyContext() -> (mode: WorkflowType, backend: TranscriptionBackend)
+  {
+    let mode = activeWorkflow?.type ?? .transcription
+    switch mode {
+    case .localTranscription:
+      return (mode, .local)
+    case .transcription:
+      return (mode, appSettings.secureLocalModeEnabled ? .local : .remote)
+    case .textImprover, .dampfAblassen, .emojiText:
+      return (mode, rewriteTranscriptionBackend)
+    }
   }
 
   func dismissVariantChoice() {

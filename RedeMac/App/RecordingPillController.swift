@@ -23,6 +23,7 @@ final class RecordingPillController {
   /// True while the red cancel/error flash is playing, so the trailing `.idle` doesn't hide early.
   private var isFlashing = false
   private var flashTask: Task<Void, Never>?
+  private var busyNoticeTask: Task<Void, Never>?
 
   /// Distance below the top of the active screen's safe area (under the notch / menu bar).
   private let topInset: CGFloat = 8
@@ -167,6 +168,30 @@ final class RecordingPillController {
     }
   }
 
+  func showWorkflowStartBlocked(_ message: String) {
+    let text = message.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { return }
+    if panel == nil { panel = makePanel() }
+    guard let panel else { return }
+
+    model.busyNotice = text
+    if panel.isVisible {
+      positionPanel(panel)
+    } else {
+      show()
+    }
+
+    busyNoticeTask?.cancel()
+    busyNoticeTask = Task { @MainActor [weak self, weak panel] in
+      try? await Task.sleep(for: .seconds(1.1))
+      guard let self, !Task.isCancelled else { return }
+      if self.model.busyNotice == text {
+        self.model.busyNotice = nil
+        if let panel { self.positionPanel(panel) }
+      }
+    }
+  }
+
   private func dismissCopyOnly() {
     flashTask?.cancel()
     isFlashing = false
@@ -195,8 +220,11 @@ final class RecordingPillController {
   private func cancelTransientState() {
     flashTask?.cancel()
     flashTask = nil
+    busyNoticeTask?.cancel()
+    busyNoticeTask = nil
     isFlashing = false
     model.errorMessage = nil
+    model.busyNotice = nil
     model.copyOnlyText = nil
     model.pendingVariants = nil
   }
@@ -229,6 +257,9 @@ final class RecordingPillController {
 
   private func hide() {
     stopLevelTimer()
+    busyNoticeTask?.cancel()
+    busyNoticeTask = nil
+    model.busyNotice = nil
     panel?.orderOut(nil)
   }
 
@@ -386,6 +417,7 @@ final class RecordingPillModel: ObservableObject {
   @Published var phase: PillPhase = .recording
   /// Shown in the `.failed` state — the run's error message.
   @Published var errorMessage: String?
+  @Published var busyNotice: String?
   /// Shown in the `.copyOnly` state — the dictated text the user can read/copy.
   @Published var copyOnlyText: String?
   @Published var pendingVariants: PendingRewriteVariants?
@@ -406,6 +438,7 @@ private struct RecordingPillHostView: View {
       accentColor: model.accentColor,
       phase: model.phase,
       errorMessage: model.errorMessage,
+      busyNotice: model.busyNotice,
       copyOnlyText: model.copyOnlyText,
       pendingVariants: model.pendingVariants,
       onStop: onStop,

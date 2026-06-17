@@ -41,6 +41,11 @@ final class LocalModelStateTests: XCTestCase {
     XCTAssertEqual(present.installStateLabel, "geladen")
   }
 
+  func testWhisperKitLoadConfigurationPrioritizesHotPathLatency() {
+    XCTAssertFalse(LocalTranscriptionService.whisperKitPrewarmEnabled)
+    XCTAssertTrue(LocalTranscriptionService.whisperKitLoadEnabled)
+  }
+
   // MARK: - WhisperKit transcription model: disk-truth `isUsableModel`
 
   /// A directory with the three `.mlmodelc` packages but NO `config.json` (the classic

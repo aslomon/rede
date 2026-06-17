@@ -1,4 +1,11 @@
 import Foundation
+import OSLog
+
+private let llamaClientLogger = Logger(subsystem: "app.rede.mac", category: "LlamaCppClient")
+
+private func llamaClientMilliseconds(since start: Date, until end: Date = Date()) -> Int {
+  Int((end.timeIntervalSince(start) * 1000).rounded())
+}
 
 struct LlamaCppServerClient: Sendable {
   enum HealthStatus: Equatable, Sendable {
@@ -17,10 +24,26 @@ struct LlamaCppServerClient: Sendable {
       let content: String
     }
 
+    struct ChatTemplateOptions: Encodable {
+      let enableThinking: Bool
+
+      enum CodingKeys: String, CodingKey {
+        case enableThinking = "enable_thinking"
+      }
+    }
+
     let model: String
     let messages: [Message]
     let stream: Bool
     let temperature: Double
+    let maxTokens: Int
+    let chatTemplateOptions: ChatTemplateOptions
+
+    enum CodingKeys: String, CodingKey {
+      case model, messages, stream, temperature
+      case maxTokens = "max_tokens"
+      case chatTemplateOptions = "chat_template_kwargs"
+    }
   }
 
   private struct ChatResponse: Decodable {
@@ -31,6 +54,23 @@ struct LlamaCppServerClient: Sendable {
       let message: Message?
     }
     let choices: [Choice]?
+    let timings: ChatTimings?
+  }
+
+  struct ChatTimings: Decodable, Equatable, Sendable {
+    let cacheN: Int?
+    let promptN: Int?
+    let promptMs: Double?
+    let predictedN: Int?
+    let predictedMs: Double?
+
+    enum CodingKeys: String, CodingKey {
+      case cacheN = "cache_n"
+      case promptN = "prompt_n"
+      case promptMs = "prompt_ms"
+      case predictedN = "predicted_n"
+      case predictedMs = "predicted_ms"
+    }
   }
 
   private struct ErrorResponse: Decodable {
@@ -108,6 +148,7 @@ struct LlamaCppServerClient: Sendable {
       temperature: temperature
     )
 
+    let startedAt = Date()
     let (data, response): (Data, URLResponse)
     do {
       (data, response) = try await session.data(for: request)
@@ -126,7 +167,9 @@ struct LlamaCppServerClient: Sendable {
     guard let http = response as? HTTPURLResponse else {
       throw LLMError.networkError("Keine gültige Antwort")
     }
+    let responseElapsed = llamaClientMilliseconds(since: startedAt)
     guard http.statusCode == 200 else {
+      Self.logChatCompletion(totalMilliseconds: responseElapsed, timings: nil)
       if http.statusCode == 404 {
         throw LLMError.localModelUnavailable("Das lokale llama.cpp-Modell ist nicht verfügbar.")
       }
@@ -135,7 +178,12 @@ struct LlamaCppServerClient: Sendable {
       }
       throw LLMError.apiError(Self.errorMessage(from: data) ?? "Status \(http.statusCode)")
     }
-    return try Self.decodeChatContent(data)
+    let content = try Self.decodeChatContent(data)
+    Self.logChatCompletion(
+      totalMilliseconds: responseElapsed,
+      timings: Self.decodeChatTimings(data)
+    )
+    return content
   }
 
   func makeChatRequest(
@@ -152,7 +200,9 @@ struct LlamaCppServerClient: Sendable {
         .init(role: "user", content: userText),
       ],
       stream: false,
-      temperature: temperature
+      temperature: temperature,
+      maxTokens: Self.maxCompletionTokens(for: userText),
+      chatTemplateOptions: .init(enableThinking: false)
     )
 
     var request = URLRequest(url: url)
@@ -162,6 +212,11 @@ struct LlamaCppServerClient: Sendable {
     request.timeoutInterval = 120
     request.httpBody = try JSONEncoder().encode(payload)
     return request
+  }
+
+  static func maxCompletionTokens(for userText: String) -> Int {
+    let trimmedCount = userText.trimmingCharacters(in: .whitespacesAndNewlines).count
+    return min(2_048, max(384, trimmedCount / 2))
   }
 
   static func decodeChatContent(_ data: Data) throws -> String {
@@ -174,6 +229,10 @@ struct LlamaCppServerClient: Sendable {
       throw LLMError.noContent
     }
     return content
+  }
+
+  static func decodeChatTimings(_ data: Data) -> ChatTimings? {
+    (try? JSONDecoder().decode(ChatResponse.self, from: data))?.timings
   }
 
   /// Requests an embedding vector via the OpenAI-compatible `/v1/embeddings` endpoint.
@@ -221,5 +280,11 @@ struct LlamaCppServerClient: Sendable {
 
   private static func errorMessage(from data: Data) -> String? {
     (try? JSONDecoder().decode(ErrorResponse.self, from: data))?.error?.message
+  }
+
+  private static func logChatCompletion(totalMilliseconds: Int, timings: ChatTimings?) {
+    llamaClientLogger.info(
+      "stage=chat_completion total_ms=\(totalMilliseconds, privacy: .public) cache_n=\(timings?.cacheN ?? -1, privacy: .public) prompt_n=\(timings?.promptN ?? -1, privacy: .public) prompt_ms=\(timings?.promptMs ?? -1, privacy: .public) predicted_n=\(timings?.predictedN ?? -1, privacy: .public) predicted_ms=\(timings?.predictedMs ?? -1, privacy: .public) stream=false ttft_ms=unavailable"
+    )
   }
 }

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Complete Blitztext → Rede Rebranding**: Fully renamed the application from "Blitztext" to "Rede" across the entire codebase
+  - **Directory Structure**: `BlitztextMac/` → `RedeMac/` (project folder, Xcode target, build scheme, entitlements file)
+  - **Module Name**: `Blitztext` → `Rede` (all imports, test dependencies updated with `@testable import Rede`)
+  - **Type Names**: All classes and structs renamed: `BlitztextMacApp` → `RedeMacApp`, `BlitztextSurface` → `RedeSurface`, `BlitztextInstallLocationService` → `RedeInstallLocationService`, `BlitztextCleanupService` → `RedeCleanupService`, `BlitzStatusPill` → `RedeStatusPill`
+  - **Methods & Properties**: `blitztextSurface()` → `redeSurface()`, environment variable `BLITZTEXT_LLAMA_SERVER` → `REDE_LLAMA_SERVER`
+  - **Documentation & Configuration**: Swept all `docs/`, scripts, GitHub Actions workflows, and helper scripts to remove stale Blitztext references and ensure consistent Rede branding throughout
+  - **Git URLs & Paths**: Updated repository URLs from `aslomon/blitztext-app` → `aslomon/rede` in configuration files and documentation
+  - **Attribution**: Preserved MIT license header ("Copyright (c) 2026 Blitztext contributors") per open-source requirement; maintained single README reference to original Blitztext project and upstream contribution acknowledgment
+  - **Build Verification**: Successful debug builds produce `rede.app` with correct module exports and no build regressions
+
 - **AppState Dependency Injection**: Refactored `AppState.init()` to accept optional dependency parameters (`appSettings`, `transcriptionSettings`, `textImprovementSettings`, `dampfAblassenSettings`, `emojiTextSettings`, `localModelManager`, `prewarmEnginesAtLaunch`) with sensible defaults, improving testability and enabling fine-grained control over engine prewarming in launch sequences
 - **LocalModelManager Initialization**: Added `store` parameter to `LocalModelManager.init()` (defaults to `.default`) for dependency injection in tests and custom scenarios
 - **Local Model Auto-Adoption on Launch**: Added `adoptInstalledLocalModelsIfNeeded()` call during app initialization to automatically select the first installed local model if the persisted selection points to nothing on disk, improving UX on first launch after model installation

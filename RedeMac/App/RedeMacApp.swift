@@ -63,6 +63,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
       self?.menuBarStatusController.update(to: status)
       self?.recordingPillController.handleStatusChange(status)
     }
+    appState.onWorkflowStartBlocked = { [weak self] message in
+      self?.recordingPillController.showWorkflowStartBlocked(message)
+    }
     appState.onCopyOnlyFallback = { [weak self] text in
       self?.recordingPillController.showCopyOnly(text)
     }
@@ -166,16 +169,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
       appState.startMode(modeID, source: .hotkeyBackground)
 
     case .toggle:
-      // Toggle mode: if already recording the same workflow, stop it. Otherwise record in the
-      // BACKGROUND with the floating pill as the sole indicator — no popover, no waveform window.
-      if let active = appState.activeWorkflow,
-        appState.currentActiveModeID == modeID,
-        active.phase.isActive
-      {
-        active.stop()
-      } else {
-        appState.startMode(modeID, source: .hotkeyBackground)
-      }
+      if appState.stopActiveRecordingIfCurrentMode(modeID) { return }
+      // A different mode trigger while a workflow is busy is rejected centrally by AppState and
+      // surfaces as a lightweight pill notice.
+      appState.startMode(modeID, source: .hotkeyBackground)
     }
   }
 
@@ -196,8 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
   }
 
   private func handleHotkeyCancel() {
-    // ESC aborts (discards) the dictation — distinct from re-pressing the hotkey, which finishes it.
-    // The pill flashes red and disappears.
+    // ESC aborts (discards) the dictation. Re-pressing a hotkey only signals that rede is busy.
     recordingPillController.cancelCurrent()
   }
 

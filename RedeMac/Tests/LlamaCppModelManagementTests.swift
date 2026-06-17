@@ -87,7 +87,7 @@ final class LlamaCppModelManagementTests: XCTestCase {
 
     XCTAssertEqual(
       try LlamaCppDownloadService.sha256Hex(for: fileURL),
-      "c35b6d671fd783ce732914fae87feca0d63a24187e9c6cd74a52a6a45dcfe3f1"
+      "b1551d98e4804b5758bdcf600cdbb2e908e6a5e62c0c22f25cbad3ad57592c9d"
     )
   }
 

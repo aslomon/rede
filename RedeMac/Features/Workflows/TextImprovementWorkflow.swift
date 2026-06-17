@@ -104,7 +104,14 @@ final class TextImprovementWorkflow: Workflow {
 
   func stop() {
     if recorder.isRecording {
+      let stopStartedAt = Date()
       recorder.stopRecording()
+      WorkflowLatencyDiagnostics.logStage(
+        .recordingStop,
+        mode: type,
+        backend: backend,
+        startedAt: stopStartedAt
+      )
       guard
         !TranscriptionQualityService.shouldRejectRecording(duration: recorder.lastRecordingDuration)
       else {
@@ -112,7 +119,7 @@ final class TextImprovementWorkflow: Workflow {
         phase = .error(TranscriptionQualityService.noSpeechMessage)
         return
       }
-      processRecording()
+      processRecording(totalStartedAt: stopStartedAt)
     } else {
       processingTask?.cancel()
       phase = .idle
@@ -130,7 +137,7 @@ final class TextImprovementWorkflow: Workflow {
 
   // MARK: - Two-Phase Processing: Transcribe -> Rewrite
 
-  private func processRecording() {
+  private func processRecording(totalStartedAt: Date) {
     guard let url = recorder.recordingURL else {
       phase = .error("Keine Aufnahme vorhanden.")
       return
@@ -139,39 +146,46 @@ final class TextImprovementWorkflow: Workflow {
     phase = .running("wird transkribiert …")
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
+    let mode = type
+    let transcriptionBackend = backend
+    let requestLanguage = language
+    let selectedLocalModelName = localModelName
+    let dictationDictionary = dictionary
+    let correctionTerms = fuzzyTerms
+    let shouldTrimSilence = AudioRecorder.silenceTrimmingEnabled
+    let rewriteConfig = rewrite
+    let rewriteProvider = provider
+    let rewritePromptTerms = rewriteTerms
+    let selectionContext = selection
+    let automaticRewriteContext = automaticContext
+    let personalMemoryContext = memoryContext
+    let identityContext = userIdentity
+    let semanticEmailLevel = emailMemoryLevel
+    let semanticEmailLoader = emailMemoryLoader
 
-    processingTask = Task {
-      // Optionally cut long pauses first; `audioURL` is the original when trimming is off/failed.
-      let audioURL = await AudioRecorder.audioForTranscription(original: url)
-      defer {
-        try? FileManager.default.removeItem(at: url)
-        if audioURL != url { try? FileManager.default.removeItem(at: audioURL) }
+    processingTask = Task(priority: .userInitiated) {
+      let transcriptionWorker = Task.detached(priority: .userInitiated) {
+        try await WorkflowTranscriptionProcessor.transcribeAndClean(
+          originalAudioURL: url,
+          mode: mode,
+          backend: transcriptionBackend,
+          vocabularyHints: vocabularyHints,
+          language: requestLanguage,
+          localModelName: selectedLocalModelName,
+          dictionary: dictationDictionary,
+          fuzzyTerms: correctionTerms,
+          silenceTrimmingEnabled: shouldTrimSilence
+        )
       }
-
       do {
-        let rawText: String
-        switch backend {
-        case .remote:
-          rawText = try await TranscriptionService.transcribe(
-            audioURL: audioURL,
-            customTerms: vocabularyHints,
-            language: language
-          )
-        case .local:
-          rawText = try await LocalTranscriptionService.shared.transcribe(
-            audioURL: audioURL,
-            language: language,
-            modelName: localModelName,
-            customTerms: vocabularyHints
-          )
+        let transcription = try await withTaskCancellationHandler {
+          try await transcriptionWorker.value
+        } onCancel: {
+          transcriptionWorker.cancel()
         }
-        let cleanedRawText = FuzzyTermCorrector.correct(
-          DictationPostProcessor.process(
-            TranscriptionQualityService.cleanedTranscript(rawText), dictionary: dictionary),
-          terms: fuzzyTerms)
         guard
           !TranscriptionQualityService.isLikelyArtifact(
-            cleanedRawText, recordingDuration: recordingDuration)
+            transcription.cleanedText, recordingDuration: recordingDuration)
         else {
           phase = .error(TranscriptionQualityService.noSpeechMessage)
           return
@@ -180,73 +194,59 @@ final class TextImprovementWorkflow: Workflow {
         if Task.isCancelled { return }
 
         phase = .running("text wird verbessert …")
-
-        let emailMemoryMatches = await emailMemoryLoader?(cleanedRawText) ?? []
-        let emailMemoryContext =
-          emailMemoryMatches.isEmpty
-          ? nil
-          : EmailSemanticMemoryContext(matches: emailMemoryMatches, level: emailMemoryLevel)
-
-        let systemPrompt = LLMService.rewriteSystemPrompt(
-          rewrite,
-          customTerms: rewriteTerms,
-          selection: selection,
-          automaticContext: automaticContext,
-          memory: memoryContext,
-          userIdentity: userIdentity,
-          emailMemory: emailMemoryContext)
-        let outcome = try await provider.rewrite(
-          systemPrompt: systemPrompt,
-          userText: cleanedRawText,
-          temperature: LLMService.defaultRewriteTemperature
-        )
-        let cleanedImproved = TranscriptionQualityService.cleanedTranscript(outcome.text)
-
-        if rewrite.showTwoVariants {
-          do {
-            let secondOutcome = try await provider.rewrite(
-              systemPrompt: RewriteVariantBuilder.secondVariantPrompt(systemPrompt),
-              userText: cleanedRawText,
-              temperature: LLMService.defaultRewriteTemperature
-            )
-            let cleanedSecond = TranscriptionQualityService.cleanedTranscript(secondOutcome.text)
-            let variants = RewriteVariantBuilder.uniqueVariants(
-              first: cleanedImproved, second: cleanedSecond)
-            guard variants.count > 1 else {
-              throw LLMError.noContent
-            }
-            onRewriteFallback?(
-              RewriteVariantBuilder.fallbackNote(primary: outcome, secondary: secondOutcome))
-            phase = .variantChoice(variants)
-            onVariants?(
-              PendingRewriteVariants(
-                mode: type,
-                rawTranscript: cleanedRawText,
-                variants: variants,
-                backend: backend,
-                durationSec: recordingDuration
-              )
-            )
-            return
-          } catch {
-            // One-variant fallback: keep the successful first rewrite and paste it normally.
-          }
-        }
-
-        onRewriteFallback?(
-          RewriteModelRegistry.fallbackNote(
-            requested: outcome.requestedModelID, used: outcome.usedModelID))
-        phase = .done(cleanedImproved)
-        onRun?(
-          ArchiveRunRecord(
-            mode: type,
-            rawTranscript: cleanedRawText,
-            finalText: cleanedImproved,
-            backend: backend,
-            durationSec: recordingDuration
+        let rewriteWorker = Task.detached(priority: .userInitiated) {
+          try await WorkflowRewriteProcessor.textImprovementResult(
+            cleanedRawText: transcription.cleanedText,
+            recordingDuration: recordingDuration,
+            mode: mode,
+            backend: transcriptionBackend,
+            rewrite: rewriteConfig,
+            provider: rewriteProvider,
+            rewriteTerms: rewritePromptTerms,
+            selection: selectionContext,
+            automaticContext: automaticRewriteContext,
+            memoryContext: personalMemoryContext,
+            userIdentity: identityContext,
+            emailMemoryLevel: semanticEmailLevel,
+            emailMemoryLoader: semanticEmailLoader
           )
-        )
-        onOutput?(cleanedImproved)
+        }
+        let result = try await withTaskCancellationHandler {
+          try await rewriteWorker.value
+        } onCancel: {
+          rewriteWorker.cancel()
+        }
+        try Task.checkCancellation()
+        switch result {
+        case .completed(let rawTranscript, let finalText, let fallbackNote):
+          onRewriteFallback?(fallbackNote)
+          phase = .done(finalText)
+          onRun?(
+            ArchiveRunRecord(
+              mode: mode,
+              rawTranscript: rawTranscript,
+              finalText: finalText,
+              backend: transcriptionBackend,
+              durationSec: recordingDuration
+            )
+          )
+          onOutput?(finalText)
+          WorkflowLatencyDiagnostics.logStage(
+            .total,
+            mode: mode,
+            backend: transcriptionBackend,
+            startedAt: totalStartedAt
+          )
+        case .variants(let variants, let fallbackNote):
+          onRewriteFallback?(fallbackNote)
+          phase = .variantChoice(variants.variants)
+          onVariants?(variants)
+          WorkflowLatencyDiagnostics.logEvent(
+            "variant_choice_ready",
+            mode: mode,
+            backend: transcriptionBackend
+          )
+        }
       } catch {
         phase = .error(error.localizedDescription)
       }

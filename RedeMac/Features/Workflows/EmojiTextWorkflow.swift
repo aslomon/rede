@@ -77,7 +77,14 @@ final class EmojiTextWorkflow: Workflow {
 
   func stop() {
     if recorder.isRecording {
+      let stopStartedAt = Date()
       recorder.stopRecording()
+      WorkflowLatencyDiagnostics.logStage(
+        .recordingStop,
+        mode: type,
+        backend: backend,
+        startedAt: stopStartedAt
+      )
       guard
         !TranscriptionQualityService.shouldRejectRecording(duration: recorder.lastRecordingDuration)
       else {
@@ -85,7 +92,7 @@ final class EmojiTextWorkflow: Workflow {
         phase = .error(TranscriptionQualityService.noSpeechMessage)
         return
       }
-      processRecording()
+      processRecording(totalStartedAt: stopStartedAt)
     } else {
       processingTask?.cancel()
       phase = .idle
@@ -103,7 +110,7 @@ final class EmojiTextWorkflow: Workflow {
 
   // MARK: - Two-Phase Processing: Transcribe -> Emoji
 
-  private func processRecording() {
+  private func processRecording(totalStartedAt: Date) {
     guard let url = recorder.recordingURL else {
       phase = .error("Keine Aufnahme vorhanden.")
       return
@@ -112,39 +119,40 @@ final class EmojiTextWorkflow: Workflow {
     phase = .running("wird transkribiert …")
     let recordingDuration = recorder.lastRecordingDuration
     let vocabularyHints = recordingDuration >= 0.9 ? customTerms : []
+    let mode = type
+    let transcriptionBackend = backend
+    let requestLanguage = language
+    let selectedLocalModelName = localModelName
+    let dictationDictionary = dictionary
+    let correctionTerms = fuzzyTerms
+    let shouldTrimSilence = AudioRecorder.silenceTrimmingEnabled
+    let rewriteConfig = rewrite
+    let rewriteProvider = provider
+    let rewritePromptTerms = rewriteTerms
 
-    processingTask = Task {
-      // Optionally cut long pauses first; `audioURL` is the original when trimming is off/failed.
-      let audioURL = await AudioRecorder.audioForTranscription(original: url)
-      defer {
-        try? FileManager.default.removeItem(at: url)
-        if audioURL != url { try? FileManager.default.removeItem(at: audioURL) }
+    processingTask = Task(priority: .userInitiated) {
+      let transcriptionWorker = Task.detached(priority: .userInitiated) {
+        try await WorkflowTranscriptionProcessor.transcribeAndClean(
+          originalAudioURL: url,
+          mode: mode,
+          backend: transcriptionBackend,
+          vocabularyHints: vocabularyHints,
+          language: requestLanguage,
+          localModelName: selectedLocalModelName,
+          dictionary: dictationDictionary,
+          fuzzyTerms: correctionTerms,
+          silenceTrimmingEnabled: shouldTrimSilence
+        )
       }
-
       do {
-        let rawText: String
-        switch backend {
-        case .remote:
-          rawText = try await TranscriptionService.transcribe(
-            audioURL: audioURL,
-            customTerms: vocabularyHints,
-            language: language
-          )
-        case .local:
-          rawText = try await LocalTranscriptionService.shared.transcribe(
-            audioURL: audioURL,
-            language: language,
-            modelName: localModelName,
-            customTerms: vocabularyHints
-          )
+        let transcription = try await withTaskCancellationHandler {
+          try await transcriptionWorker.value
+        } onCancel: {
+          transcriptionWorker.cancel()
         }
-        let cleanedRawText = FuzzyTermCorrector.correct(
-          DictationPostProcessor.process(
-            TranscriptionQualityService.cleanedTranscript(rawText), dictionary: dictionary),
-          terms: fuzzyTerms)
         guard
           !TranscriptionQualityService.isLikelyArtifact(
-            cleanedRawText, recordingDuration: recordingDuration)
+            transcription.cleanedText, recordingDuration: recordingDuration)
         else {
           phase = .error(TranscriptionQualityService.noSpeechMessage)
           return
@@ -153,66 +161,53 @@ final class EmojiTextWorkflow: Workflow {
         if Task.isCancelled { return }
 
         phase = .running("emojis werden eingefügt …")
-
-        let systemPrompt = LLMService.emojiSystemPrompt(rewrite, customTerms: rewriteTerms)
-        let outcome = try await provider.rewrite(
-          systemPrompt: systemPrompt,
-          userText: cleanedRawText,
-          temperature: LLMService.defaultRewriteTemperature
-        )
-        let cleanedResult = TranscriptionQualityService.cleanedTranscript(outcome.text)
-        guard cleanedResult != "KEINE_AUFNAHME_ERKANNT" else {
-          phase = .error(TranscriptionQualityService.noSpeechMessage)
-          return
-        }
-        if rewrite.showTwoVariants {
-          do {
-            let secondOutcome = try await provider.rewrite(
-              systemPrompt: RewriteVariantBuilder.secondVariantPrompt(systemPrompt),
-              userText: cleanedRawText,
-              temperature: LLMService.defaultRewriteTemperature
-            )
-            let cleanedSecond = TranscriptionQualityService.cleanedTranscript(secondOutcome.text)
-            guard cleanedSecond != "KEINE_AUFNAHME_ERKANNT" else {
-              throw LLMError.noContent
-            }
-            let variants = RewriteVariantBuilder.uniqueVariants(
-              first: cleanedResult, second: cleanedSecond)
-            guard variants.count > 1 else {
-              throw LLMError.noContent
-            }
-            onRewriteFallback?(
-              RewriteVariantBuilder.fallbackNote(primary: outcome, secondary: secondOutcome))
-            phase = .variantChoice(variants)
-            onVariants?(
-              PendingRewriteVariants(
-                mode: type,
-                rawTranscript: cleanedRawText,
-                variants: variants,
-                backend: backend,
-                durationSec: recordingDuration
-              )
-            )
-            return
-          } catch {
-            // One-variant fallback: keep the successful first rewrite and paste it normally.
-          }
-        }
-
-        onRewriteFallback?(
-          RewriteModelRegistry.fallbackNote(
-            requested: outcome.requestedModelID, used: outcome.usedModelID))
-        phase = .done(cleanedResult)
-        onRun?(
-          ArchiveRunRecord(
-            mode: type,
-            rawTranscript: cleanedRawText,
-            finalText: cleanedResult,
-            backend: backend,
-            durationSec: recordingDuration
+        let rewriteWorker = Task.detached(priority: .userInitiated) {
+          try await WorkflowRewriteProcessor.emojiResult(
+            cleanedRawText: transcription.cleanedText,
+            recordingDuration: recordingDuration,
+            mode: mode,
+            backend: transcriptionBackend,
+            rewrite: rewriteConfig,
+            provider: rewriteProvider,
+            rewriteTerms: rewritePromptTerms
           )
-        )
-        onOutput?(cleanedResult)
+        }
+        let result = try await withTaskCancellationHandler {
+          try await rewriteWorker.value
+        } onCancel: {
+          rewriteWorker.cancel()
+        }
+        try Task.checkCancellation()
+        switch result {
+        case .completed(let rawTranscript, let finalText, let fallbackNote):
+          onRewriteFallback?(fallbackNote)
+          phase = .done(finalText)
+          onRun?(
+            ArchiveRunRecord(
+              mode: mode,
+              rawTranscript: rawTranscript,
+              finalText: finalText,
+              backend: transcriptionBackend,
+              durationSec: recordingDuration
+            )
+          )
+          onOutput?(finalText)
+          WorkflowLatencyDiagnostics.logStage(
+            .total,
+            mode: mode,
+            backend: transcriptionBackend,
+            startedAt: totalStartedAt
+          )
+        case .variants(let variants, let fallbackNote):
+          onRewriteFallback?(fallbackNote)
+          phase = .variantChoice(variants.variants)
+          onVariants?(variants)
+          WorkflowLatencyDiagnostics.logEvent(
+            "variant_choice_ready",
+            mode: mode,
+            backend: transcriptionBackend
+          )
+        }
       } catch {
         phase = .error(error.localizedDescription)
       }

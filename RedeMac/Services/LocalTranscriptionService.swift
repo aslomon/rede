@@ -1,5 +1,13 @@
 import Foundation
+import OSLog
 import WhisperKit
+
+private let localTranscriptionLogger = Logger(
+  subsystem: "app.rede.mac", category: "LocalTranscription")
+
+private func localTranscriptionMilliseconds(since start: Date, until end: Date = Date()) -> Int {
+  Int((end.timeIntervalSince(start) * 1000).rounded())
+}
 
 struct LocalTranscriptionModel: Identifiable, Hashable {
   let id: String
@@ -111,6 +119,8 @@ actor LocalTranscriptionService {
   static let fastModelName = "openai_whisper-large-v3-v20240930_turbo_632MB"
   static let recommendedFastModelName = "openai_whisper-small_216MB"
   static let modelRepo = "argmaxinc/whisperkit-coreml"
+  static let whisperKitPrewarmEnabled = false
+  static let whisperKitLoadEnabled = true
   static let supportedModelNames = [
     recommendedFastModelName,
     fastModelName,
@@ -248,7 +258,11 @@ actor LocalTranscriptionService {
   }
 
   func prepare(modelName: String) async throws {
+    let startedAt = Date()
     _ = try await pipeline(modelName: modelName)
+    localTranscriptionLogger.info(
+      "stage=prepare_pipeline elapsed_ms=\(localTranscriptionMilliseconds(since: startedAt), privacy: .public)"
+    )
   }
 
   /// Remove an installed Whisper model directory from disk. If that model is currently loaded into
@@ -372,9 +386,13 @@ actor LocalTranscriptionService {
       decodeOptions.usePrefillPrompt = true
       decodeOptions.promptTokens = promptTokens
     }
+    let startedAt = Date()
     let results = try await pipeline.transcribe(
       audioPath: audioPath,
       decodeOptions: decodeOptions
+    )
+    localTranscriptionLogger.info(
+      "stage=whisper_decode prompt_tokens=\(promptTokens.count, privacy: .public) elapsed_ms=\(localTranscriptionMilliseconds(since: startedAt), privacy: .public)"
     )
     return
       results
@@ -394,12 +412,16 @@ actor LocalTranscriptionService {
       throw LocalTranscriptionError.modelMissing(url)
     }
 
+    let startedAt = Date()
     let loaded = try await WhisperKit(
       modelFolder: url.path,
       verbose: false,
-      prewarm: true,
-      load: true,
+      prewarm: Self.whisperKitPrewarmEnabled,
+      load: Self.whisperKitLoadEnabled,
       download: false
+    )
+    localTranscriptionLogger.info(
+      "stage=pipeline_load prewarm=\(Self.whisperKitPrewarmEnabled, privacy: .public) load=\(Self.whisperKitLoadEnabled, privacy: .public) elapsed_ms=\(localTranscriptionMilliseconds(since: startedAt), privacy: .public)"
     )
     whisperKit = loaded
     loadedModelName = resolvedModelName

@@ -4,7 +4,8 @@ enum RewriteVariantBuilder {
   static func secondVariantPrompt(_ systemPrompt: String) -> String {
     systemPrompt
       + "\n\nErzeuge diesmal eine zweite, klar alternative Version derselben Nachricht. "
-      + "Behalte alle Fakten exakt bei, aber variiere Struktur, Rhythmus und Formulierungen sinnvoll."
+      + "Behalte alle Fakten exakt bei, aber variiere Struktur, Einstieg, Satzrhythmus und "
+      + "Formulierungen deutlich. Gib nicht dieselbe Version mit nur kleinen Wortwechseln zurück."
   }
 
   static func uniqueVariants(first: String, second: String) -> [RewriteVariant] {

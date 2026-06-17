@@ -1,5 +1,12 @@
 import Darwin
 import Foundation
+import OSLog
+
+private let llamaRuntimeLogger = Logger(subsystem: "app.rede.mac", category: "LlamaCppRuntime")
+
+private func llamaRuntimeMilliseconds(since start: Date, until end: Date = Date()) -> Int {
+  Int((end.timeIntervalSince(start) * 1000).rounded())
+}
 
 actor LlamaCppRuntimeService {
   static let shared = LlamaCppRuntimeService()
@@ -64,7 +71,11 @@ actor LlamaCppRuntimeService {
     let trimmed = modelID.trimmingCharacters(in: .whitespacesAndNewlines)
     let existing = embedding ? runningEmbedding : running
     if let existing, existing.modelID == trimmed, existing.process.isRunning {
+      let healthStartedAt = Date()
       let status = await existing.client.healthStatus()
+      llamaRuntimeLogger.info(
+        "stage=reuse_health_check role=\(Self.roleLabel(embedding: embedding), privacy: .public) status=\(String(describing: status), privacy: .public) elapsed_ms=\(llamaRuntimeMilliseconds(since: healthStartedAt), privacy: .public)"
+      )
       if status == .ready { return existing.client }
     }
 
@@ -101,19 +112,31 @@ actor LlamaCppRuntimeService {
     process.standardOutput = Pipe()
     process.standardError = Pipe()
 
+    let coldStartStartedAt = Date()
+    let launchStartedAt = Date()
     do {
       try process.run()
     } catch {
       throw RuntimeError.processLaunchFailed(error.localizedDescription)
     }
+    llamaRuntimeLogger.info(
+      "stage=process_launch role=\(Self.roleLabel(embedding: embedding), privacy: .public) elapsed_ms=\(llamaRuntimeMilliseconds(since: launchStartedAt), privacy: .public)"
+    )
 
     let server = RunningServer(process: process, modelID: trimmed, client: client)
     if embedding { runningEmbedding = server } else { running = server }
     do {
+      let healthStartedAt = Date()
       try await waitUntilReady(client: client, process: process)
+      llamaRuntimeLogger.info(
+        "stage=health_wait role=\(Self.roleLabel(embedding: embedding), privacy: .public) elapsed_ms=\(llamaRuntimeMilliseconds(since: healthStartedAt), privacy: .public)"
+      )
       guard Self.listeningPIDs(for: port).contains(process.processIdentifier) else {
         throw RuntimeError.portOwnershipMismatch
       }
+      llamaRuntimeLogger.info(
+        "stage=cold_start role=\(Self.roleLabel(embedding: embedding), privacy: .public) elapsed_ms=\(llamaRuntimeMilliseconds(since: coldStartStartedAt), privacy: .public)"
+      )
     } catch {
       try? await stopSlot(embedding: embedding)
       throw error
@@ -191,6 +214,12 @@ actor LlamaCppRuntimeService {
       "--api-key", apiKey,
       "--no-webui",
       "--log-disable",
+      "--cache-prompt",
+      "-np", "1",
+      "--reasoning", "off",
+      "--reasoning-budget", "0",
+      "-ngl", "99",
+      "-fa", "on",
     ]
     if embedding {
       // nomic-embed-text-v1.5 is mean-pooled; enable the embeddings endpoint explicitly.
@@ -221,6 +250,10 @@ actor LlamaCppRuntimeService {
     ProcessInfo.processInfo.environment.filter { key, _ in
       !key.hasPrefix("DYLD_")
     }
+  }
+
+  private static func roleLabel(embedding: Bool) -> String {
+    embedding ? "embedding" : "rewrite"
   }
 
   private static func portIsAvailable(_ port: Int) -> Bool {

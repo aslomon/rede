@@ -20,6 +20,17 @@ final class LlamaCppRuntimeTests: XCTestCase {
     XCTAssertFalse(arguments.contains("0.0.0.0"))
     XCTAssertTrue(arguments.contains("--api-key"))
     XCTAssertTrue(arguments.contains("token"))
+    XCTAssertTrue(arguments.contains("--cache-prompt"))
+    XCTAssertTrue(arguments.contains("-np"))
+    XCTAssertTrue(arguments.contains("1"))
+    XCTAssertTrue(arguments.contains("--reasoning"))
+    XCTAssertTrue(arguments.contains("off"))
+    XCTAssertTrue(arguments.contains("--reasoning-budget"))
+    XCTAssertTrue(arguments.contains("0"))
+    XCTAssertTrue(arguments.contains("-ngl"))
+    XCTAssertTrue(arguments.contains("99"))
+    XCTAssertTrue(arguments.contains("-fa"))
+    XCTAssertTrue(arguments.contains("on"))
     XCTAssertEqual(LlamaCppRuntimeService.executableURLOverride(binaryURL), binaryURL)
   }
 

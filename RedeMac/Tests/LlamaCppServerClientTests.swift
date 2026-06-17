@@ -42,6 +42,20 @@ final class LlamaCppServerClientTests: XCTestCase {
     let bodyString = try XCTUnwrap(String(data: body, encoding: .utf8))
     XCTAssertTrue(bodyString.contains(#""stream":false"#))
     XCTAssertTrue(bodyString.contains(#""temperature":0.2"#))
+    XCTAssertTrue(bodyString.contains(#""max_tokens":384"#))
+    XCTAssertTrue(bodyString.contains(#""chat_template_kwargs":{"enable_thinking":false}"#))
+  }
+
+  func testLocalChatCompletionTokenCapScalesWithInputLength() {
+    XCTAssertEqual(LlamaCppServerClient.maxCompletionTokens(for: "short"), 384)
+    XCTAssertEqual(
+      LlamaCppServerClient.maxCompletionTokens(for: String(repeating: "a", count: 3_000)),
+      1_500
+    )
+    XCTAssertEqual(
+      LlamaCppServerClient.maxCompletionTokens(for: String(repeating: "a", count: 9_000)),
+      2_048
+    )
   }
 
   func testChatResponseTrimsContent() throws {
@@ -50,6 +64,30 @@ final class LlamaCppServerClientTests: XCTestCase {
     let text = try LlamaCppServerClient.decodeChatContent(data)
 
     XCTAssertEqual(text, "Hallo")
+  }
+
+  func testChatResponseDecodesTimings() throws {
+    let data = Data(
+      """
+      {
+        "choices": [{"message": {"content": "Hallo"}}],
+        "timings": {
+          "cache_n": 236,
+          "prompt_n": 1,
+          "prompt_ms": 30.958,
+          "predicted_n": 35,
+          "predicted_ms": 661.064
+        }
+      }
+      """.utf8)
+
+    let timings = try XCTUnwrap(LlamaCppServerClient.decodeChatTimings(data))
+
+    XCTAssertEqual(timings.cacheN, 236)
+    XCTAssertEqual(timings.promptN, 1)
+    XCTAssertEqual(timings.promptMs ?? 0, 30.958, accuracy: 0.001)
+    XCTAssertEqual(timings.predictedN, 35)
+    XCTAssertEqual(timings.predictedMs ?? 0, 661.064, accuracy: 0.001)
   }
 
   func testEmptyChatResponseThrowsNoContent() {

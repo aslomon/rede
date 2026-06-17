@@ -19,6 +19,8 @@ struct RecordingPillView: View {
   var phase: PillPhase
   /// The run's error text, shown in the `.failed` state.
   var errorMessage: String?
+  /// Short transient notice when a start trigger is rejected because rede is already busy.
+  var busyNotice: String?
   /// The dictated text, shown in the `.copyOnly` fallback card.
   var copyOnlyText: String?
   var pendingVariants: PendingRewriteVariants?
@@ -165,6 +167,7 @@ struct RecordingPillView: View {
 
   /// Spoken summary of the pill's current state for VoiceOver.
   private var pillAccessibilityLabel: String {
+    if let busyNotice { return busyNotice }
     switch phase {
     case .failed: return "fehler: \(errorMessage ?? "")"
     case .copyOnly: return "nicht eingefügt — liegt in der zwischenablage: \(copyOnlyText ?? "")"
@@ -183,6 +186,22 @@ struct RecordingPillView: View {
           .font(.system(size: 11, weight: .bold))
           .foregroundStyle(.red)
           .transition(.opacity)
+      } else if let busyNotice {
+        HStack(spacing: 6) {
+          Image(systemName: "hand.raised.fill")
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(accentColor)
+          Text(busyNotice)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+        }
+        .transition(
+          .asymmetric(
+            insertion: .opacity.combined(with: .scale(scale: 0.92)),
+            removal: .opacity.combined(with: .scale(scale: 0.92))
+          )
+        )
       } else if isHovering {
         affordances
           .transition(
@@ -210,6 +229,7 @@ struct RecordingPillView: View {
     .frame(height: pillHeight)
     .modifier(PillGlassSurface())
     .animation(.easeInOut(duration: 0.2), value: phase)
+    .animation(.easeInOut(duration: 0.16), value: busyNotice)
   }
 
   // MARK: - Subviews

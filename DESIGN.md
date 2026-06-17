@@ -176,8 +176,9 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   rechts. Headline/Subheadline leben als Step-Metadaten im `OnboardingViewModel`.
   Fenster ~660×700, min 620×640, Hochformat.
   Step-Wechsel blenden per 0.16s Ease-In-Out; keine Push-/Slide-Transitions.
-- **Varianten-Karte in der Pille**: zwei gleich gewichtete Textkarten, je `Einfügen` und
-  `Kopieren`. Keine automatische Paste, solange die Karte sichtbar ist.
+- **Varianten-Karte in der Pille**: breites Compare-Panel (~620pt) mit zwei gleich gewichteten
+  Textkarten nebeneinander, je größerem scrollbarem Textbereich und Icon+Text-Aktionen
+  `Einfügen`/`Kopieren`. Keine automatische Paste, solange die Karte sichtbar ist.
 - **Verfügbarkeits-Badges**: vorhandene Icons `checkmark.circle.fill` (grün) /
   `arrow.down.circle.fill` (blau) / `exclamationmark.triangle.fill` (orange) wiederverwenden.
 - **Startseiten-Readiness**: Wenn aktive Modi wegen fehlendem OpenAI-Key, fehlendem Whisper oder

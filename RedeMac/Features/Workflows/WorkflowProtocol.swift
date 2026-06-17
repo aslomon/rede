@@ -81,6 +81,13 @@ enum WorkflowPhase: Equatable {
     default: return true
     }
   }
+
+  var blocksNewWorkflowStart: Bool {
+    switch self {
+    case .running, .variantChoice: return true
+    case .idle, .done, .error: return false
+    }
+  }
 }
 
 struct RewriteVariant: Codable, Identifiable, Sendable, Equatable {

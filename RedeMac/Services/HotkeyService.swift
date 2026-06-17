@@ -4,7 +4,7 @@ import Observation
 
 enum HotkeyMode: String, Codable, Sendable, CaseIterable, Identifiable {
   case hold  // Tasten halten = aufnehmen, loslassen = stoppen
-  case toggle  // Einmal drücken = starten, nochmal/Escape = stoppen
+  case toggle  // Press same shortcut again to finish; other mode shortcuts are rejected while busy.
 
   var id: String { rawValue }
 
@@ -18,7 +18,8 @@ enum HotkeyMode: String, Codable, Sendable, CaseIterable, Identifiable {
   var description: String {
     switch self {
     case .hold: return "tasten halten zum aufnehmen, loslassen zum stoppen."
-    case .toggle: return "einmal drücken zum starten, nochmal oder Esc zum stoppen."
+    case .toggle:
+      return "einmal drücken zum starten, gleicher shortcut beendet. andere modi warten."
     }
   }
 }
