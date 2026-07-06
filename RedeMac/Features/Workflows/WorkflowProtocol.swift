@@ -199,7 +199,9 @@ struct ArchiveRunRecord: Sendable {
   }
 }
 
-/// Invoked once per completed run, right before `onOutput`. Default-nil so disabled == zero I/O.
+/// Invoked once per completed run, right before `onOutput`. Wired unconditionally: the handler
+/// keeps the RAM-only recents buffer (always) and gates DISK archiving on the archive setting —
+/// archive disabled == zero disk I/O.
 typealias WorkflowRunHandler = @MainActor (ArchiveRunRecord) -> Void
 typealias WorkflowVariantChoiceHandler = @MainActor (PendingRewriteVariants) -> Void
 
@@ -219,7 +221,8 @@ protocol Workflow: AnyObject, Observable {
   var didTruncateAtMaxDuration: Bool { get }
   var onOutput: WorkflowOutputHandler? { get set }
   var onPhaseChange: WorkflowPhaseChangeHandler? { get set }
-  /// Emitted with raw+final+mode right before `onOutput`. Wired ONLY when archiving is enabled.
+  /// Emitted with raw+final+mode right before `onOutput`. Wired unconditionally; the handler
+  /// decides RAM buffer (always) vs disk archive (only while archiving is enabled).
   var onRun: WorkflowRunHandler? { get set }
 
   func start()

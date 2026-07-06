@@ -136,6 +136,7 @@ final class AppState {
 
   // Phase 4: text-only archive + two-speed Memory (opt-in, default OFF).
   let archiveStore = ArchiveStore()
+  let recentDictationsBuffer = RecentDictationsBuffer()
   let memoryStore = MemoryStore()
   let emailSemanticMemoryStore = EmailSemanticMemoryStore()
   let memoryCoordinator: MemoryCoordinator
@@ -534,6 +535,22 @@ final class AppState {
   func clearArchive() { archiveStore.clear() }
   func clearMemory() { memoryStore.clear() }
   func clearEmailSemanticMemory() { emailSemanticMemoryStore.clear() }
+
+  var recentDictations: [RecentDictation] {
+    RecentDictationsBuffer.displayed(
+      archiveEnabled: isArchiveEnabled,
+      archived: archiveStore.entries.prefix(RecentDictationsBuffer.cap).map {
+        RecentDictation(
+          id: $0.id,
+          date: $0.date,
+          mode: $0.mode,
+          modeName: $0.modeName,
+          finalText: $0.finalText
+        )
+      },
+      session: recentDictationsBuffer.items
+    )
+  }
 
   /// R2-FT-stats: engaging "time saved" aggregate over the EXISTING archive — read-only, no new
   /// capture, no privacy cost. Recomputed live from `archiveStore.entries` (cheap, single pass).
@@ -1972,11 +1989,9 @@ final class AppState {
       guard let self, let workflow else { return }
       self.handleWorkflowPhaseChange(phase, workflow: workflow)
     }
-    // Wire archiving/Memory-folding ONLY when the archive is enabled, so disabled == zero I/O.
-    if appSettings.archiveEnabled {
-      workflow.onRun = { [weak self] record in
-        self?.handleWorkflowRun(record)
-      }
+    // Archive disabled == zero DISK I/O. The RAM session buffer is deliberate and documented.
+    workflow.onRun = { [weak self] record in
+      self?.recordCompletedRun(record)
     }
     wireRewriteFallbackNote(workflow)
   }
@@ -1991,6 +2006,24 @@ final class AppState {
     case let workflow as DampfAblassenWorkflow: workflow.onRewriteFallback = handler
     case let workflow as EmojiTextWorkflow: workflow.onRewriteFallback = handler
     default: break
+    }
+  }
+
+  private func recordCompletedRun(_ record: ArchiveRunRecord) {
+    let enrichedRecord = enrichedArchiveRecord(record)
+    // Single privacy gate for RAM retention (pure + unit-tested): a secure/password-field run
+    // leaves no trace — neither in the session buffer nor in the disk path below.
+    guard
+      let bufferItem = RecentDictation.bufferItem(
+        from: enrichedRecord,
+        isSecureFieldTarget: activePasteTarget?.isSecureField ?? false)
+    else {
+      statusLogger.debug("Secure paste target → skipping recents buffer and archive for this run.")
+      return
+    }
+    recentDictationsBuffer.record(bufferItem)
+    if appSettings.archiveEnabled {
+      handleWorkflowRun(enrichedRecord)
     }
   }
 
@@ -2083,9 +2116,7 @@ final class AppState {
       durationSec: pending.durationSec,
       date: pending.date
     )
-    if appSettings.archiveEnabled {
-      handleWorkflowRun(record)
-    }
+    recordCompletedRun(record)
     handleWorkflowOutput(variant.text)
   }
 

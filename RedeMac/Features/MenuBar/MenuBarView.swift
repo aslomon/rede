@@ -131,6 +131,10 @@ private struct MainPageView: View {
       workflowList
         .padding(.vertical, 2)
 
+      // Recent dictations live between the workflow rows and the footer. Renders nothing when
+      // there is no data, so the popover stays pixel-identical for users without history.
+      RecentDictationsSection(appState: appState)
+
       // Engine/model selection lives only in Settings → Modelle now; the popover start page no
       // longer carries the bottom engine bar.
       AppFooter(appState: appState)

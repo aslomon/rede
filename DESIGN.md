@@ -198,6 +198,17 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   (die app-weite Listen-Reihen-Fläche), je Engine eine `SectionLabel`-Gruppe. Embedding-Modelle zeigen nie „Nutzen" (das setzt nur das
   Sprachmodell). Jeder Modelltyp muss löschbar und neu ladbar sein.
 - **Offline-/Lokal-Hinweis**: orange Info-Banner-Muster wie `accessibilityHintBanner`.
+- **Letzte Diktate im Popover**: unter den Glass-Workflow-Reihen sitzt eine bewusst ruhigere
+  Sektion „letzte diktate" (max 3, `clock.arrow.circlepath`) — flache `.tokenCard`-Reihen statt
+  Glass, damit die Hierarchie stimmt: Workflow-Reihen bleiben das visuelle Primär, der Verlauf ist
+  Sekundär. Die Sektion rendert NICHTS ohne Daten (Popover bleibt für frische Nutzer
+  pixelidentisch). Jede Reihe ist EIN `.plain`-Copy-Button: Modus-Punkt, einzeilige Vorschau,
+  Relativzeit (`RelativeTime.short`) und der `QuickCopyGlyph` rechts. `QuickCopyGlyph`
+  (`doc.on.doc` ↔ grüner `checkmark.circle.fill`) ist DIE app-weite Sprache für Copy-Feedback —
+  gleiche Geste im Popover-Verlauf und auf eingeklappten Archiv-Reihen (`ArchiveQuickCopyButton`).
+  Ist das Archiv aus, sagt die Sektion es ehrlich: Status-Pille „nur diese sitzung" (`.muted`) plus
+  Caption „beim beenden weg." mit leisem „archiv aktivieren". Kopiert wird ausschließlich über
+  `ArchiveClipboard.copyConcealed`.
 
 ## Regeln
 

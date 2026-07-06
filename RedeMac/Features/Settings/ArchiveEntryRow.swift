@@ -41,35 +41,50 @@ struct ArchiveEntryRow: View {
 
   // MARK: - Header
 
+  // Sibling controls — never nested buttons (mis-click-safe): the expand Button fills the row, an
+  // unconditional quick-copy button sits next to it, and the chevron stays the far-right disclosure
+  // cue (a mis-tap on it just expands, harmless). Quick-copy shows in the standalone window AND the
+  // Settings inline preview, collapsed and expanded — only the expanded actions strip stays gated.
   private var disclosureHeader: some View {
-    Button {
-      withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() }
-    } label: {
-      HStack(spacing: 8) {
-        Circle()
-          .fill(entry.mode.accentColorValue)
-          .frame(width: 6, height: 6)
+    HStack(spacing: 6) {
+      Button {
+        withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() }
+      } label: {
+        HStack(spacing: 8) {
+          Circle()
+            .fill(entry.mode.accentColorValue)
+            .frame(width: 6, height: 6)
 
-        VStack(alignment: .leading, spacing: 1) {
-          Text(displayName)
-            .font(.system(size: 11.5, weight: .semibold))
-            .foregroundStyle(.primary)
-          Text(timeLabel)
-            .font(.system(size: 10))
-            .foregroundStyle(.secondary)
+          VStack(alignment: .leading, spacing: 1) {
+            Text(displayName)
+              .font(.system(size: 11.5, weight: .semibold))
+              .foregroundStyle(.primary)
+            Text(timeLabel)
+              .font(.system(size: 10))
+              .foregroundStyle(.secondary)
+          }
+
+          Spacer()
         }
-
-        Spacer()
-
-        Image(systemName: expanded ? "chevron.up" : "chevron.down")
-          .font(.system(size: 9, weight: .semibold))
-          .foregroundStyle(.tertiary)
+        .contentShape(Rectangle())
       }
-      .contentShape(Rectangle())
+      .buttonStyle(.plain)
+      .frame(maxWidth: .infinity)
+      .accessibilityLabel("\(displayName), \(timeLabel)")
+      .accessibilityHint(expanded ? "Eintrag einklappen" : "Eintrag ausklappen")
+
+      ArchiveQuickCopyButton(text: entry.finalText)
+
+      Image(systemName: expanded ? "chevron.up" : "chevron.down")
+        .font(.system(size: 9, weight: .semibold))
+        .foregroundStyle(.tertiary)
+        // A little breathing room so the ~9pt glyph gets a usable tap target.
+        .padding(3)
+        .contentShape(Rectangle())
+        .onTapGesture {
+          withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() }
+        }
     }
-    .buttonStyle(.plain)
-    .accessibilityLabel("\(displayName), \(timeLabel)")
-    .accessibilityHint(expanded ? "Eintrag einklappen" : "Eintrag ausklappen")
   }
 
   // MARK: - Expanded content
