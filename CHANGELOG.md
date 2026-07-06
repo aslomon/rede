@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Archive Window Redesign (Modelle-window pattern)**: The archive window now shares the Local Models window scaffold — one ScrollView with a `VStack` (BrandMark header + subline first, then the tab bar) instead of a fixed header over a separate scroll area; window minimum size unified to 540×580 like the Modelle window
+  - Stable header: the "archiv löschen" action no longer jumps in and out of the header per tab — it sits right-aligned below the history list
+  - "neu umschreiben …" now renders via the shared `PopoverActionButtonStyle` (was hand-built background/border chrome with custom colors) and matches the adjacent copy buttons; the settings archive tab delete action uses the shared `DestructiveClearButton` instead of a re-implemented confirmation flow
+  - Empty states across all four archive facets (history, stats, paste contexts, improvements) are now `EmptyStateCard`s with each facet's concept icon instead of bare text lines; duplicated title/caption phrasing cleaned up
+  - DESIGN.md documents the shared window-scaffold and empty-state patterns
+
+- **Recent Dictations Section (popover)**: Removed the divider above "letzte diktate" — the section now sits seamlessly under the workflow rows; the "alle anzeigen" action is now a text-only tertiary affordance (same quiet style as the footer "beenden") instead of a filled quiet button, documented in DESIGN.md as a deliberate header cue rather than a CTA
+- **FooterTextButtonStyle**: Promoted from private to module-level in `MenuBarView.swift` so the text-only tertiary style can be reused (footer "beenden", recents "alle anzeigen") instead of introducing a second near-identical style
+
 - **Complete Blitztext → Rede Rebranding**: Fully renamed the application from "Blitztext" to "Rede" across the entire codebase
   - **Directory Structure**: `BlitztextMac/` → `RedeMac/` (project folder, Xcode target, build scheme, entitlements file)
   - **Module Name**: `Blitztext` → `Rede` (all imports, test dependencies updated with `@testable import Rede`)

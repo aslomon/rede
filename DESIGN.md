@@ -208,7 +208,9 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   gleiche Geste im Popover-Verlauf und auf eingeklappten Archiv-Reihen (`ArchiveQuickCopyButton`).
   Ist das Archiv aus, sagt die Sektion es ehrlich: Status-Pille „nur diese sitzung" (`.muted`) plus
   Caption „beim beenden weg." mit leisem „archiv aktivieren". Kopiert wird ausschließlich über
-  `ArchiveClipboard.copyConcealed`.
+  `ArchiveClipboard.copyConcealed`. Keine Trennlinie über der Sektion; das „alle anzeigen" im
+  Header ist bewusst textonly (`FooterTextButtonStyle`, wie „beenden" im Footer) — Header-Cue,
+  keine CTA.
 
 ## Regeln
 

@@ -546,7 +546,9 @@ private struct AppFooter: View {
   }
 }
 
-private struct FooterTextButtonStyle: ButtonStyle {
+/// Text-only tertiary affordance for deliberately quiet actions (footer "beenden",
+/// "alle anzeigen" in the recents section) — the sanctioned exception to the fill/stroke rule.
+struct FooterTextButtonStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled
 
   func makeBody(configuration: Configuration) -> some View {

@@ -23,13 +23,9 @@ struct RecentDictationsSection: View {
   @ViewBuilder
   private func content(_ recents: [RecentDictation]) -> some View {
     VStack(spacing: 0) {
-      Divider()
-        .opacity(0.5)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-
       header
         .padding(.horizontal, 16)
+        .padding(.top, 8)
         .padding(.bottom, 4)
 
       VStack(spacing: 6) {
@@ -60,7 +56,8 @@ struct RecentDictationsSection: View {
           Button("alle anzeigen") {
             NotificationCenter.default.post(name: .openArchiveWindow, object: nil)
           }
-          .buttonStyle(PopoverActionButtonStyle(.quiet))
+          // Deliberately text-only (like the footer "beenden") — a section header cue, not a CTA.
+          .buttonStyle(FooterTextButtonStyle())
           .help("archiv-fenster öffnen")
         }
       } else {
