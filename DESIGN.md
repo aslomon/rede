@@ -349,7 +349,20 @@ Chips (RecognizeChip) **innerhalb GroupBox** nutzen `ChipBackgroundModifier` aus
   `AppState.adoptInstalledLocalModelsIfNeeded()` das erste installierte (für beide Engines; bei
   Whisper nicht während eines laufenden Downloads).
 - **Archiv-Tab**: eine `SettingsSection`-Karte mit Status-Pille (aus · aktiv · N einträge) im
-  Header.
+  Header. Die Fußzeile trägt „archiv-fenster öffnen …" (`.secondary`) links und den geteilten
+  `DestructiveClearButton` rechts (deaktiviert statt versteckt, wenn nichts zu löschen ist) — keine
+  inline nachgebaute Bestätigung.
+- **Archiv-Fenster** (`ArchiveWindowView`): gleiches Gerüst wie das Modelle-Fenster — eine
+  `ScrollView` mit `VStack(spacing: 20)`, Header (BrandMark + Titel + einzeilige Subline) als
+  erstes Kind, dann die `RedeTabBar` mit den vier Facetten (verlauf · diktate · kontext ·
+  verbesserungen, Zähler-Badge auf verbesserungen), `.fontDesign(.rounded)`, min 540×580 (wie
+  Modelle). Der Header ist über alle Facetten stabil: „archiv löschen" ist KEIN Header-Button mehr,
+  sondern sitzt rechtsbündig unter der verlauf-Liste (`DestructiveClearButton`). Leere/aus-Zustände
+  aller Facetten sind `EmptyStateCard` mit dem Konzept-Icon der Facette (verlauf
+  `clock.arrow.circlepath`, statistik `chart.bar`, kontext `scope`, verbesserungen
+  `wand.and.stars`), nie nackte Textzeilen. Die „neu umschreiben …"-Aktion je Eintrag ist ein
+  `Menu` mit `.menuStyle(.button)` + `PopoverActionButtonStyle(.secondary)` — kein handgebautes
+  Fill/Border.
 - Systemeinstellungen-Reihenfolge: Bedienungshilfen → Installation & Start → Tastenkürzel →
   Diktat → Akustisches Feedback → Einrichtung → Updates → Über & Lizenzen → Sauber Entfernen.
   Die Tastenkürzel-Sektion trägt EINE `SectionLabel`-Überschrift, dann die

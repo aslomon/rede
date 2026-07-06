@@ -8,8 +8,6 @@ import SwiftUI
 struct ArchiveSettingsView: View {
   @Bindable var appState: AppState
 
-  @State private var showClearArchiveConfirm = false
-
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       archiveSection
@@ -82,26 +80,17 @@ struct ArchiveSettingsView: View {
 
       Spacer()
 
-      Button {
-        showClearArchiveConfirm = true
-      } label: {
-        Label("archiv löschen", systemImage: "trash")
+      // Shared destructive control (native confirmationDialog) instead of a duplicated inline
+      // dialog — identical look/behaviour to the archive-window and other clear buttons. Disabled
+      // (not hidden) when there's nothing to clear, so the bar never jumps.
+      DestructiveClearButton(
+        "archiv löschen",
+        message:
+          "alle archivierten transkriptionen werden on-device entfernt. das lässt sich nicht rückgängig machen."
+      ) {
+        appState.clearArchive()
       }
-      .buttonStyle(PopoverActionButtonStyle(.danger))
-        .disabled(!appState.isArchiveEnabled || appState.archiveStore.entries.isEmpty)
-        .accessibilityLabel("Archiv löschen")
-        .confirmationDialog(
-          "archiv löschen?",
-          isPresented: $showClearArchiveConfirm,
-          titleVisibility: .visible
-        ) {
-          Button("löschen", role: .destructive) { appState.clearArchive() }
-          Button("abbrechen", role: .cancel) {}
-        } message: {
-          Text(
-            "alle archivierten transkriptionen werden on-device entfernt. das lässt sich nicht rückgängig machen."
-          )
-        }
+      .disabled(!appState.isArchiveEnabled || appState.archiveStore.entries.isEmpty)
     }
     .padding(.top, 2)
   }

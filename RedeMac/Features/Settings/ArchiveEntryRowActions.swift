@@ -10,7 +10,6 @@ struct ArchiveEntryRowActions: View {
   let entry: ArchiveEntry
   let appState: AppState
 
-  @Environment(\.colorScheme) private var colorScheme
   @State private var copiedLabel: String?
   @State private var isRerunning = false
   @State private var rerunResult: String?
@@ -54,6 +53,10 @@ struct ArchiveEntryRowActions: View {
     .accessibilityLabel("\(title) in die Zwischenablage")
   }
 
+  // A real styled control renders the chrome (DESIGN.md: no hand-rolled fills/borders on
+  // interactive elements). `.menuStyle(.button)` lets the sanctioned `PopoverActionButtonStyle`
+  // draw the fill, border and 11pt-semibold type — identical to the copy buttons beside it. The
+  // label carries no `.font(...)` so the button style owns the typography.
   private var rerunMenu: some View {
     Menu {
       ForEach(rewriteModes) { mode in
@@ -69,34 +72,15 @@ struct ArchiveEntryRowActions: View {
           ProgressView().controlSize(.small).scaleEffect(0.6)
         } else {
           Image(systemName: "arrow.triangle.2.circlepath")
-            .font(.system(size: 9, weight: .semibold))
         }
         Text("neu umschreiben …")
-          .font(.system(size: 11, weight: .semibold))
       }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 6)
-      .frame(minHeight: 28)
-      .background(
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
-          .fill(rerunMenuBackground)
-      )
-      .overlay(
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
-          .strokeBorder(rerunMenuBorder, lineWidth: 0.8)
-      )
     }
+    .menuStyle(.button)
+    .buttonStyle(PopoverActionButtonStyle(.secondary))
     .fixedSize()
     .disabled(isRerunning || entry.rawTranscript.isEmpty)
     .accessibilityLabel("Rohtranskript in einem Modus neu umschreiben")
-  }
-
-  private var rerunMenuBackground: Color {
-    colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.045)
-  }
-
-  private var rerunMenuBorder: Color {
-    colorScheme == .dark ? Color.white.opacity(0.16) : Color.black.opacity(0.12)
   }
 
   private var rewriteModes: [ModeConfig] {

@@ -65,13 +65,12 @@ struct ImprovementSection: View {
   // MARK: - Empty state
 
   private var emptyState: some View {
-    Text(
-      "noch keine korrekturen erkannt. sobald du eingefügten text im feld änderst, erscheint die "
-        + "verbesserung hier."
+    EmptyStateCard(
+      icon: "wand.and.stars",
+      title: "noch keine korrekturen",
+      caption: "sobald du eingefügten text im feld änderst, erscheint die verbesserung hier.",
+      accent: .secondary
     )
-    .font(.system(size: 11))
-    .foregroundStyle(.secondary)
-    .fixedSize(horizontal: false, vertical: true)
   }
 
   // MARK: - Recent list
@@ -108,7 +107,6 @@ struct ImprovementSection: View {
 /// observations are dimmed; edited ones show the diff with an arrow.
 private struct ImprovementRow: View {
   let observation: ImprovementObservation
-
 
   private static let relativeFormatter: RelativeDateTimeFormatter = {
     let formatter = RelativeDateTimeFormatter()
@@ -192,7 +190,6 @@ private struct ImprovementSuggestionRow: View {
   let suggestion: ImprovementMiner.Suggestion
   let onAccept: () -> Void
   let onDismiss: () -> Void
-
 
   var body: some View {
     HStack(spacing: 8) {

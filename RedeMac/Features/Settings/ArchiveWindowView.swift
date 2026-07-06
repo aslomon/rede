@@ -22,25 +22,25 @@ struct ArchiveWindowView: View {
   @State private var facet: Facet = .verlauf
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      VStack(alignment: .leading, spacing: 12) {
-        header
-        facetPicker
-      }
-      .padding(.horizontal, 16)
-
-      // Full-width ScrollView; the inner horizontal padding (16) keeps the cards aligned with
-      // the header above.
-      ScrollView {
+    // Same scaffold as LocalModelsView: one ScrollView, a leading VStack(spacing: 20), the header
+    // as the first child, then the tab bar and the selected facet. Header + tab bar are grouped
+    // tightly (spacing 12) so navigation stays anchored to the title. The clear action lives inside
+    // the verlauf facet now, so the header is stable across all four facets.
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 12) {
+          header
+          facetPicker
+        }
         selectedFacet
-          .padding(.top, 2)
-          .padding(.horizontal, 16)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
+      // Top inset clears the floating traffic lights (full-size-content title bar).
+      .padding(.horizontal, 16)
+      .padding(.top, 38)
+      .padding(.bottom, 16)
     }
-    // Top inset clears the floating traffic lights (full-size-content title bar).
-    .padding(.top, 38)
-    .frame(minWidth: 460, minHeight: 480)
+    .frame(minWidth: 540, minHeight: 580)
     // rede voice: SF Rounded for the whole window, matching the popover/onboarding roots.
     .fontDesign(.rounded)
   }
@@ -48,25 +48,18 @@ struct ArchiveWindowView: View {
   // MARK: - Header
 
   private var header: some View {
-    HStack(alignment: .top) {
-      VStack(alignment: .leading, spacing: 2) {
-        HStack(spacing: 8) {
-          BrandMark(size: 18)
-          Text("transkriptions-archiv")
-            .font(.system(size: 16, weight: .semibold))
-        }
-        Text(headerSubtitle)
-          .font(.system(size: 11))
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
+    VStack(alignment: .leading, spacing: 2) {
+      HStack(spacing: 8) {
+        BrandMark(size: 18)
+        Text("transkriptions-archiv")
+          .font(.system(size: 16, weight: .semibold))
       }
-      Spacer()
-      // Only offer "Archiv löschen" on the Verlauf facet while archiving is on — elsewhere (or with
-      // it off) there's nothing to clear, and hiding it keeps an empty window reading as "disabled".
-      if appState.isArchiveEnabled, facet == .verlauf {
-        clearArchiveButton
-      }
+      Text(headerSubtitle)
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   /// Honest subtitle: confirms the local-only storage when on, but says plainly that archiving is
@@ -109,22 +102,17 @@ struct ArchiveWindowView: View {
       if appState.isImprovementDetectionEnabled {
         ImprovementSection(appState: appState)
       } else {
-        facetOffHint(
-          "verbesserungs-erkennung ist aus. aktiviere sie im tab vokabular (memory), "
-            + "um zu sehen, wie du eingefügten text danach korrigierst.")
+        // Off-state guidance, not a bare text line: reads as a calm, disabled facet.
+        EmptyStateCard(
+          icon: "wand.and.stars",
+          title: "verbesserungs-erkennung ist aus",
+          caption:
+            "aktiviere sie im tab vokabular (memory), um zu sehen, wie du eingefügten text danach "
+            + "korrigierst.",
+          accent: .secondary
+        )
       }
     }
-  }
-
-  /// Quiet placeholder shown when an opt-in facet is turned off, so the segment reads as "disabled"
-  /// rather than empty/broken.
-  private func facetOffHint(_ text: String) -> some View {
-    Text(text)
-      .font(.system(size: 11))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.vertical, 8)
   }
 
   // MARK: - List
@@ -134,7 +122,12 @@ struct ArchiveWindowView: View {
     let grouped = appState.archiveStore.entriesByDay()
 
     if grouped.isEmpty {
-      facetOffHint("noch keine einträge. neue transkriptionen erscheinen hier nach tag.")
+      EmptyStateCard(
+        icon: "clock.arrow.circlepath",
+        title: "noch keine einträge",
+        caption: "neue transkriptionen erscheinen hier nach tag.",
+        accent: .secondary
+      )
     } else {
       VStack(alignment: .leading, spacing: 12) {
         ForEach(grouped, id: \.day) { group in
@@ -154,6 +147,16 @@ struct ArchiveWindowView: View {
               }
             }
           }
+        }
+
+        // Destructive clearing lives at the bottom of the list (right-aligned), not in the window
+        // header — so switching facets no longer makes a header button appear/disappear.
+        if appState.isArchiveEnabled {
+          HStack {
+            Spacer()
+            clearArchiveButton
+          }
+          .padding(.top, 2)
         }
       }
     }

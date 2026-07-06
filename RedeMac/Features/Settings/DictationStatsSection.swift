@@ -7,7 +7,6 @@ import SwiftUI
 struct DictationStatsSection: View {
   @Bindable var appState: AppState
 
-
   private var stats: DictationStats { appState.dictationStats }
 
   var body: some View {
@@ -35,10 +34,12 @@ struct DictationStatsSection: View {
   // MARK: - Empty state
 
   private var emptyState: some View {
-    Text("noch keine diktate aufgezeichnet — aktiviere das archiv.")
-      .font(.system(size: 11))
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+    EmptyStateCard(
+      icon: "chart.bar",
+      title: "noch keine diktate",
+      caption: "aktiviere das archiv — dann erscheinen hier läufe, wörter und gesparte zeit.",
+      accent: .secondary
+    )
   }
 
   // MARK: - Stat tiles

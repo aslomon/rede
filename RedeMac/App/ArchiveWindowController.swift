@@ -37,8 +37,9 @@ final class ArchiveWindowController {
     window.titleVisibility = .hidden
     window.titlebarSeparatorStyle = .none  // removes the hairline separator under the title bar
     window.isMovableByWindowBackground = true
-    window.setContentSize(NSSize(width: 520, height: 620))
-    window.minSize = NSSize(width: 460, height: 420)
+    // Sized to match the models window so the two standalone windows read as one system.
+    window.setContentSize(NSSize(width: 560, height: 660))
+    window.minSize = NSSize(width: 520, height: 480)
     window.isReleasedWhenClosed = false
     window.center()
     return window

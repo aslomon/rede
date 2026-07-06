@@ -31,12 +31,12 @@ struct PasteContextSection: View {
   // MARK: - Empty state
 
   private var emptyState: some View {
-    Text(
-      "noch nichts protokolliert. sobald du diktierst, erscheint hier, wo der text gelandet ist."
+    EmptyStateCard(
+      icon: "scope",
+      title: "noch nichts protokolliert",
+      caption: "sobald du diktierst, erscheint hier, wo der text gelandet ist.",
+      accent: .secondary
     )
-    .font(.system(size: 11))
-    .foregroundStyle(.secondary)
-    .fixedSize(horizontal: false, vertical: true)
   }
 
   // MARK: - Aggregate
