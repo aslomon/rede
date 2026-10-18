@@ -15,7 +15,7 @@ rede is a **native macOS menu bar app** (Swift 5.10, SwiftUI + AppKit), not a we
 
 ## Build, test, run
 
-All scripts are non-interactive. Requires full Xcode 16+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+All scripts are non-interactive. Requires full Xcode 26+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```bash
 ./build.sh --debug          # debug build

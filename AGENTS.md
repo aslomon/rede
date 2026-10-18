@@ -24,7 +24,7 @@ Project generation is driven by `RedeMac/project.yml`. Generated `.xcodeproj` an
 - `scripts/create-dev-cert.sh`: create the local signing identity for stable Accessibility permissions.
 - `scripts/build-llamacpp-helper.sh`: build the bundled llama.cpp helper.
 
-Requires Xcode 16+, Command Line Tools, and XcodeGen.
+Requires Xcode 26+, Command Line Tools, and XcodeGen.
 
 ## Coding Style & Naming Conventions
 

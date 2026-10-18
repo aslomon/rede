@@ -32,4 +32,6 @@ Complexity: medium. Risks: clipboard privacy changes are intentional and documen
 
 ## Xcode 16.2 compatibility follow-up
 
-GitHub CI exposed an older Swift compiler restriction: an actor-isolated method reference in a default argument is evaluated from a nonisolated context. Replace that default argument with an explicit no-argument overload, keeping both the native paste command and the injectable test path on MainActor. This preserves delivery behavior without raising the minimum Xcode version.
+GitHub CI exposed an older Swift compiler restriction: an actor-isolated method reference in a default argument is evaluated from a nonisolated context. Replace that default argument with an explicit no-argument overload, keeping both the native paste command and the injectable test path on MainActor. This preserves delivery behavior and avoids actor-isolated default argument evaluation.
+
+The next CI run exposed a pre-existing toolchain mismatch: Liquid Glass wrappers require the macOS 26 SDK, but CI and release workflows selected Xcode 16.2. Both workflows now use the macOS 15 runner with Xcode 26.2 explicitly selected, matching the verified local toolchain. Build prerequisites document Xcode 26+; the deployment target remains macOS 14. This change does not trigger a release tag or publish an appcast.

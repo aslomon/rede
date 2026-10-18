@@ -153,7 +153,8 @@ The build pulls one Swift Package automatically: [`argmax-oss-swift`](https://gi
 
 ## 🛠️ Build & run from source
 
-Requires full **Xcode 16+** and [**XcodeGen**](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+Requires full **Xcode 26+** and [**XcodeGen**](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+The macOS 26 SDK is required to compile Liquid Glass APIs; the app still runs on macOS 14+ through availability-guarded fallbacks.
 The Xcode project is generated from `RedeMac/project.yml` — edit that, not the `.xcodeproj`.
 
 ```bash
