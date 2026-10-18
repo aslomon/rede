@@ -80,83 +80,13 @@ struct RecordingPillView: View {
     .modifier(PillGlassSurface())
   }
 
-  /// Fallback card when auto-paste couldn't land: the dictated text in a scrollable, selectable area
-  /// with a Copy button (and a ⌘V hint), so the result is never silently stuck on the clipboard.
-  ///
-  /// Design: three-zone card (header / body / footer) on a rounded-rect glass surface — NOT a
-  /// capsule — so the expanded layout reads cleanly. A thin `.separator`-opacity stroke traces the
-  /// card edge. The Copy action is a filled accent capsule (prominent CTA); ⌘V hint sits in muted
-  /// caption beside it. The dismiss target is a 20×20 circle with a `.tertiary`-foreground ✕.
   private var copyOnlyContent: some View {
-    VStack(alignment: .leading, spacing: 0) {
-
-      // ── Header ──────────────────────────────────────────────────────────
-      HStack(spacing: 6) {
-        Image(systemName: "clipboard")
-          .font(.system(size: 11, weight: .semibold))
-          .foregroundStyle(accentColor)
-        Text("nicht eingefügt — liegt bereit")
-          .font(.system(size: 11, weight: .semibold))
-          .foregroundStyle(.primary)
-        Spacer(minLength: 8)
-        CopyOnlyDismissButton(action: onDismiss)
-      }
-      .padding(.horizontal, 12)
-      .padding(.top, 11)
-      .padding(.bottom, 8)
-
-      // ── Divider ─────────────────────────────────────────────────────────
-      Rectangle()
-        .fill(Color.primary.opacity(0.06))
-        .frame(height: 0.5)
-        .padding(.horizontal, 0)
-
-      // ── Body ────────────────────────────────────────────────────────────
-      ScrollView(.vertical, showsIndicators: false) {
-        Text(copyOnlyText ?? "")
-          .font(.system(size: 11.5))
-          .foregroundStyle(.primary)
-          .textSelection(.enabled)
-          .lineSpacing(2)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(.horizontal, 12)
-          .padding(.vertical, 9)
-      }
-      .frame(maxHeight: 140)
-
-      // ── Divider ─────────────────────────────────────────────────────────
-      Rectangle()
-        .fill(Color.primary.opacity(0.06))
-        .frame(height: 0.5)
-
-      // ── Footer ──────────────────────────────────────────────────────────
-      HStack(spacing: 8) {
-        Button {
-          onCopy(copyOnlyText ?? "")
-        } label: {
-          Text("kopieren")
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 5)
-            .background(accentColor, in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Text kopieren")
-        .help("text in die zwischenablage kopieren")
-
-        Text("oder ⌘V")
-          .font(.system(size: 10.5))
-          .foregroundStyle(Color.secondary.opacity(0.75))
-
-        Spacer(minLength: 0)
-      }
-      .padding(.horizontal, 12)
-      .padding(.top, 8)
-      .padding(.bottom, 10)
-    }
-    .frame(width: 320)
-    .modifier(CardGlassSurface())
+    DictationFallbackCard(
+      text: copyOnlyText ?? "",
+      onCopy: onCopy,
+      onDismiss: onDismiss
+    )
+    .modifier(CardGlassModifier())
   }
 
   // MARK: - Layout

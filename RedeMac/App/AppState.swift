@@ -17,8 +17,8 @@ enum PopoverPage: Equatable {
 @MainActor
 final class AppState {
   private static let pasteRetryInitialAttempts = 22
-  private static let concealedPasteboardType = NSPasteboard.PasteboardType(
-    "org.nspasteboard.ConcealedType")
+  private let dictationClipboard = DictationClipboard()
+  private let credentialPresence: (KeychainKey) -> Bool
 
   var activeWorkflow: (any Workflow)?
   var page: PopoverPage = .main
@@ -85,12 +85,6 @@ final class AppState {
   private var pendingPopoverAutomaticContext: AutomaticRewriteContext?
   private var menuBarStatusResetTask: Task<Void, Never>?
   private var workflowCleanupTask: Task<Void, Never>?
-  /// The user's clipboard, snapshotted right before auto-paste overwrites it. Restored after a
-  /// successful Cmd+V so the previous contents (and any sensitive transcript) don't linger.
-  private var pasteboardRestoreSnapshot: PasteboardSnapshot?
-  /// Cancellable delayed restore of `pasteboardRestoreSnapshot`. Cancelled if a NEW paste starts
-  /// so a second dictation never has its text yanked out from under it by a stale restore.
-  private var pasteboardRestoreTask: Task<Void, Never>?
   /// Entprellter (debounced) Settings-Write. Jeder `saveSettings()`-Aufruf bricht den vorigen Task
   /// ab und plant einen neuen, der ~0.4s wartet, bevor er Encode + Disk-Write OFF-Main ausführt.
   /// So fasst schnelles Tippen (z.B. im System-Prompt) viele Mutationen zu EINEM Write zusammen.
@@ -196,8 +190,10 @@ final class AppState {
     dampfAblassenSettings: DampfAblassenSettings? = nil,
     emojiTextSettings: EmojiTextSettings? = nil,
     localModelManager: LocalModelManager? = nil,
-    prewarmEnginesAtLaunch: Bool = true
+    prewarmEnginesAtLaunch: Bool = true,
+    credentialPresence: @escaping (KeychainKey) -> Bool = { KeychainService.load(key: $0) != nil }
   ) {
+    self.credentialPresence = credentialPresence
     self.appSettings = appSettings ?? Self.loadAppSettings()
     self.transcriptionSettings = transcriptionSettings ?? Self.loadTranscriptionSettings()
     self.textImprovementSettings = textImprovementSettings ?? Self.loadTextImprovementSettings()
@@ -1683,7 +1679,7 @@ final class AppState {
   // MARK: - Auto-Paste
 
   /// Copies the text, restores focus when needed, then simulates Cmd+V.
-  /// The text intentionally remains on the clipboard as a fallback if paste is blocked.
+  /// The final text remains on the clipboard after every insertion attempt for manual reuse.
   private func pasteAtCursor(_ text: String, target: PasteTarget? = nil) {
     // Fresh run: assume a real paste until a no-paste path proves otherwise.
     lastRunWasCopyOnly = false
@@ -1692,14 +1688,6 @@ final class AppState {
     cancelPendingImprovementReread()
     // Stage the improvement candidate (opt-in). Armed only on the success path (`performPaste`).
     pendingImprovementSnapshot = makeImprovementSnapshot(text: text, target: target)
-    // A new paste starts: cancel any pending clipboard restore from a previous dictation so it
-    // can't race in and yank THIS text off the pasteboard before the target consumes it.
-    pasteboardRestoreTask?.cancel()
-    pasteboardRestoreTask = nil
-    // Snapshot the user's current clipboard BEFORE we overwrite it — restored only on the
-    // success path (after the Cmd+V actually fires). Empty snapshots are skipped at restore time.
-    pasteboardRestoreSnapshot = PasteboardSnapshot.capture(from: .general)
-
     writeSensitiveTextToPasteboard(text)
 
     if isPopoverShown {
@@ -1725,12 +1713,7 @@ final class AppState {
   }
 
   private func writeSensitiveTextToPasteboard(_ text: String) {
-    let pasteboard = NSPasteboard.general
-
-    pasteboard.clearContents()
-    pasteboard.declareTypes([.string, Self.concealedPasteboardType], owner: nil)
-    pasteboard.setString(text, forType: .string)
-    pasteboard.setString("", forType: Self.concealedPasteboardType)
+    dictationClipboard.copy(text)
   }
 
   func prepareForPopoverPresentation() {
@@ -1745,11 +1728,8 @@ final class AppState {
       ? SelectionContextService.capture()
       : nil
     pendingPopoverAutomaticContext = capturePopoverAutomaticContext()
-    if let activeWorkflow, activeWorkflow.phase.isActive {
-      page = .workflow
-    } else if page == .workflow {
-      page = .main
-    }
+    // Opening the menu must never replace navigation with the active recording.
+    if page == .workflow { page = .main }
   }
 
   func markOnboardingSeen() {
@@ -1771,8 +1751,7 @@ final class AppState {
   }
 
   func hasValue(for key: KeychainKey) -> Bool {
-    guard let value = KeychainService.load(key: key) else { return false }
-    return !value.isEmpty
+    credentialPresence(key)
   }
 
   // MARK: - Settings Persistence
@@ -2359,12 +2338,9 @@ final class AppState {
     }
   }
 
-  /// No paste happened (no target / focus race lost). Flags the run as copy-only so the result
-  /// view shows "kopiert — ⌘V", and drops the restore snapshot so OUR text stays on the clipboard
-  /// as the fallback the user can paste manually (the success path is the only one that restores).
+  /// No insertion was possible; show the final text and manual paste guidance.
   private func markCopyOnly() {
     lastRunWasCopyOnly = true
-    pasteboardRestoreSnapshot = nil
     // Surface the dictated text in the expanding fallback pill so it's never silently stuck on the
     // clipboard — the user can read it, copy it, and paste it wherever they want.
     if let text = currentPasteText, !text.isEmpty {
@@ -2373,41 +2349,9 @@ final class AppState {
   }
 
   private func performPaste() {
-    let source = CGEventSource(stateID: .hidSystemState)
-    let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true)
-    keyDown?.flags = .maskCommand
-    let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
-    keyUp?.flags = .maskCommand
-    keyDown?.post(tap: .cghidEventTap)
-    keyUp?.post(tap: .cghidEventTap)
-
-    // Only the success path reaches here, so this is the only place we restore the user's
-    // clipboard — failed/blocked pastes deliberately leave our text on the board as a fallback.
-    scheduleClipboardRestore()
-
-    // The paste landed: arm the single deferred AX re-read to learn from later manual corrections.
-    // Opt-in; a no-op when improvement detection is off. Never blocks/alters the paste above.
+    dictationClipboard.paste()
+    // Opt-in only; clipboard contents remain available independently of correction learning.
     scheduleImprovementReread()
-  }
-
-  /// Restores the pre-paste clipboard snapshot after a short delay so the target app has time to
-  /// consume our pasted text first (the Cmd+V is async; restoring immediately could swap the
-  /// pasteboard out before the paste lands). Cancellable so a new dictation supersedes it.
-  private func scheduleClipboardRestore() {
-    guard let snapshot = pasteboardRestoreSnapshot, !snapshot.isEmpty else {
-      pasteboardRestoreSnapshot = nil
-      return
-    }
-    pasteboardRestoreSnapshot = nil
-    pasteboardRestoreTask?.cancel()
-    pasteboardRestoreTask = Task { @MainActor [weak self] in
-      // ~0.75s: long enough for typical target apps to read the pasteboard on Cmd+V, short
-      // enough that the user's clipboard is back almost immediately.
-      try? await Task.sleep(for: .milliseconds(750))
-      guard !Task.isCancelled, let self else { return }
-      snapshot.restore(to: .general)
-      self.pasteboardRestoreTask = nil
-    }
   }
 
   // MARK: - Improvement detection (MEM-2) — deferred AX re-read

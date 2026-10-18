@@ -75,6 +75,7 @@ rede does not need Full Disk Access. Auto-paste uses the Accessibility permissio
 - If secure local mode is disabled, check whether a WhisperKit model is installed in the expected folder.
 - If transcription works but paste does not, this is not an OpenAI billing issue. Check **Privacy & Security -> Accessibility**, restart rede after changing the permission, and make sure the cursor is focused in a text field before starting the workflow.
 - If macOS shows multiple rede entries under Accessibility, remove or disable stale entries, run the app from the final location (`/Applications` if you used `./build.sh --install`), then grant the permission again.
-- If the target app blocks synthetic paste or the target app was not detected, the result still stays on the clipboard so you can press Cmd+V manually.
+- Every completed dictation stays on the clipboard, including after successful auto-paste, until you copy something else. Press Cmd+V to reuse it later. If insertion is blocked or no target is found, a floating card shows the result and manual paste guidance.
+- Opening the menu while recording or processing keeps modes and settings accessible. A compact status line indicates the active run; use the floating pill to stop or cancel it.
 - If audio is missing, check Microphone permission and macOS input settings.
 - If you see OpenAI errors, verify model access and account billing.

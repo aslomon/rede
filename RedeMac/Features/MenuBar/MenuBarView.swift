@@ -106,6 +106,7 @@ private struct MainPageView: View {
   var body: some View {
     VStack(spacing: 0) {
       headerBand
+      WorkflowActivityStatus(appState: appState)
 
       if RedeInstallLocationService.shouldOfferMoveToApplications {
         installHintBanner
@@ -377,6 +378,7 @@ private struct SettingsPageView: View {
       .padding(.vertical, 10)
       .background(MenuBarTokens.headerBand(colorScheme: colorScheme))
 
+      WorkflowActivityStatus(appState: appState)
       SettingsContentView(appState: appState)
 
       Spacer(minLength: 0)

@@ -199,9 +199,9 @@ When adding a model option:
 
 When changing paste or Accessibility behavior:
 
-1. Read `AppState`, `RecordingPillController`, `PasteboardSnapshot`, `SelectionContextService`, and `PasteContextAXReader`.
+1. Read `AppState`, `RecordingPillController`, `DictationClipboard`, `SelectionContextService`, and `PasteContextAXReader`.
 2. Preserve manual paste fallback.
-3. Preserve clipboard restoration semantics.
+3. Keep final output on the clipboard after every insertion attempt; never restore stale clipboard contents over a dictation or later user copy.
 4. Test pure decision logic and manually verify the macOS permission flow when possible.
 
 When changing prompts:

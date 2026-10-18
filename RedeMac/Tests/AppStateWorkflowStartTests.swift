@@ -48,6 +48,34 @@ private final class StartGateWorkflow: Workflow {
 
 @MainActor
 final class AppStateWorkflowStartTests: XCTestCase {
+  func testOpeningMenuDuringRecordingShowsMainNavigation() {
+    let state = AppState(prewarmEnginesAtLaunch: false)
+    let workflow = StartGateWorkflow()
+    state.installActiveWorkflowForTesting(workflow, modeID: WorkflowType.transcription.rawValue)
+    state.page = .workflow
+
+    state.prepareForPopoverPresentation()
+
+    XCTAssertEqual(state.page, .main)
+    XCTAssertTrue(workflow.isRecording)
+    XCTAssertEqual(workflow.stopCallCount, 0)
+  }
+
+  func testOpeningMenuWhileBusyPreservesSettings() {
+    for isRecording in [true, false] {
+      let state = AppState(prewarmEnginesAtLaunch: false)
+      let workflow = StartGateWorkflow(isRecording: isRecording)
+      state.installActiveWorkflowForTesting(workflow, modeID: WorkflowType.transcription.rawValue)
+      state.openSettings(tab: 4)
+
+      state.prepareForPopoverPresentation()
+
+      XCTAssertEqual(state.page, .settings)
+      XCTAssertEqual(state.settingsTabSelection, 4)
+      XCTAssertEqual(workflow.resetCallCount, 0)
+    }
+  }
+
   func testStartModeSignalsBusyAndKeepsCurrentWorkflowWhenRecordingIsActive() {
     let state = AppState(prewarmEnginesAtLaunch: false)
     let workflow = StartGateWorkflow()

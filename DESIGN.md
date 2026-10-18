@@ -408,3 +408,14 @@ behält den Modus-Akzent zur Modus-Kodierung. Rot nur im Abbruch-Zustand.
 - Menüleisten-Icon: Idle ist das monochrome Template des rede-Marks (Sprechblase, Welle
   transparent gestanzt). Während Aufnahme/Verarbeitung keine mode-spezifischen Badge-Symbole;
   nur das normale Zeichen plus kleiner pulsierender Statuspunkt.
+
+## Dictation continuity
+
+- During recording/processing, the menu keeps its normal mode list and settings navigation. A
+  compact 10.5pt status line uses the existing violet mic/waveform symbol; the floating pill
+  remains the recording control. Opening the menu never forces the workflow page.
+- Copy-only recovery uses a 340pt rounded glass card, 14pt padding, SF Rounded typography,
+  a quiet violet clipboard tile, and a 136pt scrollable text preview on textBackgroundColor.
+  State explicitly that the text is already copied, with Cmd+V guidance and the existing
+  primary button style plus QuickCopyGlyph feedback. Keep dismissal available.
+- Final output stays on the clipboard after successful insertion too; no delayed restoration.

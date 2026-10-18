@@ -12,7 +12,8 @@ final class AppStateReadinessTests: XCTestCase {
     let state = AppState(
       appSettings: settings,
       localModelManager: LocalModelManager(store: LlamaCppModelStore(rootDirectory: root)),
-      prewarmEnginesAtLaunch: false
+      prewarmEnginesAtLaunch: false,
+      credentialPresence: { _ in false }
     )
 
     let issueIDs = Set(state.mainPageReadinessIssues.map(\.id))
@@ -29,7 +30,8 @@ final class AppStateReadinessTests: XCTestCase {
     let state = AppState(
       appSettings: settings,
       localModelManager: LocalModelManager(store: LlamaCppModelStore(rootDirectory: root)),
-      prewarmEnginesAtLaunch: false
+      prewarmEnginesAtLaunch: false,
+      credentialPresence: { _ in false }
     )
 
     let issueIDs = Set(state.mainPageReadinessIssues.map(\.id))

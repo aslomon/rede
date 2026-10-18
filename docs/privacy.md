@@ -38,7 +38,7 @@ The app stores:
 - semantic email-memory embeddings generated locally through a bundled llama.cpp embedding model; the store keeps finished email text plus vectors for up to 30 days
 - temporary audio files while a transcription is being processed; the app attempts to delete each recording when the workflow ends or is cancelled
 
-Workflow output may also be placed on your clipboard so it can be pasted into another app. Auto-paste marks the clipboard entry as concealed for compatible clipboard managers, but the generated text intentionally remains on the clipboard as a fallback if automatic paste is blocked. Clipboard managers, macOS, or other apps may still observe clipboard contents while they are present.
+Workflow output may also be placed on your clipboard so it can be pasted into another app. Auto-paste marks the clipboard entry as concealed for compatible clipboard managers, and the final generated text stays on the clipboard after every insertion attempt, including successful auto-paste, until you copy something else. This allows later manual reuse with Cmd+V. Clipboard managers, macOS, or other apps may still observe clipboard contents while they are present.
 
 The app uses the system TLS trust store for OpenAI and Hugging Face requests. It does not currently pin certificates. A user-installed or managed root certificate can therefore affect HTTPS trust decisions on that Mac.
 
