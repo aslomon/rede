@@ -14,7 +14,11 @@ struct DictationClipboard {
   }
 
   /// The target consumes the same clipboard output that remains available for later Cmd+V.
-  func paste(using command: @MainActor () -> Void = Self.sendPasteCommand) {
+  func paste() {
+    paste(using: Self.sendPasteCommand)
+  }
+
+  func paste(using command: @MainActor () -> Void) {
     command()
   }
 

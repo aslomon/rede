@@ -29,3 +29,7 @@ Complexity: medium. Risks: clipboard privacy changes are intentional and documen
 
 ![Light recovery card content](clipboard-fallback-light.png)
 ![Dark recovery card content](clipboard-fallback-dark.png)
+
+## Xcode 16.2 compatibility follow-up
+
+GitHub CI exposed an older Swift compiler restriction: an actor-isolated method reference in a default argument is evaluated from a nonisolated context. Replace that default argument with an explicit no-argument overload, keeping both the native paste command and the injectable test path on MainActor. This preserves delivery behavior without raising the minimum Xcode version.
