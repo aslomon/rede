@@ -166,7 +166,7 @@ enum LlamaCppModelCatalog {
       blurb: "Spitzenqualität für Macs mit viel RAM (48 GB+).",
       qualityRank: 80
     ),
-  ]
+  ] + currentModels
 
   /// Embedding models — deliberately separate from chat `models` so they never surface in the
   /// rewrite picker. Powers semantic e-mail memory via a dedicated llama.cpp embedding server.

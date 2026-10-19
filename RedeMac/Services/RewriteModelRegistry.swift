@@ -8,6 +8,12 @@ struct RewriteModelOption: Identifiable, Hashable {
   let supportsTemperature: Bool
 
   var menuLabel: String { "\(label) · \(tier)" }
+
+  /// Exact API aliases verified in the official model cards on 2026-10-19.
+  /// Unknown and legacy models remain unverified rather than inheriting prefix-based support.
+  var supportedReasoningEfforts: [RewriteReasoningEffort] {
+    RewriteModelRegistry.supportedEfforts(for: id)
+  }
 }
 
 /// Curated registry of OpenAI chat models usable for rewriting, plus helpers to
@@ -15,17 +21,20 @@ struct RewriteModelOption: Identifiable, Hashable {
 enum RewriteModelRegistry {
   // Stable, broadly available ids (safe fallbacks).
   static let defaultModelID = "gpt-4o"
+  static let recommendedModelID = "gpt-6-luna"
   static let fastModelID = "gpt-4o-mini"
   /// Stronger newer model for high-quality language tasks (verified available June 2026).
   static let strongModelID = "gpt-5.4"
   /// Universal hard fallback when a chosen model id is rejected by the API.
   static let safeFallbackModelID = "gpt-4o-mini"
 
-  /// Newer GPT-5.x reasoning models reject the `temperature` parameter (HTTP 400),
-  /// so it must be omitted for them.
-  static let temperatureUnsupportedPrefixes = ["gpt-5", "o1", "o3", "o4"]
+  /// Reasoning model defaults reject `temperature`; omit it until a supported non-reasoning
+  /// configuration is explicitly selected.
+  static let temperatureUnsupportedPrefixes = ["gpt-5", "gpt-6", "o1", "o3", "o4"]
 
   static let curated: [RewriteModelOption] = [
+    RewriteModelOption(
+      id: "gpt-6-luna", label: "GPT-6 Luna", tier: "Sehr schnell & günstig", supportsTemperature: false),
     RewriteModelOption(
       id: "gpt-4o-mini", label: "GPT-4o mini", tier: "Schnell & günstig", supportsTemperature: true),
     RewriteModelOption(
@@ -36,6 +45,10 @@ enum RewriteModelRegistry {
       id: "gpt-5.4", label: "GPT-5.4", tier: "Stark für Sprache", supportsTemperature: false),
     RewriteModelOption(
       id: "gpt-5.5", label: "GPT-5.5", tier: "Maximale Qualität", supportsTemperature: false),
+    RewriteModelOption(
+      id: "gpt-6-sol", label: "GPT-6 Sol", tier: "Ausgewogen", supportsTemperature: false),
+    RewriteModelOption(
+      id: "gpt-6.1-sol", label: "GPT-6.1 Sol", tier: "Ausgewogen", supportsTemperature: false)
   ]
 
   // MARK: - Fallback note (B6)
@@ -77,39 +90,4 @@ enum RewriteModelRegistry {
     return result
   }
 
-  // MARK: - Account model listing
-
-  private struct ModelsResponse: Decodable {
-    struct Model: Decodable { let id: String }
-    let data: [Model]?
-  }
-
-  /// Fetches the chat-capable model ids available on the user's account via /v1/models.
-  /// Best-effort; returns a filtered, sorted list of plausible chat models.
-  static func fetchAvailableChatModels() async throws -> [String] {
-    guard let apiKey = KeychainService.load(key: .openAIAPIKey) else {
-      throw LLMError.notConfigured
-    }
-    var request = URLRequest(url: URL(string: "https://api.openai.com/v1/models")!)
-    request.httpMethod = "GET"
-    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-    request.timeoutInterval = 30
-
-    let (data, response) = try await URLSession.shared.data(for: request)
-    guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-      throw LLMError.apiError("Modell-Liste konnte nicht geladen werden.")
-    }
-    let decoded = try JSONDecoder().decode(ModelsResponse.self, from: data)
-    let ids = (decoded.data ?? []).map(\.id)
-    let chatLike = ids.filter { id in
-      let l = id.lowercased()
-      return
-        (l.hasPrefix("gpt-") || l.hasPrefix("o1") || l.hasPrefix("o3") || l.hasPrefix("o4")
-        || l.hasPrefix("chatgpt"))
-        && !l.contains("audio") && !l.contains("realtime") && !l.contains("transcribe")
-        && !l.contains("tts") && !l.contains("image") && !l.contains("embedding")
-        && !l.contains("search") && !l.contains("moderation")
-    }
-    return Array(Set(chatLike)).sorted()
-  }
 }
