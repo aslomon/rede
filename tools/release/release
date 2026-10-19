@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+release_tools="$(cd "$(dirname "$0")" && pwd -P)"
+exec python3 "$release_tools/cli.py" "$@"

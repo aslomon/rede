@@ -1,142 +1,27 @@
-name: Release
+name: Verify published release
 
-# Builds a signed, Sparkle-ready release when a version tag is pushed (e.g. v1.6).
-# IMPORTANT: until a Developer ID certificate is configured as a secret, CI artifacts are
-# ad-hoc signed — suitable for personal machines only (Gatekeeper friction, TCC grants do not
-# survive updates). See docs/release-process.md for the local signing path and the Phase 3
-# (notarization) follow-ups.
-
+# Signing remains on the owner's Mac. This read-only job verifies the public assets after
+# the separately approved local publish command makes a complete draft release visible.
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
+  workflow_dispatch:
 
 permissions:
-  contents: write
-
-env:
-  SPARKLE_VERSION: "2.9.3" # keep in sync with RedeMac/project.yml
+  contents: read
 
 jobs:
-  release:
-    name: Build and draft release
+  verify-public-assets:
     runs-on: macos-15
-    timeout-minutes: 90
-
+    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Select Xcode
-        run: |
-          sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          xcodebuild -version
-
-      - name: Install XcodeGen
-        run: |
-          if ! command -v xcodegen >/dev/null 2>&1; then
-            brew install xcodegen
-          fi
-
-      - name: Build llama.cpp helper (universal)
-        run: ./scripts/build-llamacpp-helper.sh
-
-      - name: Resolve helper path and checksum
-        id: helper
-        run: |
-          helper="$PWD/.derivedData-llamacpp-helper/output/llama-server"
-          if [ ! -f "$helper" ]; then
-            echo "llama-server helper not found after build: $helper" >&2
-            exit 1
-          fi
-          echo "path=$helper" >> "$GITHUB_OUTPUT"
-          echo "sha256=$(shasum -a 256 "$helper" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-
-      - name: Build app (Release, universal)
-        run: |
-          ./build.sh --release \
-            --llamacpp-helper="${{ steps.helper.outputs.path }}" \
-            --llamacpp-helper-sha256="${{ steps.helper.outputs.sha256 }}"
-
-      - name: Archive app
-        id: archive
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          zip_name="rede-${version}.zip"
-          ditto -c -k --sequesterRsrc --keepParent rede.app "$zip_name"
-          echo "zip=$zip_name" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Fetch Sparkle tools
-        run: |
-          curl -L -o sparkle-dist.tar.xz \
-            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
-          mkdir -p sparkle-dist
-          tar -xJf sparkle-dist.tar.xz -C sparkle-dist
-
-      - name: Sign update archive (EdDSA)
-        id: sign
+      - uses: actions/checkout@v6
+      - name: Verify anonymously downloaded feed and signed archive
         env:
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          EXPECTED_RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
-            echo "SPARKLE_PRIVATE_KEY secret is missing — cannot produce a verifiable update." >&2
-            exit 1
+          args=(verify-remote --repository "$GITHUB_REPOSITORY")
+          if [ -n "$EXPECTED_RELEASE_TAG" ]; then
+            args+=(--expect-tag "$EXPECTED_RELEASE_TAG")
           fi
-          key_file="$(mktemp)"
-          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$key_file"
-          signature_line="$(./sparkle-dist/bin/sign_update --ed-key-file "$key_file" "${{ steps.archive.outputs.zip }}")"
-          rm -f "$key_file"
-          echo "signature=$signature_line" >> "$GITHUB_OUTPUT"
-
-      - name: Compose appcast item
-        run: |
-          version="${{ steps.archive.outputs.version }}"
-          build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' rede.app/Contents/Info.plist)"
-          pub_date="$(LC_ALL=en_US date -u '+%a, %d %b %Y %H:%M:%S +0000')"
-          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${{ steps.archive.outputs.zip }}"
-          cat > appcast.xml <<EOF
-          <?xml version="1.0" encoding="utf-8"?>
-          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
-            <channel>
-              <title>rede Updates</title>
-              <item>
-                <title>Version ${version}</title>
-                <pubDate>${pub_date}</pubDate>
-                <sparkle:version>${build}</sparkle:version>
-                <sparkle:shortVersionString>${version}</sparkle:shortVersionString>
-                <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-                <enclosure url="${url}" ${{ steps.sign.outputs.signature }} type="application/octet-stream"/>
-              </item>
-            </channel>
-          </rss>
-          EOF
-          cat appcast.xml
-
-      - name: Create draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --draft \
-            --title "rede ${GITHUB_REF_NAME}" \
-            --generate-notes \
-            "${{ steps.archive.outputs.zip }}"
-
-      - name: Publish appcast to gh-pages
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin gh-pages || true
-          if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
-            git worktree add ../gh-pages origin/gh-pages
-          else
-            git worktree add --orphan -b gh-pages ../gh-pages
-          fi
-          cp appcast.xml ../gh-pages/appcast.xml
-          cd ../gh-pages
-          git add appcast.xml
-          git commit -m "Update appcast for ${GITHUB_REF_NAME}"
-          git push origin HEAD:gh-pages
+          tools/release/release "${args[@]}"

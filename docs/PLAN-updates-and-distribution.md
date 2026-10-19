@@ -1,6 +1,11 @@
 # Implementation Plan: Update Service & Own-App Distribution (`rede`)
 
-## Status (2026-06-10)
+> Historical plan. The release/feed/signing sections below are superseded by the 2026-10-19
+> [local signed release process](release-process.md) and `tools/release/`. Current releases use
+> GitHub latest-release assets, the existing local Keychain account `rede`, and stable local code
+> signing. Do not follow historical CI-secret, key-generation, or Pages-deployment instructions.
+
+## Historical status (2026-06-10)
 
 - **Phase 1 (in-app updater): code-complete** — `UpdateService` (gentle reminders), Updates
   section in System settings, popover footer/gear hint, Sparkle in `project.yml`
@@ -119,7 +124,7 @@
   3. Sign with the stable identity (Developer ID once Phase 3 lands; until then local cert).
   4. Notarize + staple (Phase 3).
   5. `ditto -c -k --sequesterRsrc --keepParent rede.app rede-<version>.zip`.
-  6. `sign_update` → `sparkle:edSignature` + `length`.
+  6. `sign_update --account rede` → `sparkle:edSignature` + `length` (current local path).
   7. Create GitHub release on the fork with the zip as asset; update `appcast.xml` on `gh-pages`
      (enclosure URLs point at the release assets; German release notes from the CHANGELOG).
 - `build.sh` change: the standalone re-sign must sign nested Sparkle code in the right order
@@ -153,7 +158,7 @@ checks (verified via Sparkle log); popover shows the update hint without stealin
 
 | #   | Task                                                                                                                                 |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 2.1 | Generate EdDSA keypair (`generate_keys`). Private key: local Keychain + CI secret only. **Never committed.** Public key → Info.plist |
+| 2.1 | Superseded: retain the existing EdDSA Keychain account `rede`; inspect only with `generate_keys --account rede -p`. No export/CI secret. |
 | 2.2 | GitHub Actions `release.yml` on tag push `v*`: helper build → app build → sign → zip → `sign_update` → draft release with assets     |
 | 2.3 | `gh-pages` branch + GitHub Pages serving `appcast.xml`; CI job patches and pushes it                                                 |
 | 2.4 | `docs/release-process.md`: full runbook incl. local no-CI fallback and key backup/rotation notes                                     |

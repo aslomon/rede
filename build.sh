@@ -12,6 +12,7 @@ LLAMACPP_HELPER_PATH="${LLAMACPP_HELPER_PATH:-}"
 LLAMACPP_HELPER_SHA256="${LLAMACPP_HELPER_SHA256:-}"
 REQUIRE_LLAMA_CPP_HELPER=false
 ALLOW_MISSING_LLAMA_CPP_HELPER=false
+RELEASE_BUILD_SETTINGS=()
 
 for arg in "$@"; do
     case "$arg" in
@@ -38,6 +39,22 @@ for arg in "$@"; do
             ;;
         --allow-missing-llamacpp-helper)
             ALLOW_MISSING_LLAMA_CPP_HELPER=true
+            ;;
+        --version=*)
+            release_version="${arg#*=}"
+            if [[ ! "$release_version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+                echo "Invalid release version." >&2
+                exit 1
+            fi
+            RELEASE_BUILD_SETTINGS+=("MARKETING_VERSION=$release_version")
+            ;;
+        --build-number=*)
+            release_build_number="${arg#*=}"
+            if [[ ! "$release_build_number" =~ ^[1-9][0-9]*$ ]]; then
+                echo "Invalid release build number." >&2
+                exit 1
+            fi
+            RELEASE_BUILD_SETTINGS+=("CURRENT_PROJECT_VERSION=$release_build_number")
             ;;
         *)
             echo "Unbekannte Option: $arg"
@@ -74,7 +91,7 @@ resolve_codesign_identity() {
         CODESIGN_MODE="adhoc"
     fi
 
-    rm -rf "$test_dir"
+    trash_build_artifact "$test_dir"
 }
 
 # Signs the app bundle using the resolved mode. Stable mode uses the local
@@ -100,7 +117,7 @@ sign_app_bundle() {
         codesign --force --options runtime \
             --entitlements "$dev_entitlements" \
             --sign "$CODESIGN_IDENTITY_NAME" "$target" 2>&1
-        rm -f "$dev_entitlements"
+        trash_build_artifact "$dev_entitlements"
     else
         echo "🔏 Signiere lokale Development-App ad-hoc. Dieses Artefakt ist nicht notarisiert."
         echo "   Tipp: Fuehre einmalig scripts/create-dev-cert.sh aus, damit Bedienungshilfen-Freigaben Rebuilds ueberleben."
@@ -322,11 +339,13 @@ ensure_xcodebuild_available() {
     exit 1
 }
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 PROJECT_DIR="$SCRIPT_DIR/RedeMac"
 PROJECT_FILE="$PROJECT_DIR/RedeMac.xcodeproj"
 DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-redemac-build"
 ENTITLEMENTS_PATH="$PROJECT_DIR/Resources/RedeMac.entitlements"
+# shellcheck source=scripts/build-cleanup.sh
+source "$SCRIPT_DIR/scripts/build-cleanup.sh"
 cd "$PROJECT_DIR"
 
 preflight_llamacpp_helper_requirement
@@ -361,6 +380,7 @@ xcodebuild \
     ONLY_ACTIVE_ARCH=NO \
     ARCHS="$UNIVERSAL_ARCHS" \
     ENABLE_DEBUG_DYLIB=NO \
+    ${RELEASE_BUILD_SETTINGS[@]+"${RELEASE_BUILD_SETTINGS[@]}"} \
     clean build
 
 # App finden
@@ -379,7 +399,7 @@ RESOURCES_DIR="$APP_PATH/Contents/Resources"
 mkdir -p "$RESOURCES_DIR"
 cp -f "$PROJECT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/" 2>/dev/null || true
 if [ -d "$PROJECT_DIR/Resources/AppIcon.icon" ]; then
-    rm -rf "$RESOURCES_DIR/AppIcon.icon"
+    trash_build_artifact "$RESOURCES_DIR/AppIcon.icon"
     ditto "$PROJECT_DIR/Resources/AppIcon.icon" "$RESOURCES_DIR/AppIcon.icon"
 fi
 cp -f "$PROJECT_DIR/Resources/menubar_icon.png" "$RESOURCES_DIR/" 2>/dev/null || true
@@ -388,7 +408,7 @@ stage_llamacpp_helper "$APP_PATH"
 
 # In Projektordner kopieren
 DEST="$SCRIPT_DIR/rede.app"
-rm -rf "$DEST"
+trash_build_artifact "$DEST"
 cp -R "$APP_PATH" "$DEST"
 resolve_codesign_identity
 sign_app_bundle "$DEST"
@@ -404,7 +424,7 @@ if [ "$INSTALL_APP" = true ]; then
         echo "   Fuehre den Befehl mit passenden Rechten erneut aus oder ziehe die App manuell nach /Applications."
         exit 1
     fi
-    rm -rf "$INSTALL_DEST"
+    trash_build_artifact "$INSTALL_DEST"
     cp -R "$DEST" "$INSTALL_DEST"
     sign_app_bundle "$INSTALL_DEST"
     verify_universal_app "$INSTALL_DEST"
