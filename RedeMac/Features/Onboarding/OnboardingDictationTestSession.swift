@@ -29,7 +29,8 @@ final class OnboardingDictationTestSession {
           fuzzyTerms: appState.effectiveFuzzyTerms,
           language: appState.transcriptionSettings.language,
           backend: appState.appSettings.secureLocalModeEnabled ? .local : .remote,
-          localModelName: appState.selectedLocalModelName
+          localModelName: appState.selectedLocalModelName,
+          remote: WorkflowRemoteContext(isRemoteAllowed: appState.remoteGate.allowsRemote)
         )
       },
       setHotkeysSuspended: { isSuspended in

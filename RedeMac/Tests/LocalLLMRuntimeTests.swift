@@ -44,8 +44,9 @@ final class LocalLLMRuntimeTests: XCTestCase {
     XCTAssertEqual(decoded.selectedLocalLLMModelName, "gemma3:latest")
   }
 
-  func testExplicitOllamaSelectionIsDroppedAfterOllamaRemoval() throws {
-    // An explicitly-stored Ollama selection is unknown to the llama.cpp catalog and is discarded.
+  func testExplicitOllamaSelectionIsDroppedByValidatorNotByDecode() throws {
+    // Decoding keeps the stored id (the installed set is unknown there); the validator that runs
+    // where installed models are known discards an id neither the catalog nor the disk knows.
     let json = """
       {
         "selectedLocalLLM": {
@@ -56,9 +57,12 @@ final class LocalLLMRuntimeTests: XCTestCase {
       """
 
     let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(json.utf8))
+    XCTAssertEqual(decoded.selectedLocalLLM.modelID, "gemma3:latest")
 
-    XCTAssertFalse(decoded.selectedLocalLLM.isConfigured)
-    XCTAssertEqual(decoded.selectedLocalLLM.modelID, "")
+    let validated = LocalLLMSelectionValidator.validated(
+      decoded.selectedLocalLLM, installedModelIDs: [])
+    XCTAssertFalse(validated.isConfigured)
+    XCTAssertEqual(validated.modelID, "")
   }
 
   func testExplicitSelectionWinsOverLegacyModelName() throws {

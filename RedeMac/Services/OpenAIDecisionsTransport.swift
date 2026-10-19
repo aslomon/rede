@@ -1,7 +1,7 @@
 import Foundation
 
 struct OpenAIDecisionsTransport: Sendable {
-    static let shared = OpenAIDecisionsTransport()
+    static let shared = OpenAIDecisionsTransport(isRemoteAllowed: { false })
     static let requestTimeout: TimeInterval = 10
     static let resourceTimeout: TimeInterval = 15
     static let endpoint = URL(string: "https://api.openai.com/v1/decisions")!

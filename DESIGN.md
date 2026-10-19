@@ -212,6 +212,84 @@ hotkey-modus, aufnahmelänge, enrichment, verarbeitung online/lokal) — immer t
   Header ist bewusst textonly (`FooterTextButtonStyle`, wie „beenden" im Footer) — Header-Cue,
   keine CTA.
 
+## Refresh: Live-Text · Automatik · Updates · Modelle (additiv)
+
+Keine neue visuelle Sprache — alles nutzt vorhandene Primitives (`SettingsSection`,
+`RedeStatusPill`, `.tokenCard`/`.tintBanner`, `PopoverActionButtonStyle`, `InfoDisclosure`,
+`CardGlassModifier`). Logik lebt in den Control-Models unter `Features/Shared/Controls/`; Views
+rendern sie nur und halten die deutsche Copy.
+
+- **Neue Icons** (je ein Symbol pro Konzept): live-text `waveform.badge.mic`, automatik
+  `wand.and.stars.inverse`, online-extras `cloud`, „jetzt installieren“ `arrow.down.app`,
+  Automatik-Hinweis „als e-mail erkannt“ `envelope`, „live pausiert“/Rückfall `arrow.triangle.branch`,
+  „wie gewohnt“ `equal.circle`, Feldtext `text.cursor`, Modell-Angebot `sparkles`.
+- **Live-Pille** (`RecordingPillLiveCard`): ersetzt die Kapsel NUR während der Aufnahme und nur wenn
+  Live an ist, als 340pt-Karte (`LiquidGlass.pillExpandedWidth`, `CardGlassModifier`, ein
+  Glass-Layer). Kopfzeile = violetter Live-Punkt (`RedeBrand.violet`) + Waveform in Modus-Akzent +
+  leises „live“; Hover blendet ✓/✕ ein. Darunter ein **festes** 2-Zeilen-Fenster (32pt) mit dem
+  Textende an einer Wortgrenze — die Karte ändert ihre Größe nie, das Panel springt nicht. Bereits
+  gesicherter Text in `.primary`, noch änderbarer Text in `.secondary` (nicht kursiv, keine
+  Animation pro Wort). Zustände: verbinden · ich höre zu · letzte worte · „live-text pausiert — ich
+  transkribiere danach.“ (ruhig, `.secondary`, KEIN Rot: die Aufnahme wird ja weiterverarbeitet).
+  Reduce Motion: keine Hover-Animation. VoiceOver: Wert bleibt während des Sprechens konstant
+  („läuft“), der Text wird erst nach Live-Ende vorgelesen — nie pro Delta.
+- **Online-Extras** (Modelle-Tab, direkt unter „verarbeitung“): eine `SettingsSection` mit zwei
+  Schaltern (live-text, automatik) + Unter-Schalter „text aus dem aktuellen feld mitsenden“.
+  Beides standardmäßig AUS. Im Lokalmodus bleiben die Schalter sichtbar, aber **deaktiviert mit
+  Grund-Zeile** („im lokalmodus aus: nichts verlässt deinen Mac.“); ein früher gespeicherter
+  An-Wert bleibt gespeichert, ist aber wirkungslos. Datenfluss steht hinter `InfoDisclosure`
+  „was wird gesendet?“ (kein Dauertext). Status-Pille im Header: `.local` „im lokalmodus aus“ ·
+  `.online` „an“ · `.muted` „aus“.
+- **Automatik pro Modus**: ein Schalter „zweck automatisch erkennen“ in jedem Modus mit
+  Umschreib-Schritt (E-Mail, Prompt, Social, eigene Rewrite-Modi — `ModeKind.rewritesText`), nie im
+  Diktat (kein Umschreiben, nichts zu formatieren). Standard AUS, pro Modus bewusst einzuschalten.
+  Bei Social hängt das Overlay HINTER dem ganzen Emoji-Prompt („Ton und Emoji-Einstellungen des
+  Modus bleiben“); Auswahl und Feldtext gehen dort nie mit, weil der Social-Rewrite sie selbst
+  nicht liest. Deaktiviert mit Grund, solange der globale Schalter aus ist, Lokalmodus an ist oder
+  das Rewrite lokal läuft. Automatik schaltet NIE einen anderen Datenschutz-Schalter (Feldkontext,
+  Memory, E-Mail-Memory) ein.
+- **Ergebnis-Zeile** (`PurposeRoutingNoteView`): eine leise 10.5pt-Zeile unter „sitzt.“ — „als
+  e-mail erkannt — umschreiben angepasst.“ / „kein besonderer zweck erkannt — wie gewohnt
+  umgeschrieben.“ / „automatik war unsicher — wie gewohnt umgeschrieben.“ Nie ein Perfektions-
+  oder Genauigkeitsversprechen.
+- **Modell- und Denkaufwand-Picker** (Modus-Karte): Menü-Picker wie bisher; Luna steht zuerst und
+  trägt das Suffix „· empfohlen“ (ein Menü zeigt nur Text, daher kein zweites Pill). Gespeicherte
+  fremde IDs bleiben als „Eigenes“ sichtbar. „denkaufwand“ erscheint nur für Modelle mit
+  Aufwandsstufen (Luna: aus · mittel · hoch · sehr hoch); bei Luna ist der Standard **aus**. Bei
+  den Sol-Modellen steht ohne gespeicherte Wahl die Zeile „modellstandard“ (es wird nichts
+  gesendet, der API-Standard gilt) — nie „aus“, das dort eine eigene, gesendete Stufe ist. Ab
+  „hoch“ eine Zeile „denkt länger nach. dein text kommt später.“ Beim Modellwechsel wird eine
+  nicht unterstützte Stufe verworfen.
+- **Modell-Angebot** (`RecommendedModelOfferBanner`, Modelle-Tab, nur online + Key): violettes
+  `.tintBanner` mit „für rewrite-modi übernehmen“ (primary) und „nicht jetzt“ (quiet, wird
+  gemerkt in `dismissedModelOffers`). Nie still; verändert nur Online-Rewrite-Modi.
+- **Lokale Modelle**: Einträge der aktuellen Katalog-Erweiterung tragen die Pillen „neu“ (`.download`)
+  und „nicht lokal geprüft“ (`.muted`) neben dem Namen; Größe und der explizite „laden“-Button
+  bleiben unverändert — nichts lädt von selbst. Die Pillen kommen aus dem `verification`-Wert des
+  Modells selbst, der an der exakten Datei hängt (Dateiname + Prüfsumme + Größe): die installierte
+  Gemma-E4B-Q4_K_M-Datei trägt „lokal geprüft“ (`.ready`, Tooltip mit llama.cpp-Build und Datum,
+  „kein qualitätsurteil“); ein Geschwister wie Q4_0 erbt das nie. Ältere Katalogzeilen tragen keine
+  Pille — über sie wird nichts Neues behauptet.
+- **Updates-Sektion** (System-Tab, `UpdatesSettingsContent`): Status-Pille im Header (noch nicht
+  geprüft · aktuell · prüfe … · lädt N % · update X · X bereit · fehlgeschlagen), Versionszeile,
+  EINE Detailzeile (Fehler orange, nüchtern), dann „jetzt nach updates suchen“ und — nur bei
+  gestagtem Update — „jetzt installieren“ (primary, deaktiviert während eines Diktats mit
+  „wartet, bis dein diktat fertig ist.“). Der Button bleibt bei jedem `.staged` stehen, auch bei
+  einem bereits angeforderten, verschobenen Neustart ohne Hinweisversion. Gibt der Dienst `false`
+  zurück, steht dort ruhig „starten ging gerade nicht. das update bleibt bereit.“ — nie ein
+  Neustart-Versprechen. Der Hinweis im Popover-Footer folgt derselben Logik: bei `.available`
+  öffnet er die Update-Ansicht („update auf X verfügbar“), bei `.staged` installiert er („update
+  auf X installieren“; ein Check wäre dort bewusst wirkungslos), während Prüfung/Download ist er
+  sichtbar aber deaktiviert. Zwei Schalter: „automatisch täglich prüfen“ und
+  „updates automatisch laden, beim beenden installieren“ (deaktiviert, solange die Prüfung aus
+  ist — sie zeigt den EFFEKTIVEN Wert). Datenfluss-Caption: nur app-/macOS-Version an GitHub,
+  kein Geräteprofil, **auch im Lokalmodus** (Updates sind keine Inhaltsübertragung).
+- **Copy-Regeln**: Kleinschreibung wie überall; kein „perfekt/garantiert/immer richtig“; keine
+  Aufbewahrungszusage („wird nicht gespeichert“) — wo es keine dokumentierte Zusage gibt, steht
+  „wie lange OpenAI diese anfragen aufbewahrt, steuert rede nicht“; Rückfälle klingen ruhig
+  („wie gewohnt“), nie nach Fehler. Gesendet-Audio ist nicht zurückholbar — das steht beim
+  Live-Schalter.
+
 ## Regeln
 
 - Keine neuen Akzentfarben ohne Grund; bestehende Modus-Akzente nutzen.

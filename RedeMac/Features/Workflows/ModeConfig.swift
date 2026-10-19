@@ -132,7 +132,9 @@ enum SemanticEmailEnrichmentLevel: String, Codable, Sendable, CaseIterable, Iden
 struct RewriteConfig: Codable, Sendable {
   var systemPrompt: String = ""
   var rewriteBackend: RewriteBackend = .openai
-  var modelID: String = RewriteModelRegistry.defaultModelID
+  /// New configurations start on the recommended model. Decoding a stored config without a model id
+  /// still falls back to the legacy `defaultModelID`, so old files never change silently.
+  var modelID: String = RewriteModelRegistry.recommendedModelID
   var tone: TextImprovementSettings.TextTone = .neutral
   var context: String = ""
   var emojiDensity: EmojiTextSettings.EmojiDensity = .mittel
@@ -147,11 +149,18 @@ struct RewriteConfig: Codable, Sendable {
   var useSemanticEmailMemory: Bool = false
   var semanticEmailEnrichmentLevel: SemanticEmailEnrichmentLevel = .medium
   var showTwoVariants: Bool = false
+  /// Stored reasoning effort. `nil` means "not chosen": the registry resolves it per model, which
+  /// for the recommended model is `.none`. A stored value the model does not support is ignored
+  /// at request time, never sent. Unknown stored strings decode to `nil`.
+  var reasoningEffort: RewriteReasoningEffort?
+  /// Per-mode Automatik (purpose routing). Only effective while the global master is on, the
+  /// rewrite runs online and secure-local is off. It never changes any other privacy setting.
+  var purposeRouting: PurposeRoutingMode = .off
 
   init(
     systemPrompt: String = "",
     rewriteBackend: RewriteBackend = .openai,
-    modelID: String = RewriteModelRegistry.defaultModelID,
+    modelID: String = RewriteModelRegistry.recommendedModelID,
     tone: TextImprovementSettings.TextTone = .neutral,
     context: String = "",
     emojiDensity: EmojiTextSettings.EmojiDensity = .mittel,
@@ -160,7 +169,9 @@ struct RewriteConfig: Codable, Sendable {
     useMemoryContext: Bool = false,
     useSemanticEmailMemory: Bool = false,
     semanticEmailEnrichmentLevel: SemanticEmailEnrichmentLevel = .medium,
-    showTwoVariants: Bool = false
+    showTwoVariants: Bool = false,
+    reasoningEffort: RewriteReasoningEffort? = nil,
+    purposeRouting: PurposeRoutingMode = .off
   ) {
     self.systemPrompt = systemPrompt
     self.rewriteBackend = rewriteBackend
@@ -174,6 +185,8 @@ struct RewriteConfig: Codable, Sendable {
     self.useSemanticEmailMemory = useSemanticEmailMemory
     self.semanticEmailEnrichmentLevel = semanticEmailEnrichmentLevel
     self.showTwoVariants = showTwoVariants
+    self.reasoningEffort = reasoningEffort
+    self.purposeRouting = purposeRouting
   }
 
   enum CodingKeys: String, CodingKey {
@@ -181,6 +194,7 @@ struct RewriteConfig: Codable, Sendable {
     case useAutomaticFieldContext, useMemoryContext
     case useSemanticEmailMemory, semanticEmailEnrichmentLevel
     case showTwoVariants
+    case reasoningEffort, purposeRouting
   }
 
   init(from decoder: Decoder) throws {
@@ -214,6 +228,11 @@ struct RewriteConfig: Codable, Sendable {
       ) ?? .medium
     showTwoVariants =
       try c.decodeIfPresent(Bool.self, forKey: .showTwoVariants) ?? false
+    // Unknown or malformed values must not fail the whole mode: `try?` maps them to the defaults.
+    reasoningEffort = (try? c.decodeIfPresent(String.self, forKey: .reasoningEffort))
+      .flatMap(RewriteReasoningEffort.init(rawValue:))
+    purposeRouting =
+      (try? c.decodeIfPresent(PurposeRoutingMode.self, forKey: .purposeRouting)) ?? .off
   }
 }
 
@@ -265,7 +284,7 @@ struct ModeConfig: Codable, Sendable, Identifiable {
       ?? ModeConfig.defaultKind(for: decodedSlot)
     rewrite =
       try c.decodeIfPresent(RewriteConfig.self, forKey: .rewrite)
-      ?? ModeConfig.defaultRewrite(for: decodedSlot)
+      ?? ModeConfig.legacyDefaultRewrite(for: decodedSlot)
   }
 
   // MARK: - Defaults
@@ -289,35 +308,49 @@ struct ModeConfig: Codable, Sendable, Identifiable {
     }
   }
 
+  /// Defaults for NEWLY created configurations: every rewrite slot starts on the recommended model.
+  /// Stored modes are never touched by this; see `legacyDefaultRewrite(for:)` for decoding.
   static func defaultRewrite(for slot: WorkflowType) -> RewriteConfig {
     switch slot {
     case .textImprover:
       return RewriteConfig(
         systemPrompt: ModeDefaults.emailSystemPrompt,
-        modelID: RewriteModelRegistry.strongModelID,
         useAutomaticFieldContext: true,
         useMemoryContext: true,
         useSemanticEmailMemory: true)
     case .dampfAblassen:
       return RewriteConfig(
         systemPrompt: ModeDefaults.promptCraftSystemPrompt,
-        modelID: RewriteModelRegistry.strongModelID,
         useAutomaticFieldContext: true,
         useMemoryContext: true)
-    case .emojiText:
-      return RewriteConfig(modelID: RewriteModelRegistry.fastModelID)
-    case .transcription, .localTranscription:
+    case .emojiText, .transcription, .localTranscription:
       return RewriteConfig()
     }
   }
 
-  static func `default`(for slot: WorkflowType) -> ModeConfig {
+  /// Decode-time fallback for a stored mode that has no `rewrite` block. Keeps the exact model each
+  /// slot defaulted to before the recommended model existed, so old files never change silently.
+  static func legacyDefaultRewrite(for slot: WorkflowType) -> RewriteConfig {
+    var config = defaultRewrite(for: slot)
+    switch slot {
+    case .textImprover, .dampfAblassen: config.modelID = RewriteModelRegistry.strongModelID
+    case .emojiText: config.modelID = RewriteModelRegistry.fastModelID
+    case .transcription, .localTranscription: config.modelID = RewriteModelRegistry.defaultModelID
+    }
+    return config
+  }
+
+  /// `preservingLegacyModels` is for building the missing modes of an installation that already
+  /// existed before the recommended model: it keeps each slot's historical model instead of Luna.
+  static func `default`(
+    for slot: WorkflowType, preservingLegacyModels: Bool = false
+  ) -> ModeConfig {
     ModeConfig(
       slot: slot,
       userName: defaultUserName(for: slot),
       isEnabled: true,
       kind: defaultKind(for: slot),
-      rewrite: defaultRewrite(for: slot)
+      rewrite: preservingLegacyModels ? legacyDefaultRewrite(for: slot) : defaultRewrite(for: slot)
     )
   }
 

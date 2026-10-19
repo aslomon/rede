@@ -19,7 +19,8 @@ enum WorkflowRewriteProcessor {
     memoryContext: MemoryContext?,
     userIdentity: UserIdentityContext?,
     emailMemoryLevel: SemanticEmailEnrichmentLevel,
-    emailMemoryLoader: EmailMemoryMatchLoader?
+    emailMemoryLoader: EmailMemoryMatchLoader?,
+    purpose: DictationPurpose = .other
   ) async throws -> WorkflowRewriteProcessingResult {
     let memoryStartedAt = Date()
     let emailMemoryMatches = await emailMemoryLoader?(cleanedRawText) ?? []
@@ -35,7 +36,7 @@ enum WorkflowRewriteProcessor {
       : EmailSemanticMemoryContext(matches: emailMemoryMatches, level: emailMemoryLevel)
 
     let promptStartedAt = Date()
-    let systemPrompt = LLMService.rewriteSystemPrompt(
+    let basePrompt = LLMService.rewriteSystemPrompt(
       rewrite,
       customTerms: rewriteTerms,
       selection: selection,
@@ -43,6 +44,8 @@ enum WorkflowRewriteProcessor {
       memory: memoryContext,
       userIdentity: userIdentity,
       emailMemory: emailMemoryContext)
+    // Allowlisted purposes append a short overlay after the mode prompt; `.other` changes nothing.
+    let systemPrompt = PurposeOverlay.apply(purpose, to: basePrompt)
     WorkflowLatencyDiagnostics.logStage(
       .promptConstruction,
       mode: mode,
@@ -97,17 +100,19 @@ enum WorkflowRewriteProcessor {
     rewriteTerms: [String],
     automaticContext: AutomaticRewriteContext?,
     memoryContext: MemoryContext?,
-    userIdentity: UserIdentityContext?
+    userIdentity: UserIdentityContext?,
+    purpose: DictationPurpose = .other
   ) async throws -> WorkflowRewriteProcessingResult {
     logNoLookupMemoryStage(mode: mode, backend: backend)
     let promptStartedAt = Date()
-    let systemPrompt = LLMService.rewriteSystemPrompt(
+    let basePrompt = LLMService.rewriteSystemPrompt(
       rewrite,
       customTerms: rewriteTerms,
       selection: nil,
       automaticContext: automaticContext,
       memory: memoryContext,
       userIdentity: userIdentity)
+    let systemPrompt = PurposeOverlay.apply(purpose, to: basePrompt)
     WorkflowLatencyDiagnostics.logStage(
       .promptConstruction,
       mode: mode,
@@ -163,11 +168,14 @@ enum WorkflowRewriteProcessor {
     backend: TranscriptionBackend,
     rewrite: RewriteConfig,
     provider: any RewriteProvider,
-    rewriteTerms: [String]
+    rewriteTerms: [String],
+    purpose: DictationPurpose = .other
   ) async throws -> WorkflowRewriteProcessingResult {
     logNoLookupMemoryStage(mode: mode, backend: backend)
     let promptStartedAt = Date()
-    let systemPrompt = LLMService.emojiSystemPrompt(rewrite, customTerms: rewriteTerms)
+    // The overlay goes after the whole emoji prompt, so density and tone stay the mode's own.
+    let systemPrompt = PurposeOverlay.apply(
+      purpose, to: LLMService.emojiSystemPrompt(rewrite, customTerms: rewriteTerms))
     WorkflowLatencyDiagnostics.logStage(
       .promptConstruction,
       mode: mode,

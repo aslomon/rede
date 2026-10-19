@@ -224,10 +224,20 @@ protocol Workflow: AnyObject, Observable {
   /// Emitted with raw+final+mode right before `onOutput`. Wired unconditionally; the handler
   /// decides RAM buffer (always) vs disk archive (only while archiving is enabled).
   var onRun: WorkflowRunHandler? { get set }
+  /// Live transcript while speaking (display only, never typed anywhere). Nil unless live
+  /// transcription is active for this run; the default keeps every other workflow unchanged.
+  var liveTranscript: LiveTranscriptSnapshot? { get }
+  /// What the live part of the pill is doing (connecting, streaming, failed). Nil when not live.
+  var liveDisplayState: LiveDisplayState? { get }
 
   func start()
   func stop()
   func reset()
+}
+
+extension Workflow {
+  var liveTranscript: LiveTranscriptSnapshot? { nil }
+  var liveDisplayState: LiveDisplayState? { nil }
 }
 
 // MARK: - App Settings
@@ -307,6 +317,21 @@ struct AppSettings: Codable, Sendable {
   /// MEM-2b: keys (`from→to`, lowercased) of mined suggestions the user permanently dismissed, so a
   /// declined "Lern-Vorschlag" doesn't reappear on every relaunch. Persisted; default empty.
   var dismissedImprovementSuggestionKeys: [String] = []
+  /// Opt-in live transcript: audio is streamed to OpenAI WHILE you speak and shown in the pill.
+  /// Default OFF. Stays stored but inert while `secureLocalModeEnabled` is on.
+  var liveTranscriptionEnabled: Bool = false
+  /// Opt-in master for "Automatik" (purpose routing). Default OFF; each mode also needs
+  /// `RewriteConfig.purposeRouting == .automatic`. Stays stored but inert under secure-local.
+  var purposeRoutingEnabled: Bool = false
+  /// Automatik may send the bounded text of the focused field (user-approved scope). Disclosed and
+  /// switchable; it can only narrow what Automatik sends, never turn another privacy setting on.
+  var purposeRoutingIncludesFieldText: Bool = true
+  /// Model offers the user dismissed (e.g. the "Luna für Rewrite-Modi" hint), so they stay gone.
+  var dismissedModelOffers: [String] = []
+  /// Runtime-only marker, never encoded: true when this value was decoded from a stored document
+  /// rather than created fresh. It lets the one-time mode migration tell an installation that
+  /// already existed (keep its historical model defaults) from a brand-new one (recommended model).
+  private(set) var wasDecodedFromStorage = false
 
   init(
     hotkeyMode: HotkeyMode = .hold,
@@ -331,7 +356,11 @@ struct AppSettings: Codable, Sendable {
     soundFeedbackEnabled: Bool = false,
     maxDictationMinutes: Int = AppSettings.defaultMaxDictationMinutes,
     silenceTrimmingEnabled: Bool = false,
-    dismissedImprovementSuggestionKeys: [String] = []
+    dismissedImprovementSuggestionKeys: [String] = [],
+    liveTranscriptionEnabled: Bool = false,
+    purposeRoutingEnabled: Bool = false,
+    purposeRoutingIncludesFieldText: Bool = true,
+    dismissedModelOffers: [String] = []
   ) {
     self.hotkeyMode = hotkeyMode
     self.hotkeys = hotkeys
@@ -355,6 +384,10 @@ struct AppSettings: Codable, Sendable {
     self.maxDictationMinutes = maxDictationMinutes
     self.silenceTrimmingEnabled = silenceTrimmingEnabled
     self.dismissedImprovementSuggestionKeys = dismissedImprovementSuggestionKeys
+    self.liveTranscriptionEnabled = liveTranscriptionEnabled
+    self.purposeRoutingEnabled = purposeRoutingEnabled
+    self.purposeRoutingIncludesFieldText = purposeRoutingIncludesFieldText
+    self.dismissedModelOffers = dismissedModelOffers
   }
 
   enum CodingKeys: String, CodingKey {
@@ -384,10 +417,15 @@ struct AppSettings: Codable, Sendable {
     case maxDictationMinutes
     case silenceTrimmingEnabled
     case dismissedImprovementSuggestionKeys
+    case liveTranscriptionEnabled
+    case purposeRoutingEnabled
+    case purposeRoutingIncludesFieldText
+    case dismissedModelOffers
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
+    wasDecodedFromStorage = true
     hotkeyMode = try container.decodeIfPresent(HotkeyMode.self, forKey: .hotkeyMode) ?? .hold
     hotkeys = try container.decodeIfPresent([String: HotkeyConfig].self, forKey: .hotkeys) ?? [:]
     hasSeenOnboarding =
@@ -413,20 +451,13 @@ struct AppSettings: Codable, Sendable {
         String.self,
         forKey: .selectedLocalLLMModelName
       ) ?? ""
-    if let decodedSelection = try container.decodeIfPresent(
-      LocalLLMSelection.self,
-      forKey: .selectedLocalLLM
-    ) {
-      // Ollama has been removed. Keep the selection only if llama.cpp actually knows the model;
-      // an old Ollama tag (e.g. "gemma3:latest") is dropped so the user re-picks a GGUF model
-      // instead of silently failing every local rewrite. Robust to the runtime enum collapsing.
-      selectedLocalLLM =
-        LlamaCppModelCatalog.chatModel(for: decodedSelection.modelID) != nil
-        ? decodedSelection : LocalLLMSelection()
-    } else {
-      // The legacy single-string model name was always an Ollama tag — no longer usable.
-      selectedLocalLLM = LocalLLMSelection()
-    }
+    // The stored selection is kept verbatim. Whether llama.cpp still knows the model (curated
+    // catalog or an installed Hugging-Face/custom GGUF) is decided by `LocalLLMSelectionValidator`
+    // in AppState, where the installed set is known — dropping non-catalog ids here discarded
+    // installed Hugging-Face selections on every launch.
+    selectedLocalLLM =
+      try container.decodeIfPresent(LocalLLMSelection.self, forKey: .selectedLocalLLM)
+      ?? LocalLLMSelection()
     modes = try container.decodeIfPresent([String: ModeConfig].self, forKey: .modes) ?? [:]
     modeOrder = try container.decodeIfPresent([String].self, forKey: .modeOrder) ?? []
     didMigrateToModeConfigs =
@@ -470,6 +501,16 @@ struct AppSettings: Codable, Sendable {
     dismissedImprovementSuggestionKeys =
       try container.decodeIfPresent([String].self, forKey: .dismissedImprovementSuggestionKeys)
       ?? []
+    // Missing keys (settings written before live/Automatik existed) decode to the opt-in-off
+    // defaults, so an upgrade can never enable a network feature.
+    liveTranscriptionEnabled =
+      try container.decodeIfPresent(Bool.self, forKey: .liveTranscriptionEnabled) ?? false
+    purposeRoutingEnabled =
+      try container.decodeIfPresent(Bool.self, forKey: .purposeRoutingEnabled) ?? false
+    purposeRoutingIncludesFieldText =
+      try container.decodeIfPresent(Bool.self, forKey: .purposeRoutingIncludesFieldText) ?? true
+    dismissedModelOffers =
+      try container.decodeIfPresent([String].self, forKey: .dismissedModelOffers) ?? []
   }
 }
 

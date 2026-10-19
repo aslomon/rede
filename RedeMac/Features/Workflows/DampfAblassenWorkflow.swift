@@ -34,6 +34,12 @@ final class DampfAblassenWorkflow: Workflow {
   private let memoryContext: MemoryContext?
   private let userIdentity: UserIdentityContext?
   private var processingTask: Task<Void, Never>?
+  private let remote: WorkflowRemoteContext
+  private let routing: PurposeRoutingPlan?
+  /// Fired once per run with what Automatik did (nil: it did not run). Display only.
+  var onRoutingNote: ((PurposeRoutingNote?) -> Void)?
+  private let runs = WorkflowRunTracker()
+  private let transcriptionOverride: WorkflowTranscriptionOverride?
 
   init(
     rewrite: RewriteConfig,
@@ -47,7 +53,10 @@ final class DampfAblassenWorkflow: Workflow {
     localModelName: String = LocalTranscriptionService.recommendedFastModelName,
     automaticContext: AutomaticRewriteContext? = nil,
     memoryContext: MemoryContext? = nil,
-    userIdentity: UserIdentityContext? = nil
+    userIdentity: UserIdentityContext? = nil,
+    remote: WorkflowRemoteContext = WorkflowRemoteContext(),
+    routing: PurposeRoutingPlan? = nil,
+    transcriptionOverride: WorkflowTranscriptionOverride? = nil
   ) {
     self.rewrite = rewrite
     self.provider = provider
@@ -61,6 +70,9 @@ final class DampfAblassenWorkflow: Workflow {
     self.automaticContext = automaticContext
     self.memoryContext = memoryContext
     self.userIdentity = userIdentity
+    self.remote = remote
+    self.routing = routing
+    self.transcriptionOverride = transcriptionOverride
   }
 
   // MARK: - Recording State
@@ -68,6 +80,9 @@ final class DampfAblassenWorkflow: Workflow {
   var isRecording: Bool { recorder.isRecording }
   var audioLevel: Float { recorder.audioLevel }
   var didTruncateAtMaxDuration: Bool { recorder.didStopAtMaxDuration }
+  /// Live text while speaking (display only); nil unless live is active for this run.
+  var liveTranscript: LiveTranscriptSnapshot? { remote.live?.snapshot }
+  var liveDisplayState: LiveDisplayState? { remote.live?.displayState }
 
   // MARK: - Workflow Protocol
 
@@ -81,6 +96,7 @@ final class DampfAblassenWorkflow: Workflow {
     }
     // Safety cap: if the recording runs past the max duration, stop+process what we have.
     recorder.onMaxDurationReached = { [weak self] in self?.stop() }
+    remote.live?.begin(language: language, keywords: customTerms)
     phase = .running("aufnahme läuft …")
   }
 
@@ -98,18 +114,23 @@ final class DampfAblassenWorkflow: Workflow {
         !TranscriptionQualityService.shouldRejectRecording(duration: recorder.lastRecordingDuration)
       else {
         recorder.discardRecording()
+        remote.live?.cancel()
         phase = .error(TranscriptionQualityService.noSpeechMessage)
         return
       }
       processRecording(totalStartedAt: stopStartedAt)
     } else {
       processingTask?.cancel()
+      remote.live?.cancel()
+      runs.invalidate()
       phase = .idle
     }
   }
 
   func reset() {
     processingTask?.cancel()
+    remote.live?.cancel()
+    runs.invalidate()
     if recorder.isRecording {
       recorder.stopRecording()
     }
@@ -142,9 +163,19 @@ final class DampfAblassenWorkflow: Workflow {
     let personalMemoryContext = memoryContext
     let identityContext = userIdentity
 
+    let isRemoteAllowed = remote.isRemoteAllowed
+    let liveSession = remote.live
+    let routingPlan = routing
+    let injected = transcriptionOverride
+    let runID = runs.begin()
     processingTask = Task(priority: .userInitiated) {
-      let transcriptionWorker = Task.detached(priority: .userInitiated) {
-        try await WorkflowTranscriptionProcessor.transcribeAndClean(
+      let liveText: String?
+      do { liveText = try await liveSession?.finalTranscript() } catch { return }
+      let transcriptionWorker = Task<WorkflowTranscriptionResult, Error>.detached(
+        priority: .userInitiated
+      ) {
+        if let injected { return try await injected(url, liveText) }
+        return try await WorkflowTranscriptionProcessor.transcribeAndClean(
           originalAudioURL: url,
           mode: mode,
           backend: transcriptionBackend,
@@ -153,7 +184,9 @@ final class DampfAblassenWorkflow: Workflow {
           localModelName: selectedLocalModelName,
           dictionary: dictationDictionary,
           fuzzyTerms: correctionTerms,
-          silenceTrimmingEnabled: shouldTrimSilence
+          silenceTrimmingEnabled: shouldTrimSilence,
+          isRemoteAllowed: isRemoteAllowed,
+          liveText: liveText
         )
       }
       do {
@@ -162,6 +195,10 @@ final class DampfAblassenWorkflow: Workflow {
         } onCancel: {
           transcriptionWorker.cancel()
         }
+        // Cancel and run identity first: a worker that ignored the cancel and finished after
+        // reset/new start must not touch phase, output or archive of the current run.
+        try Task.checkCancellation()
+        guard runs.isCurrent(runID) else { return }
         guard
           !TranscriptionQualityService.isLikelyArtifact(
             transcription.cleanedText, recordingDuration: recordingDuration)
@@ -170,9 +207,14 @@ final class DampfAblassenWorkflow: Workflow {
           return
         }
 
-        if Task.isCancelled { return }
-
         phase = .running("wird umformuliert …")
+        // Automatik: one bounded decision. Cancel is terminal; any fallback continues unchanged.
+        let routed = await PurposeRoutingStep.run(
+          plan: routingPlan, dictatedText: transcription.cleanedText)
+        if routed.isCancelled { return }
+        guard runs.isCurrent(runID) else { return }
+        onRoutingNote?(routed.note)
+        let routedPurpose = routed.purpose
         let rewriteWorker = Task.detached(priority: .userInitiated) {
           try await WorkflowRewriteProcessor.dampfAblassenResult(
             cleanedRawText: transcription.cleanedText,
@@ -184,7 +226,8 @@ final class DampfAblassenWorkflow: Workflow {
             rewriteTerms: rewritePromptTerms,
             automaticContext: automaticRewriteContext,
             memoryContext: personalMemoryContext,
-            userIdentity: identityContext
+            userIdentity: identityContext,
+            purpose: routedPurpose
           )
         }
         let result = try await withTaskCancellationHandler {
@@ -193,39 +236,28 @@ final class DampfAblassenWorkflow: Workflow {
           rewriteWorker.cancel()
         }
         try Task.checkCancellation()
-        switch result {
-        case .completed(let rawTranscript, let finalText, let fallbackNote):
-          onRewriteFallback?(fallbackNote)
-          phase = .done(finalText)
-          onRun?(
-            ArchiveRunRecord(
-              mode: mode,
-              rawTranscript: rawTranscript,
-              finalText: finalText,
-              backend: transcriptionBackend,
-              durationSec: recordingDuration
-            )
-          )
-          onOutput?(finalText)
-          WorkflowLatencyDiagnostics.logStage(
-            .total,
-            mode: mode,
-            backend: transcriptionBackend,
-            startedAt: totalStartedAt
-          )
-        case .variants(let variants, let fallbackNote):
-          onRewriteFallback?(fallbackNote)
-          phase = .variantChoice(variants.variants)
-          onVariants?(variants)
-          WorkflowLatencyDiagnostics.logEvent(
-            "variant_choice_ready",
-            mode: mode,
-            backend: transcriptionBackend
-          )
-        }
+        guard runs.isCurrent(runID) else { return }
+        deliver(
+          result, mode: mode, backend: transcriptionBackend,
+          recordingDuration: recordingDuration, totalStartedAt: totalStartedAt)
       } catch {
+        if WorkflowCancellation.isTerminal(error) { return }
+        guard runs.isCurrent(runID) else { return }
         phase = .error(error.localizedDescription)
       }
     }
   }
 }
+
+#if DEBUG
+  extension DampfAblassenWorkflow {
+    /// Runs the pipeline on a given recording without the microphone (tests only).
+    func processForTesting(audioURL: URL, recordingDuration: TimeInterval) {
+      recorder.recordingURL = audioURL
+      recorder.lastRecordingDuration = recordingDuration
+      processRecording(totalStartedAt: Date())
+    }
+
+    var processingTaskForTesting: Task<Void, Never>? { processingTask }
+  }
+#endif

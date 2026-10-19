@@ -5,6 +5,11 @@ struct WorkflowTranscriptionResult: Sendable {
   let transcriptionCompletedAt: Date
 }
 
+/// Replaces the transcription step of a run. Production never sets it; tests inject a worker they
+/// control (held back, failing, uncooperative) so no microphone, model or network is involved.
+typealias WorkflowTranscriptionOverride =
+  @Sendable (_ audioURL: URL, _ liveText: String?) async throws -> WorkflowTranscriptionResult
+
 enum WorkflowProcessingError: LocalizedError {
   case noSpeech
 
@@ -17,6 +22,10 @@ enum WorkflowProcessingError: LocalizedError {
 }
 
 enum WorkflowTranscriptionProcessor {
+  /// File transcription (or, when `liveText` is given, the live session's final text) followed by
+  /// the existing cleaning. `isRemoteAllowed` is read by the OpenAI client on every attempt.
+  /// `liveText` replaces ONLY the transcription call: silence trimming and the audio upload are
+  /// skipped, the local recording is still deleted, and cleaning is identical.
   static func transcribeAndClean(
     originalAudioURL: URL,
     mode: WorkflowType,
@@ -26,8 +35,17 @@ enum WorkflowTranscriptionProcessor {
     localModelName: String,
     dictionary: DictationDictionary,
     fuzzyTerms: [String],
-    silenceTrimmingEnabled: Bool
+    silenceTrimmingEnabled: Bool,
+    isRemoteAllowed: @escaping @Sendable () -> Bool,
+    liveText: String? = nil
   ) async throws -> WorkflowTranscriptionResult {
+    if let liveText {
+      defer { try? FileManager.default.removeItem(at: originalAudioURL) }
+      let cleaned = clean(
+        liveText, mode: mode, backend: backend, dictionary: dictionary, fuzzyTerms: fuzzyTerms)
+      return WorkflowTranscriptionResult(
+        cleanedText: cleaned, transcriptionCompletedAt: Date())
+    }
     let audioURL = await WorkflowAudioPreparation.audioForTranscription(
       original: originalAudioURL,
       trimmingEnabled: silenceTrimmingEnabled,
@@ -46,7 +64,8 @@ enum WorkflowTranscriptionProcessor {
       text = try await TranscriptionService.transcribe(
         audioURL: audioURL,
         customTerms: vocabularyHints,
-        language: language
+        language: language,
+        isRemoteAllowed: isRemoteAllowed
       )
     case .local:
       text = try await LocalTranscriptionService.shared.transcribe(
@@ -64,7 +83,21 @@ enum WorkflowTranscriptionProcessor {
       startedAt: transcriptionStartedAt,
       endedAt: transcriptionCompletedAt
     )
+    let cleaned = clean(
+      text, mode: mode, backend: backend, dictionary: dictionary, fuzzyTerms: fuzzyTerms)
+    return WorkflowTranscriptionResult(
+      cleanedText: cleaned, transcriptionCompletedAt: transcriptionCompletedAt)
+  }
 
+  /// The clean-only step: quality cleanup, dictionary, fuzzy correction. Shared by the file path
+  /// and the live path so both produce identical text for identical input.
+  static func clean(
+    _ text: String,
+    mode: WorkflowType,
+    backend: TranscriptionBackend,
+    dictionary: DictationDictionary,
+    fuzzyTerms: [String]
+  ) -> String {
     let cleanupStartedAt = Date()
     let cleaned = FuzzyTermCorrector.correct(
       DictationPostProcessor.process(
@@ -76,10 +109,6 @@ enum WorkflowTranscriptionProcessor {
       backend: backend,
       startedAt: cleanupStartedAt
     )
-
-    return WorkflowTranscriptionResult(
-      cleanedText: cleaned,
-      transcriptionCompletedAt: transcriptionCompletedAt
-    )
+    return cleaned
   }
 }

@@ -43,7 +43,7 @@ struct SystemSettingsView: View {
         .settingsGroupBackground()
 
       if UpdateService.isAvailable {
-        updatesSection
+        UpdatesSettingsSection(appState: appState)
           .settingsGroupBackground()
       }
 
@@ -190,56 +190,6 @@ struct SystemSettingsView: View {
         Label("einrichtung erneut starten", systemImage: "arrow.counterclockwise")
       }
       .buttonStyle(PopoverActionButtonStyle(.secondary))
-    }
-  }
-
-  // MARK: - Updates
-
-  private var updatesSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      SectionLabel(text: "updates", icon: "arrow.triangle.2.circlepath")
-
-      HStack(spacing: 8) {
-        Text(appState.updateService.appVersionText)
-          .font(.system(size: 11.5, weight: .semibold))
-          .foregroundStyle(.primary)
-
-        if let hint = UpdateService.updateHintText(
-          forVersion: appState.updateService.availableUpdateVersion)
-        {
-          RedeStatusPill(state: .download, label: hint)
-        }
-      }
-
-      Text(appState.updateService.lastCheckDisplayText)
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-
-      Button {
-        appState.updateService.checkForUpdates()
-      } label: {
-        Label("jetzt nach updates suchen", systemImage: "arrow.triangle.2.circlepath")
-      }
-      .buttonStyle(PopoverActionButtonStyle(.secondary))
-      .disabled(!appState.updateService.canCheckForUpdates)
-
-      Toggle(
-        isOn: Binding(
-          get: { appState.updateService.automaticChecksEnabled },
-          set: { appState.updateService.setAutomaticChecksEnabled($0) }
-        )
-      ) {
-        Label("automatisch täglich prüfen", systemImage: "calendar")
-          .labelStyle(QuietToggleLabelStyle())
-      }
-      .toggleStyle(.switch)
-      .controlSize(.small)
-
-      // Compact data-flow note (DESIGN.md: sensible Hinweise als sichtbare Caption).
-      Text("übertragen wird nur die app-version — keine weiteren daten, kein geräteprofil.")
-        .font(.system(size: 10.5))
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
     }
   }
 

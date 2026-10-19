@@ -26,6 +26,9 @@ final class TranscriptionWorkflow: Workflow {
   private let backend: TranscriptionBackend
   private let localModelName: String
   private var transcriptionTask: Task<Void, Never>?
+  private let remote: WorkflowRemoteContext
+  private let runs = WorkflowRunTracker()
+  private let transcriptionOverride: WorkflowTranscriptionOverride?
 
   init(
     type: WorkflowType = .transcription,
@@ -34,7 +37,9 @@ final class TranscriptionWorkflow: Workflow {
     fuzzyTerms: [String] = [],
     language: String = "de",
     backend: TranscriptionBackend = .remote,
-    localModelName: String = LocalTranscriptionService.recommendedFastModelName
+    localModelName: String = LocalTranscriptionService.recommendedFastModelName,
+    remote: WorkflowRemoteContext = WorkflowRemoteContext(),
+    transcriptionOverride: WorkflowTranscriptionOverride? = nil
   ) {
     self.type = type
     self.customTerms = customTerms
@@ -43,6 +48,8 @@ final class TranscriptionWorkflow: Workflow {
     self.language = language
     self.backend = backend
     self.localModelName = localModelName
+    self.remote = remote
+    self.transcriptionOverride = transcriptionOverride
   }
 
   func start() {
@@ -58,6 +65,7 @@ final class TranscriptionWorkflow: Workflow {
     // Safety cap: if the recording runs past the max duration, stop+transcribe what we have
     // instead of letting it grow unbounded. `stop()` runs the normal transcription path.
     recorder.onMaxDurationReached = { [weak self] in self?.stop() }
+    remote.live?.begin(language: language, keywords: customTerms)
     phase = .running("aufnahme läuft …")
   }
 
@@ -75,18 +83,23 @@ final class TranscriptionWorkflow: Workflow {
         !TranscriptionQualityService.shouldRejectRecording(duration: recorder.lastRecordingDuration)
       else {
         recorder.discardRecording()
+        remote.live?.cancel()
         phase = .error(TranscriptionQualityService.noSpeechMessage)
         return
       }
       transcribe(totalStartedAt: stopStartedAt)
     } else {
       transcriptionTask?.cancel()
+      remote.live?.cancel()
+      runs.invalidate()
       phase = .idle
     }
   }
 
   func reset() {
     transcriptionTask?.cancel()
+    remote.live?.cancel()
+    runs.invalidate()
     if recorder.isRecording {
       recorder.stopRecording()
     }
@@ -97,6 +110,9 @@ final class TranscriptionWorkflow: Workflow {
   var isRecording: Bool { recorder.isRecording }
   var audioLevel: Float { recorder.audioLevel }
   var didTruncateAtMaxDuration: Bool { recorder.didStopAtMaxDuration }
+  /// Live text while speaking (display only); nil unless live is active for this run.
+  var liveTranscript: LiveTranscriptSnapshot? { remote.live?.snapshot }
+  var liveDisplayState: LiveDisplayState? { remote.live?.displayState }
 
   private func transcribe(totalStartedAt: Date) {
     guard let url = recorder.recordingURL else {
@@ -115,10 +131,19 @@ final class TranscriptionWorkflow: Workflow {
     let dictationDictionary = dictionary
     let correctionTerms = fuzzyTerms
 
+    let isRemoteAllowed = remote.isRemoteAllowed
+    let liveSession = remote.live
+    let injected = transcriptionOverride
+    let runID = runs.begin()
     transcriptionTask = Task(priority: .userInitiated) {
       let requestStart = Date()
-      let worker = Task.detached(priority: .userInitiated) {
-        try await WorkflowTranscriptionProcessor.transcribeAndClean(
+      let liveText: String?
+      do { liveText = try await liveSession?.finalTranscript() } catch { return }
+      let worker = Task<WorkflowTranscriptionResult, Error>.detached(
+        priority: .userInitiated
+      ) {
+        if let injected { return try await injected(url, liveText) }
+        return try await WorkflowTranscriptionProcessor.transcribeAndClean(
           originalAudioURL: url,
           mode: mode,
           backend: transcriptionBackend,
@@ -127,7 +152,9 @@ final class TranscriptionWorkflow: Workflow {
           localModelName: selectedLocalModelName,
           dictionary: dictationDictionary,
           fuzzyTerms: correctionTerms,
-          silenceTrimmingEnabled: shouldTrimSilence
+          silenceTrimmingEnabled: shouldTrimSilence,
+          isRemoteAllowed: isRemoteAllowed,
+          liveText: liveText
         )
       }
       do {
@@ -137,6 +164,7 @@ final class TranscriptionWorkflow: Workflow {
           worker.cancel()
         }
         try Task.checkCancellation()
+        guard runs.isCurrent(runID) else { return }
 
         guard
           !TranscriptionQualityService.isLikelyArtifact(
@@ -170,6 +198,8 @@ final class TranscriptionWorkflow: Workflow {
           startedAt: totalStartedAt
         )
       } catch {
+        if WorkflowCancellation.isTerminal(error) { return }
+        guard runs.isCurrent(runID) else { return }
         transcriptionLogger.error(
           "Transcription failed after \(WorkflowLatencyDiagnostics.milliseconds(since: totalStartedAt), privacy: .public) ms: \(error.localizedDescription, privacy: .private)"
         )
@@ -178,3 +208,16 @@ final class TranscriptionWorkflow: Workflow {
     }
   }
 }
+
+#if DEBUG
+  extension TranscriptionWorkflow {
+    /// Runs the pipeline on a given recording without the microphone (tests only).
+    func processForTesting(audioURL: URL, recordingDuration: TimeInterval) {
+      recorder.recordingURL = audioURL
+      recorder.lastRecordingDuration = recordingDuration
+      transcribe(totalStartedAt: Date())
+    }
+
+    var processingTaskForTesting: Task<Void, Never>? { transcriptionTask }
+  }
+#endif

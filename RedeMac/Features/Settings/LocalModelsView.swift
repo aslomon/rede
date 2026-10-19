@@ -222,8 +222,11 @@ struct LocalModelsView: View {
         .font(.system(size: 13))
         .foregroundStyle(.green)
       VStack(alignment: .leading, spacing: 1) {
-        Text(model.displayName)
-          .font(.system(size: 12, weight: .semibold))
+        HStack(spacing: 6) {
+          Text(model.displayName)
+            .font(.system(size: 12, weight: .semibold))
+          LocalModelBadgeRow(model: model)
+        }
         Text([model.parameterSize, model.quantization].joined(separator: " · "))
           .font(.system(size: 10))
           .foregroundStyle(.secondary)
@@ -279,6 +282,7 @@ struct LocalModelsView: View {
             if isRecommended(model) {
               RedeStatusPill(state: .download, label: "empfohlen")
             }
+            LocalModelBadgeRow(model: model)
           }
           Text(model.blurb)
             .font(.system(size: 10.5))

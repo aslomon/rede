@@ -58,12 +58,12 @@ struct ModeCardView: View {
     )
   }
 
-  private var modelOptions: [RewriteModelOption] {
-    var options = RewriteModelRegistry.options(includingFetched: appState.availableModelIDs)
-    if !options.contains(where: { $0.id == config.rewrite.modelID }) {
-      options.append(RewriteModelRegistry.option(for: config.rewrite.modelID))
-    }
-    return options
+  private var pickerModel: ModelPickerModel {
+    ModelPickerModel(config: config.rewrite, accountModelIDs: appState.availableModelIDs)
+  }
+
+  private var routingModel: PurposeRoutingSettingsModel {
+    PurposeRoutingSettingsModel(settings: appState.appSettings, hasAPIKey: appState.hasOpenAIKey)
   }
 
   var body: some View {
@@ -452,19 +452,42 @@ struct ModeCardView: View {
           .disabled(appState.isLoadingModels)
         }
       }
-      Picker("", selection: bind(\.rewrite.modelID)) {
-        ForEach(modelOptions) { option in
+      Picker(
+        "",
+        selection: Binding(
+          get: { config.rewrite.modelID },
+          set: { id in
+            // Switching model also drops a stored effort the new model does not support.
+            appState.updateMode(id: modeID) {
+              $0.rewrite = ModelPickerModel(config: $0.rewrite).selecting(modelID: id)
+            }
+          })
+      ) {
+        ForEach(pickerModel.options) { option in
           Text(option.menuLabel).tag(option.id)
         }
       }
       .labelsHidden()
       .controlSize(.small)
 
+      RewriteEffortControl(model: pickerModel) { effort in
+        appState.updateMode(id: modeID) {
+          $0.rewrite = ModelPickerModel(config: $0.rewrite).selecting(effort: effort)
+        }
+      }
+
       if let error = appState.modelLoadError {
         Text(error)
           .font(.system(size: 10))
           .foregroundStyle(.red)
           .fixedSize(horizontal: false, vertical: true)
+      }
+
+      AutomatikModeToggle(
+        routing: routingModel, config: config, rewriteBackend: effectiveBackend
+      ) { mode in
+        let routing = routingModel
+        appState.updateMode(id: modeID) { $0 = routing.settingMode(mode, on: $0) }
       }
     }
   }

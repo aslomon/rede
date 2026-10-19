@@ -19,6 +19,9 @@ final class AppState {
   private static let pasteRetryInitialAttempts = 22
   private let dictationClipboard = DictationClipboard()
   private let credentialPresence: (KeychainKey) -> Bool
+  /// Where settings are persisted. Production uses the Application Support file; tests inject a
+  /// temp location so a lifecycle flush never touches the real settings.
+  private let settingsFileURL: URL
 
   var activeWorkflow: (any Workflow)?
   var page: PopoverPage = .main
@@ -93,6 +96,7 @@ final class AppState {
   // Persisted settings
   var appSettings: AppSettings {
     didSet {
+      remoteGate.update(secureLocalEnabled: appSettings.secureLocalModeEnabled)
       saveSettings()
       if oldValue.selectedLocalTranscriptionModelName
         != appSettings.selectedLocalTranscriptionModelName
@@ -156,6 +160,13 @@ final class AppState {
   // scheduled check arms immediately; UI goes through this service, never through Sparkle types.
   let updateService = UpdateService()
 
+  /// Secure-local policy for every OpenAI client, read per request attempt. Synced from settings.
+  let remoteGate = RemoteAccessGate()
+  /// What Automatik did in the last run (display only); nil when it did not run.
+  var lastRoutingNote: PurposeRoutingNote?
+  /// Live session of the current run, kept so quitting can close its socket.
+  private var activeLive: WorkflowLiveSupport?
+
   // Computed
   var isConfigured: Bool {
     KeychainService.isConfigured || !LocalTranscriptionService.installedModels().isEmpty
@@ -191,18 +202,35 @@ final class AppState {
     emojiTextSettings: EmojiTextSettings? = nil,
     localModelManager: LocalModelManager? = nil,
     prewarmEnginesAtLaunch: Bool = true,
-    credentialPresence: @escaping (KeychainKey) -> Bool = { KeychainService.load(key: $0) != nil }
+    credentialPresence: @escaping (KeychainKey) -> Bool = { KeychainService.load(key: $0) != nil },
+    settingsFileURL: URL? = nil,
+    lifecycleCenter: NotificationCenter = .default
   ) {
     self.credentialPresence = credentialPresence
-    self.appSettings = appSettings ?? Self.loadAppSettings()
+    self.settingsFileURL = settingsFileURL ?? Self.settingsURL
+    let resolvedModelManager = localModelManager ?? LocalModelManager()
+    // An existing installation is one whose settings came from storage. Injected settings carry the
+    // decode marker; for the on-disk path any readable container counts, even one without an `app`
+    // block. A fresh AppSettings() is the only case that starts on the recommended model.
+    let isExistingInstallation =
+      appSettings.map(\.wasDecodedFromStorage) ?? (Self.loadContainer() != nil)
+    var loadedSettings = appSettings ?? Self.loadAppSettings()
+    // Validated in memory only (no didSet, no write): a stale id such as a removed Ollama tag is
+    // dropped, while an installed Hugging-Face/custom model — unknown to the curated catalog —
+    // keeps its selection. Persistence stays with the next user-driven save.
+    loadedSettings.selectedLocalLLM = LocalLLMSelectionValidator.validated(
+      loadedSettings.selectedLocalLLM,
+      installedModelIDs: Set(resolvedModelManager.llamaCppInstalled.map(\.id)))
+    self.appSettings = loadedSettings
+    remoteGate.update(secureLocalEnabled: loadedSettings.secureLocalModeEnabled)
     self.transcriptionSettings = transcriptionSettings ?? Self.loadTranscriptionSettings()
     self.textImprovementSettings = textImprovementSettings ?? Self.loadTextImprovementSettings()
     self.dampfAblassenSettings = dampfAblassenSettings ?? Self.loadDampfAblassenSettings()
     self.emojiTextSettings = emojiTextSettings ?? Self.loadEmojiTextSettings()
-    self.localModelManager = localModelManager ?? LocalModelManager()
+    self.localModelManager = resolvedModelManager
     self.memoryCoordinator = MemoryCoordinator(
       memory: memoryStore, archive: archiveStore)
-    migrateToModeConfigsIfNeeded()
+    migrateToModeConfigsIfNeeded(isExistingInstallation: isExistingInstallation)
     refreshDefaultPromptsIfNeeded()
     refreshAccessibilityPermission()
     autoSelectFastLocalModelIfNeeded()
@@ -218,7 +246,18 @@ final class AppState {
     runMemoryLaunchMaintenanceIfNeeded()
     startAccessibilityMonitoring()
     observeAppActivation()
-    observeAppLifecycleForFlush()
+    observeAppLifecycleForFlush(center: lifecycleCenter)
+    wireUpdaterBusyGate()
+  }
+
+  /// The updater never interrupts a dictation: it asks this before showing any scheduled update UI
+  /// or installing. Busy means recording or any workflow phase other than idle. Observation of
+  /// `activeWorkflow`/`phase` re-arms the updater when the state flips.
+  private func wireUpdaterBusyGate() {
+    updateService.isBusy = { [weak self] in
+      guard let workflow = self?.activeWorkflow else { return false }
+      return workflow.isRecording || workflow.phase != .idle
+    }
   }
 
   /// Re-checks Accessibility whenever the app becomes active (e.g. the user comes back from
@@ -242,14 +281,21 @@ final class AppState {
   /// Schreibt ausstehende Settings SOFORT auf die Platte, sobald die App den Fokus verliert oder
   /// beendet wird — so überlebt eine Änderung kurz vor Quit/Blur das 0.4s-Debounce-Fenster.
   /// `willTerminate` läuft synchron auf dem Main-Thread, daher der synchrone `flushSettings()`.
-  private func observeAppLifecycleForFlush() {
-    let center = NotificationCenter.default
-    for name in [
-      NSApplication.willResignActiveNotification,
-      NSApplication.willTerminateNotification,
-    ] {
-      center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-        MainActor.assumeIsolated { self?.flushSettings() }
+  /// Nur das Beenden schließt zusätzlich die Live-Sitzung (Socket zu). Ein Fokuswechsel mitten im
+  /// Diktat, etwa nach dem Start über das Popover, lässt Aufnahme und Live weiterlaufen — sonst
+  /// käme beim Stopp ein abgebrochenes Live-Ergebnis und der Lauf bräche ab.
+  private func observeAppLifecycleForFlush(center: NotificationCenter) {
+    center.addObserver(
+      forName: NSApplication.willResignActiveNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated { self?.flushSettings() }
+    }
+    center.addObserver(
+      forName: NSApplication.willTerminateNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated {
+        self?.activeLive?.cancel()
+        self?.flushSettings()
       }
     }
   }
@@ -632,7 +678,8 @@ final class AppState {
     modelLoadError = nil
     Task {
       do {
-        let ids = try await RewriteModelRegistry.fetchAvailableChatModels()
+        let ids = try await RewriteModelRegistry.fetchAvailableChatModels(
+          isRemoteAllowed: remoteGate.allowsRemote)
         availableModelIDs = ids
         isLoadingModels = false
       } catch {
@@ -911,7 +958,7 @@ final class AppState {
       // llama.cpp is the only local runtime — every on-device rewrite goes through it.
       return LlamaCppRewriteProvider(modelID: appSettings.selectedLocalLLM.modelID)
     case .openai:
-      return OpenAIRewriteProvider(modelID: config.rewrite.modelID)
+      return openAIRewriteProvider(for: config)
     }
   }
 
@@ -1024,59 +1071,20 @@ final class AppState {
     }
   }
 
-  private func migrateToModeConfigsIfNeeded() {
+  /// Builds the missing slot modes once. A new installation starts on the recommended model; an
+  /// installation that already existed keeps each slot's historical model, so nothing changes
+  /// silently.
+  private func migrateToModeConfigsIfNeeded(isExistingInstallation: Bool) {
     guard !appSettings.didMigrateToModeConfigs else { return }
 
-    var modes = appSettings.modes
-
-    func ensure(_ slot: WorkflowType, _ build: () -> ModeConfig) {
-      if modes[slot.rawValue] == nil { modes[slot.rawValue] = build() }
-    }
-
-    ensure(.transcription) { .default(for: .transcription) }
-    ensure(.localTranscription) { .default(for: .localTranscription) }
-
-    ensure(.textImprover) {
-      var cfg = ModeConfig.default(for: .textImprover)
-      if !textImprovementSettings.customName.isEmpty {
-        cfg.userName = textImprovementSettings.customName
-      }
-      if !textImprovementSettings.systemPrompt.isEmpty {
-        cfg.rewrite.systemPrompt = textImprovementSettings.systemPrompt
-      }
-      cfg.rewrite.tone = textImprovementSettings.tone
-      cfg.rewrite.context = textImprovementSettings.context
-      return cfg
-    }
-
-    ensure(.dampfAblassen) {
-      var cfg = ModeConfig.default(for: .dampfAblassen)
-      if !dampfAblassenSettings.customName.isEmpty {
-        cfg.userName = dampfAblassenSettings.customName
-      }
-      // Only keep a user-customized prompt; the stock "calm down" default is replaced by the curated Prompt default.
-      let stock = DampfAblassenSettings().systemPrompt
-      if !dampfAblassenSettings.systemPrompt.isEmpty, dampfAblassenSettings.systemPrompt != stock {
-        cfg.rewrite.systemPrompt = dampfAblassenSettings.systemPrompt
-      }
-      return cfg
-    }
-
-    ensure(.emojiText) {
-      var cfg = ModeConfig.default(for: .emojiText)
-      if !emojiTextSettings.customName.isEmpty { cfg.userName = emojiTextSettings.customName }
-      cfg.rewrite.emojiDensity = emojiTextSettings.emojiDensity
-      return cfg
-    }
-
-    if appSettings.modeOrder.isEmpty {
-      appSettings.modeOrder = WorkflowType.allCases.map(\.rawValue)
-    } else {
-      for slot in WorkflowType.allCases where !appSettings.modeOrder.contains(slot.rawValue) {
-        appSettings.modeOrder.append(slot.rawValue)
-      }
-    }
-    appSettings.modes = modes
+    let migrated = ModeMigration.migratedModes(
+      existing: appSettings.modes, order: appSettings.modeOrder,
+      legacy: .init(
+        textImprovement: textImprovementSettings, dampfAblassen: dampfAblassenSettings,
+        emojiText: emojiTextSettings),
+      isExistingInstallation: isExistingInstallation)
+    appSettings.modeOrder = migrated.order
+    appSettings.modes = migrated.modes
     appSettings.didMigrateToModeConfigs = true
     // Preserve the user's offline choice: a previously-enabled "secure local mode" now simply routes
     // both transcription AND rewriting on-device (local model) instead of disabling rewrite.
@@ -1292,6 +1300,7 @@ final class AppState {
     lastRewriteFallbackNote = nil
     activeLaunchSource = source
     activeModeID = config.id
+    lastRoutingNote = nil
     activePasteTarget = capturePasteTarget(for: source)
     let selection = captureSelectionContext(for: config, source: source)
     let automaticContext = captureAutomaticContext(for: config, source: source)
@@ -1305,19 +1314,23 @@ final class AppState {
 
     switch config.slot {
     case .transcription:
+      let remote = trackedRemoteContext(
+        backend: appSettings.secureLocalModeEnabled ? .local : .remote)
       let workflow = TranscriptionWorkflow(
         customTerms: effectiveCustomTerms,
         dictionary: appSettings.dictationDictionary,
         fuzzyTerms: effectiveFuzzyTerms,
         language: transcriptionSettings.language,
         backend: appSettings.secureLocalModeEnabled ? .local : .remote,
-        localModelName: selectedLocalModelName
+        localModelName: selectedLocalModelName,
+        remote: remote
       )
       configureWorkflowHandlers(workflow)
       activeWorkflow = workflow
       workflow.start()
 
     case .localTranscription:
+      let remote = trackedRemoteContext(backend: .local)
       let workflow = TranscriptionWorkflow(
         type: .localTranscription,
         customTerms: effectiveCustomTerms,
@@ -1325,13 +1338,19 @@ final class AppState {
         fuzzyTerms: effectiveFuzzyTerms,
         language: transcriptionSettings.language,
         backend: .local,
-        localModelName: selectedLocalModelName
+        localModelName: selectedLocalModelName,
+        remote: remote
       )
       configureWorkflowHandlers(workflow)
       activeWorkflow = workflow
       workflow.start()
 
     case .textImprover:
+      let remote = trackedRemoteContext(backend: rewriteTranscriptionBackend)
+      let routingPlan = purposeRoutingPlan(
+        for: config, targetIsSecureField: activePasteTarget?.isSecureField ?? false,
+        appName: activePasteTarget?.appName, selection: selection,
+        automaticContext: automaticContext)
       let workflow = TextImprovementWorkflow(
         rewrite: config.rewrite,
         provider: rewriteProvider(for: config),
@@ -1347,9 +1366,12 @@ final class AppState {
         memoryContext: memoryContext(for: config),
         userIdentity: userIdentityContext,
         emailMemoryLevel: config.rewrite.semanticEmailEnrichmentLevel,
-        emailMemoryLoader: emailMemoryLoader(for: config)
+        emailMemoryLoader: emailMemoryLoader(for: config),
+        remote: remote,
+        routing: routingPlan
       )
       configureWorkflowHandlers(workflow)
+      workflow.onRoutingNote = { [weak self] note in self?.lastRoutingNote = note }
       workflow.onVariants = { [weak self] variants in
         self?.handleWorkflowVariants(variants)
       }
@@ -1357,6 +1379,11 @@ final class AppState {
       workflow.start()
 
     case .dampfAblassen:
+      let remote = trackedRemoteContext(backend: rewriteTranscriptionBackend)
+      let routingPlan = purposeRoutingPlan(
+        for: config, targetIsSecureField: activePasteTarget?.isSecureField ?? false,
+        appName: activePasteTarget?.appName, selection: nil,
+        automaticContext: automaticContext)
       let workflow = DampfAblassenWorkflow(
         rewrite: config.rewrite,
         provider: rewriteProvider(for: config),
@@ -1369,9 +1396,12 @@ final class AppState {
         localModelName: selectedLocalModelName,
         automaticContext: automaticContext,
         memoryContext: memoryContext(for: config),
-        userIdentity: userIdentityContext
+        userIdentity: userIdentityContext,
+        remote: remote,
+        routing: routingPlan
       )
       configureWorkflowHandlers(workflow)
+      workflow.onRoutingNote = { [weak self] note in self?.lastRoutingNote = note }
       workflow.onVariants = { [weak self] variants in
         self?.handleWorkflowVariants(variants)
       }
@@ -1379,6 +1409,11 @@ final class AppState {
       workflow.start()
 
     case .emojiText:
+      let remote = trackedRemoteContext(backend: rewriteTranscriptionBackend)
+      // Social reads no selection or field text for its rewrite, so routing sends none either.
+      let routingPlan = purposeRoutingPlan(
+        for: config, targetIsSecureField: activePasteTarget?.isSecureField ?? false,
+        appName: activePasteTarget?.appName, selection: nil, automaticContext: nil)
       let workflow = EmojiTextWorkflow(
         rewrite: config.rewrite,
         provider: rewriteProvider(for: config),
@@ -1388,9 +1423,12 @@ final class AppState {
         fuzzyTerms: effectiveFuzzyTerms,
         language: transcriptionSettings.language,
         backend: rewriteTranscriptionBackend,
-        localModelName: selectedLocalModelName
+        localModelName: selectedLocalModelName,
+        remote: remote,
+        routing: routingPlan
       )
       configureWorkflowHandlers(workflow)
+      workflow.onRoutingNote = { [weak self] note in self?.lastRoutingNote = note }
       workflow.onVariants = { [weak self] variants in
         self?.handleWorkflowVariants(variants)
       }
@@ -1400,6 +1438,13 @@ final class AppState {
 
     page = source.presentsWorkflowPage ? .workflow : .main
     return true
+  }
+
+  /// Builds the remote wiring for one run and remembers its live session so quitting can close it.
+  private func trackedRemoteContext(backend: TranscriptionBackend) -> WorkflowRemoteContext {
+    let context = workflowRemoteContext(backend: backend)
+    activeLive = context.live
+    return context
   }
 
   private func rejectStartIfWorkflowIsBusy() -> Bool {
@@ -1418,6 +1463,10 @@ final class AppState {
     func installActiveWorkflowForTesting(_ workflow: any Workflow, modeID: ModeConfig.ID) {
       activeWorkflow = workflow
       activeModeID = modeID
+    }
+
+    func installActiveLiveForTesting(_ live: WorkflowLiveSupport?) {
+      activeLive = live
     }
   #endif
 
@@ -1779,7 +1828,7 @@ final class AppState {
   private func saveSettings() {
     pendingSaveTask?.cancel()
     let snapshot = makeSettingsSnapshot()
-    let url = Self.settingsURL
+    let url = settingsFileURL
     pendingSaveTask = Task.detached(priority: .utility) { [weak self] in
       try? await Task.sleep(for: .seconds(0.4))
       guard !Task.isCancelled else { return }
@@ -1794,7 +1843,7 @@ final class AppState {
   private func flushSettings() {
     pendingSaveTask?.cancel()
     pendingSaveTask = nil
-    Self.persistSnapshot(makeSettingsSnapshot(), to: Self.settingsURL)
+    Self.persistSnapshot(makeSettingsSnapshot(), to: settingsFileURL)
   }
 
   /// Encode + atomarer 0600-Write via `SecureFileWriter`. `nonisolated`, damit es vom Debounce-Task

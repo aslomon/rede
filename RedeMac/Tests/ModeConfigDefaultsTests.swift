@@ -71,7 +71,7 @@ final class ModeConfigDefaultsTests: XCTestCase {
   func testEmailSlotUsesCuratedEmailPrompt() {
     let email = ModeConfig.default(for: .textImprover)
     XCTAssertEqual(email.rewrite.systemPrompt, ModeDefaults.emailSystemPrompt)
-    XCTAssertEqual(email.rewrite.modelID, RewriteModelRegistry.strongModelID)
+    XCTAssertEqual(email.rewrite.modelID, RewriteModelRegistry.recommendedModelID)
     XCTAssertTrue(email.rewrite.systemPrompt.contains("email"))
     XCTAssertTrue(email.rewrite.useAutomaticFieldContext)
     XCTAssertTrue(email.rewrite.useMemoryContext)
@@ -81,17 +81,17 @@ final class ModeConfigDefaultsTests: XCTestCase {
   func testPromptSlotUsesCuratedPromptCraftPrompt() {
     let prompt = ModeConfig.default(for: .dampfAblassen)
     XCTAssertEqual(prompt.rewrite.systemPrompt, ModeDefaults.promptCraftSystemPrompt)
-    XCTAssertEqual(prompt.rewrite.modelID, RewriteModelRegistry.strongModelID)
+    XCTAssertEqual(prompt.rewrite.modelID, RewriteModelRegistry.recommendedModelID)
     XCTAssertTrue(prompt.rewrite.systemPrompt.contains("Claude Code"))
     XCTAssertTrue(prompt.rewrite.useAutomaticFieldContext)
     XCTAssertTrue(prompt.rewrite.useMemoryContext)
     XCTAssertFalse(prompt.rewrite.useSemanticEmailMemory)
   }
 
-  func testEmojiSlotUsesFastModelAndNoSystemPrompt() {
+  func testEmojiSlotUsesRecommendedModelAndNoSystemPrompt() {
     let social = ModeConfig.default(for: .emojiText)
     XCTAssertEqual(social.kind, .transcribeThenEmoji)
-    XCTAssertEqual(social.rewrite.modelID, RewriteModelRegistry.fastModelID)
+    XCTAssertEqual(social.rewrite.modelID, RewriteModelRegistry.recommendedModelID)
     XCTAssertTrue(social.rewrite.systemPrompt.isEmpty)
   }
 

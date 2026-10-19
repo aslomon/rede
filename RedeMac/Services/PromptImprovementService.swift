@@ -80,7 +80,8 @@ extension AppState {
     if appSettings.secureLocalModeEnabled, let localModelID = promptImprovementLocalModelID {
       provider = LlamaCppRewriteProvider(modelID: localModelID)
     } else if !appSettings.secureLocalModeEnabled, hasOpenAIKey {
-      provider = OpenAIRewriteProvider(modelID: RewriteModelRegistry.strongModelID)
+      provider = OpenAIRewriteProvider(
+        modelID: RewriteModelRegistry.strongModelID, isRemoteAllowed: remoteGate.allowsRemote)
     } else {
       return .failure(PromptImprovementError.noRewriteEngine)
     }

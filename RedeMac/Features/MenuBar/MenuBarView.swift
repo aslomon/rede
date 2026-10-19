@@ -429,19 +429,22 @@ private struct WorkflowPageView: View {
           if let w = workflow as? TextImprovementWorkflow {
             TextImproverActiveView(
               workflow: w, copyOnly: appState.lastRunWasCopyOnly,
-              fallbackNote: appState.lastRewriteFallbackNote)
+              fallbackNote: appState.lastRewriteFallbackNote,
+              routingNote: appState.lastRoutingNote)
           }
         case .dampfAblassen:
           if let w = workflow as? DampfAblassenWorkflow {
             DampfAblassenActiveView(
               workflow: w, copyOnly: appState.lastRunWasCopyOnly,
-              fallbackNote: appState.lastRewriteFallbackNote)
+              fallbackNote: appState.lastRewriteFallbackNote,
+              routingNote: appState.lastRoutingNote)
           }
         case .emojiText:
           if let w = workflow as? EmojiTextWorkflow {
             EmojiTextActiveView(
               workflow: w, copyOnly: appState.lastRunWasCopyOnly,
-              fallbackNote: appState.lastRewriteFallbackNote)
+              fallbackNote: appState.lastRewriteFallbackNote,
+              routingNote: appState.lastRoutingNote)
           }
         }
 
@@ -521,6 +524,12 @@ private struct WorkflowPageView: View {
 private struct AppFooter: View {
   @Bindable var appState: AppState
 
+  /// Stateless on purpose: it only reads the observable service, so a fresh one per render is fine.
+  private var updates: UpdateSettingsModel {
+    UpdateSettingsModel(
+      service: appState.updateService, isBusy: { appState.updateService.isBusy() })
+  }
+
   var body: some View {
     HStack(spacing: 8) {
       if appState.isConfigured {
@@ -529,13 +538,14 @@ private struct AppFooter: View {
 
       Spacer()
 
-      if let hint = UpdateService.updateHintText(
-        forVersion: appState.updateService.availableUpdateVersion)
-      {
-        Button(hint) {
-          appState.updateService.checkForUpdates()
+      // `.available` opens the update UI; `.staged` installs (a check is a no-op there).
+      if let hint = updates.footerHint {
+        Button(hint.label) {
+          updates.performFooterHint()
         }
         .buttonStyle(PopoverActionButtonStyle(.primary))
+        .disabled(!hint.isEnabled)
+        .help(hint.help)
       }
 
       Button("beenden") {
@@ -663,6 +673,8 @@ struct TextImproverActiveView: View {
   @Bindable var workflow: TextImprovementWorkflow
   var copyOnly: Bool = false
   var fallbackNote: String?
+  /// What Automatik did in this run; nil when it did not run.
+  var routingNote: PurposeRoutingNote?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -675,7 +687,8 @@ struct TextImproverActiveView: View {
         }
 
       case .done(let text):
-        autoPasteView(text: text, copyOnly: copyOnly, fallbackNote: fallbackNote)
+        autoPasteView(
+          text: text, copyOnly: copyOnly, fallbackNote: fallbackNote, routingNote: routingNote)
 
       case .variantChoice:
         variantChoicePopoverHint()
@@ -698,6 +711,8 @@ struct DampfAblassenActiveView: View {
   @Bindable var workflow: DampfAblassenWorkflow
   var copyOnly: Bool = false
   var fallbackNote: String?
+  /// What Automatik did in this run; nil when it did not run.
+  var routingNote: PurposeRoutingNote?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -710,7 +725,8 @@ struct DampfAblassenActiveView: View {
         }
 
       case .done(let text):
-        autoPasteView(text: text, copyOnly: copyOnly, fallbackNote: fallbackNote)
+        autoPasteView(
+          text: text, copyOnly: copyOnly, fallbackNote: fallbackNote, routingNote: routingNote)
 
       case .variantChoice:
         variantChoicePopoverHint()
@@ -733,6 +749,8 @@ struct EmojiTextActiveView: View {
   @Bindable var workflow: EmojiTextWorkflow
   var copyOnly: Bool = false
   var fallbackNote: String?
+  /// What Automatik did in this run; nil when it did not run.
+  var routingNote: PurposeRoutingNote?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -745,7 +763,8 @@ struct EmojiTextActiveView: View {
         }
 
       case .done(let text):
-        autoPasteView(text: text, copyOnly: copyOnly, fallbackNote: fallbackNote)
+        autoPasteView(
+          text: text, copyOnly: copyOnly, fallbackNote: fallbackNote, routingNote: routingNote)
 
       case .variantChoice:
         variantChoicePopoverHint()
@@ -796,10 +815,12 @@ private func processingSpinner(phase: WorkflowPhase) -> some View {
   }
 }
 
-private func autoPasteView(text: String, copyOnly: Bool = false, fallbackNote: String? = nil)
-  -> some View
-{
-  _AutoPasteView(text: text, copyOnly: copyOnly, fallbackNote: fallbackNote)
+private func autoPasteView(
+  text: String, copyOnly: Bool = false, fallbackNote: String? = nil,
+  routingNote: PurposeRoutingNote? = nil
+) -> some View {
+  _AutoPasteView(
+    text: text, copyOnly: copyOnly, fallbackNote: fallbackNote, routingNote: routingNote)
 }
 
 private func variantChoicePopoverHint() -> some View {
@@ -824,6 +845,8 @@ private struct _AutoPasteView: View {
   var copyOnly: Bool = false
   /// Quiet one-line note when this run fell back to a different rewrite model (B6). `nil` = hidden.
   var fallbackNote: String?
+  /// Quiet one-line note of what Automatik did (E-Mail/Prompt modes only). `nil` = hidden.
+  var routingNote: PurposeRoutingNote?
   @Environment(\.colorScheme) private var colorScheme
 
   private var accent: Color { copyOnly ? .orange : .green }
@@ -860,6 +883,10 @@ private struct _AutoPasteView: View {
           .foregroundStyle(.orange)
           .multilineTextAlignment(.center)
           .padding(.horizontal, 8)
+      }
+
+      if let routingNote {
+        PurposeRoutingNoteView(note: routingNote)
       }
 
       // Spec change #14: .lineLimit(1), .leading alignment

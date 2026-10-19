@@ -36,11 +36,14 @@ struct ModelsSettingsView: View {
     VStack(alignment: .leading, spacing: 20) {
       processingCard
 
+      OnlineExtrasSection(appState: appState)
+
       if isLocal {
         whisperCard
         localLLMCard
       } else {
         openAICard
+        RecommendedModelOfferBanner(appState: appState)
       }
     }
     .padding(16)
@@ -71,7 +74,8 @@ struct ModelsSettingsView: View {
       // Data-flow note stays permanently visible (DESIGN.md: sensible Hinweise als Caption).
       Text(
         isLocal
-          ? "alles bleibt auf deinem Mac: Whisper + lokales llama.cpp-Modell. keine online-dienste."
+          ? "alles bleibt auf deinem Mac: Whisper + lokales llama.cpp-Modell. keine inhalte gehen "
+            + "an online-dienste. nur die update-prüfung läuft weiter und sendet keine inhalte."
           : "nutzt die OpenAI-API mit deinem eigenen key. leistungsfähiger, aber audio/text gehen online."
       )
       .font(.system(size: 10.5))

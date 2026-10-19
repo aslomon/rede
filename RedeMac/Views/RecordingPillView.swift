@@ -24,6 +24,8 @@ struct RecordingPillView: View {
   /// The dictated text, shown in the `.copyOnly` fallback card.
   var copyOnlyText: String?
   var pendingVariants: PendingRewriteVariants?
+  /// Live transcript row, present only while live transcription is on for this run.
+  var live: LiveTranscriptModel?
   /// Invoked when the user confirms (stop/checkmark).
   var onStop: () -> Void
   /// Invoked when the user cancels (X).
@@ -47,6 +49,8 @@ struct RecordingPillView: View {
         copyOnlyContent
       } else if phase == .variantChoice {
         variantChoiceContent
+      } else if let live = liveToShow {
+        liveContent(live)
       } else {
         pillContent
       }
@@ -78,6 +82,20 @@ struct RecordingPillView: View {
     .padding(.horizontal, 12)
     .padding(.vertical, 7)
     .modifier(PillGlassSurface())
+  }
+
+  /// The live card replaces the capsule only while recording and no transient notice is showing.
+  private var liveToShow: LiveTranscriptModel? {
+    guard phase == .recording, busyNotice == nil, let live, live.isVisible else { return nil }
+    return live
+  }
+
+  private func liveContent(_ live: LiveTranscriptModel) -> some View {
+    RecordingPillLiveCard(
+      live: live, audioLevel: audioLevel, accentColor: accentColor, isHovering: isHovering,
+      onStop: onStop, onCancel: onCancel
+    )
+    .modifier(CardGlassModifier())
   }
 
   private var copyOnlyContent: some View {

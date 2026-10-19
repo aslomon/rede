@@ -260,6 +260,7 @@ final class RecordingPillController {
     busyNoticeTask?.cancel()
     busyNoticeTask = nil
     model.busyNotice = nil
+    model.live = nil
     panel?.orderOut(nil)
   }
 
@@ -376,10 +377,27 @@ final class RecordingPillController {
       Task { @MainActor [weak self] in
         guard let self, let workflow = self.appState?.activeWorkflow else { return }
         self.model.audioLevel = workflow.audioLevel
+        self.syncLive(from: workflow)
       }
     }
     if let levelTimer {
       RunLoop.main.add(levelTimer, forMode: .common)
+    }
+  }
+
+  /// Mirrors the workflow's live state into the pill. Assigns only on change, so the 30 Hz tick
+  /// does not re-render the pill; the panel is re-measured only when the live card appears or goes.
+  private func syncLive(from workflow: any Workflow) {
+    let next = LiveTranscriptModel(
+      snapshot: workflow.liveTranscript, state: workflow.liveDisplayState)
+    let model = next.isVisible ? next : nil
+    guard model != self.model.live else { return }
+    let layoutChanged = (model == nil) != (self.model.live == nil)
+    self.model.live = model
+    guard layoutChanged, let panel else { return }
+    Task { @MainActor [weak self] in
+      try? await Task.sleep(for: .milliseconds(30))
+      self?.positionPanel(panel)
     }
   }
 
@@ -421,6 +439,8 @@ final class RecordingPillModel: ObservableObject {
   /// Shown in the `.copyOnly` state — the dictated text the user can read/copy.
   @Published var copyOnlyText: String?
   @Published var pendingVariants: PendingRewriteVariants?
+  /// Live row of the pill; nil unless live transcription is active for the current run.
+  @Published var live: LiveTranscriptModel?
 }
 
 private struct RecordingPillHostView: View {
@@ -441,6 +461,7 @@ private struct RecordingPillHostView: View {
       busyNotice: model.busyNotice,
       copyOnlyText: model.copyOnlyText,
       pendingVariants: model.pendingVariants,
+      live: model.live,
       onStop: onStop,
       onCancel: onCancel,
       onCopy: onCopy,
