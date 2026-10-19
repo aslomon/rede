@@ -111,12 +111,16 @@ final class UpdateServiceTests: XCTestCase {
     let feed = try XCTUnwrap(info["SUFeedURL"] as? String, "SUFeedURL missing")
     let feedURL = try XCTUnwrap(URL(string: feed), "SUFeedURL is not a valid URL")
     XCTAssertEqual(feedURL.scheme, "https", "appcast must be served over HTTPS")
+    XCTAssertEqual(feedURL.absoluteString,
+      "https://github.com/aslomon/rede/releases/latest/download/appcast.xml")
 
     XCTAssertEqual(info["SUScheduledCheckInterval"] as? Int, 86_400, "daily check interval")
     XCTAssertEqual(info["SUEnableAutomaticChecks"] as? Bool, true)
+    XCTAssertEqual(info["SUAutomaticallyUpdate"] as? Bool, true)
+    XCTAssertEqual(info["SUSendProfileInfo"] as? Bool, false)
     XCTAssertEqual(info["SUVerifyUpdateBeforeExtraction"] as? Bool, true)
-    // Privacy: Sparkle system profiling must never be enabled.
-    XCTAssertNil(info["SUEnableSystemProfiling"], "system profiling must stay absent")
+    // The profiling prompt stays hidden; runtime policy separately blocks outgoing profile data.
+    XCTAssertNil(info["SUEnableSystemProfiling"], "system profiling prompt must stay absent")
   }
 
   /// The public key must be a REAL Ed25519 key (32 bytes base64) — the build-time placeholder
@@ -126,5 +130,119 @@ final class UpdateServiceTests: XCTestCase {
     let key = try XCTUnwrap(info["SUPublicEDKey"] as? String, "SUPublicEDKey missing")
     let decoded = Data(base64Encoded: key)
     XCTAssertEqual(decoded?.count, 32, "SUPublicEDKey must be a base64 Ed25519 public key")
+  }
+}
+
+final class UpdateServicePreferencesTests: XCTestCase {
+  func testSystemProfileIsDisabledBeforeStartupWithoutChangingUpdateChoices() async {
+    await MainActor.run {
+      for checks in [false, true] {
+        for downloads in [false, true] {
+          let preferences = TestUpdatePreferences(checks: checks, downloads: downloads)
+          var startupCount = 0
+          _ = UpdateService(preferences: preferences, startUpdater: {
+            XCTAssertFalse(preferences.sendsSystemProfile)
+            startupCount += 1
+          })
+
+          XCTAssertEqual(startupCount, 1)
+          XCTAssertFalse(preferences.sendsSystemProfile)
+          XCTAssertEqual(preferences.automaticallyChecksForUpdates, checks)
+          XCTAssertEqual(preferences.storedDownloads, downloads)
+          XCTAssertEqual(preferences.writeCount, 0)
+        }
+      }
+    }
+  }
+
+  func testExistingPreferencesArePreservedWhenServiceStarts() async {
+    await MainActor.run {
+      let preferences = TestUpdatePreferences(checks: false, downloads: false)
+      let service = UpdateService(preferences: preferences)
+
+      XCTAssertFalse(service.automaticChecksEnabled)
+      XCTAssertFalse(service.automaticDownloadsEnabled)
+      XCTAssertEqual(preferences.writeCount, 0)
+    }
+  }
+
+  func testDownloadPreferenceChangesWithoutChangingChecks() async {
+    await MainActor.run {
+      let preferences = TestUpdatePreferences(checks: true, downloads: false)
+      let service = UpdateService(preferences: preferences)
+
+      service.setAutomaticDownloadsEnabled(true)
+      XCTAssertTrue(preferences.automaticallyDownloadsUpdates)
+      XCTAssertTrue(service.automaticDownloadsEnabled)
+      XCTAssertTrue(service.automaticChecksEnabled)
+
+      service.setAutomaticDownloadsEnabled(false)
+      XCTAssertFalse(preferences.automaticallyDownloadsUpdates)
+      XCTAssertFalse(service.automaticDownloadsEnabled)
+    }
+  }
+
+  func testCheckPreferencePreservesStoredDownloadsAndRestoresThemWhenReenabled() async {
+    await MainActor.run {
+      let preferences = TestUpdatePreferences(checks: true, downloads: true)
+      let service = UpdateService(preferences: preferences)
+
+      service.setAutomaticChecksEnabled(false)
+      XCTAssertFalse(preferences.automaticallyChecksForUpdates)
+      XCTAssertFalse(service.automaticChecksEnabled)
+      XCTAssertFalse(service.automaticDownloadsEnabled)
+      XCTAssertTrue(preferences.storedDownloads)
+
+      service.setAutomaticChecksEnabled(true)
+      XCTAssertTrue(service.automaticDownloadsEnabled)
+    }
+  }
+
+  func testRefreshMirrorsExternallyChangedPreferencesAndStatus() async {
+    await MainActor.run {
+      let preferences = TestUpdatePreferences(checks: true, downloads: false)
+      let service = UpdateService(preferences: preferences)
+      let checkedAt = Date(timeIntervalSince1970: 1234)
+      preferences.automaticallyDownloadsUpdates = true
+      preferences.automaticallyChecksForUpdates = false
+      preferences.lastUpdateCheckDate = checkedAt
+      preferences.canCheckForUpdates = true
+
+      service.refresh()
+
+      XCTAssertFalse(service.automaticChecksEnabled)
+      XCTAssertFalse(service.automaticDownloadsEnabled)
+      XCTAssertTrue(preferences.storedDownloads)
+      XCTAssertEqual(service.lastUpdateCheckDate, checkedAt)
+      XCTAssertTrue(service.canCheckForUpdates)
+
+      preferences.automaticallyChecksForUpdates = true
+      service.refresh()
+      XCTAssertTrue(service.automaticDownloadsEnabled)
+    }
+  }
+
+}
+
+@MainActor
+private final class TestUpdatePreferences: UpdatePreferences {
+  var writeCount = 0
+  var automaticallyChecksForUpdates: Bool { didSet { writeCount += 1 } }
+  private(set) var storedDownloads: Bool
+  var automaticallyDownloadsUpdates: Bool {
+    get { automaticallyChecksForUpdates && storedDownloads }
+    set {
+      guard automaticallyChecksForUpdates else { return }
+      storedDownloads = newValue
+      writeCount += 1
+    }
+  }
+  var sendsSystemProfile = true
+  var lastUpdateCheckDate: Date?
+  var canCheckForUpdates = false
+
+  init(checks: Bool, downloads: Bool) {
+    automaticallyChecksForUpdates = checks
+    storedDownloads = downloads
   }
 }

@@ -6,13 +6,26 @@ import os
   import Sparkle
 #endif
 
+@MainActor
+protocol UpdatePreferences: AnyObject {
+  var automaticallyChecksForUpdates: Bool { get set }
+  var automaticallyDownloadsUpdates: Bool { get set }
+  var sendsSystemProfile: Bool { get set }
+  var lastUpdateCheckDate: Date? { get }
+  var canCheckForUpdates: Bool { get }
+}
+
+#if SPARKLE_ENABLED
+  extension SPUUpdater: UpdatePreferences {}
+#endif
+
 /// Wraps the Sparkle updater behind a small app-facing service (pattern: `LaunchAtLoginService`).
 /// All Sparkle types stay behind `SPARKLE_ENABLED` so a Mac App Store build can compile the
 /// framework out entirely (stores forbid self-updating apps) without touching any call sites.
 ///
-/// Privacy: the scheduled daily check requests only the appcast feed over HTTPS (standard HTTP
-/// metadata, app version in the user agent). Sparkle's system profiling stays disabled — no
-/// hardware/usage data ever leaves the Mac. See docs/privacy.md.
+/// Privacy: daily checks fetch the public appcast over HTTPS; enabled automatic downloads also
+/// fetch signed release archives. Requests carry standard HTTP metadata and the app version.
+/// Sparkle's system profiling stays disabled. See docs/privacy.md.
 @Observable
 @MainActor
 final class UpdateService: NSObject {
@@ -35,37 +48,90 @@ final class UpdateService: NSObject {
   /// Stored mirror of Sparkle's `automaticallyChecksForUpdates` so `@Observable` change tracking
   /// works (computed passthroughs would not notify SwiftUI). Kept in sync via `refresh()`.
   private(set) var automaticChecksEnabled = false
+  private(set) var automaticDownloadsEnabled = false
+  private(set) var status: Status = .idle(lastChecked: nil)
+  var isBusy: @MainActor () -> Bool = { false } {
+    didSet { busyStateDidChange() }
+  }
+  @ObservationIgnored private var stagedInstallation: (() -> Void)?
+  @ObservationIgnored private var invokingStagedInstallation = false
+  @ObservationIgnored private var deferredRelaunch: (() -> Void)?
+  @ObservationIgnored private var busyObservationGeneration = 0
 
   private let logger = Logger(subsystem: "app.rede.mac", category: "Updates")
+  @ObservationIgnored private var preferences: (any UpdatePreferences)?
 
   #if SPARKLE_ENABLED
     private var updaterController: SPUStandardUpdaterController?
-    @ObservationIgnored private var canCheckObservation: NSKeyValueObservation?
+    @ObservationIgnored private var updaterObservations: [NSKeyValueObservation] = []
   #endif
 
   override init() {
     super.init()
     #if SPARKLE_ENABLED
+      // Hosted tests construct AppState; keep their normal startup away from real preferences.
+      if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil,
+         NSClassFromString("XCTestCase") != nil {
+        logger.debug("Updater startup skipped in app-hosted XCTest; Sparkle preferences untouched")
+        return
+      }
       let controller = SPUStandardUpdaterController(
-        startingUpdater: true,
+        startingUpdater: false,
         updaterDelegate: self,
         userDriverDelegate: self
       )
       updaterController = controller
-      // canCheckForUpdates flips while a session runs; Sparkle documents it as KVO-observable.
-      canCheckObservation = controller.updater.observe(\.canCheckForUpdates, options: [.initial]) {
-        [weak self] updater, _ in
-        let newValue = updater.canCheckForUpdates
-        Task { @MainActor [weak self] in
-          self?.canCheckForUpdates = newValue
-        }
-      }
-      refresh()
+      preferences = controller.updater
+      configureAndStartUpdater { controller.startUpdater() }
     #endif
   }
 
+  init(preferences: any UpdatePreferences, startUpdater: () -> Void = {}) {
+    self.preferences = preferences
+    super.init()
+    configureAndStartUpdater(startUpdater)
+  }
+
+  private func configureAndStartUpdater(_ startUpdater: () -> Void) {
+    preferences?.sendsSystemProfile = false
+    #if SPARKLE_ENABLED
+      if let updater = preferences as? SPUUpdater { observeUpdater(updater) }
+    #endif
+    startUpdater()
+    refresh()
+  }
+
+  #if SPARKLE_ENABLED
+    private func observeUpdater(_ updater: SPUUpdater) {
+      // Sparkle may change these through its own dialogs as well as the app's settings.
+      let refreshState: () -> Void = { [weak self] in
+        Task { @MainActor [weak self] in self?.refresh() }
+      }
+      updaterObservations = [
+        updater.observe(\.canCheckForUpdates, options: [.initial]) { _, _ in
+          refreshState()
+        },
+        updater.observe(\.automaticallyChecksForUpdates) { _, _ in
+          refreshState()
+        },
+        updater.observe(\.automaticallyDownloadsUpdates) { _, _ in
+          refreshState()
+        },
+        updater.observe(\.lastUpdateCheckDate) { _, _ in
+          refreshState()
+        }
+      ]
+    }
+  #endif
+
   /// User-initiated check — shows Sparkle's standard UI (progress, release notes, install).
   func checkForUpdates() {
+    guard canCheckForUpdates else { return }
+    switch status {
+    case .staged, .downloading: return
+    default: break
+    }
+    status = .checking
     #if SPARKLE_ENABLED
       availableUpdateVersion = nil
       updaterController?.checkForUpdates(nil)
@@ -73,136 +139,106 @@ final class UpdateService: NSObject {
   }
 
   func setAutomaticChecksEnabled(_ enabled: Bool) {
-    #if SPARKLE_ENABLED
-      updaterController?.updater.automaticallyChecksForUpdates = enabled
-      refresh()
-    #endif
+    preferences?.automaticallyChecksForUpdates = enabled
+    refresh()
+  }
+
+  func setAutomaticDownloadsEnabled(_ enabled: Bool) {
+    preferences?.automaticallyDownloadsUpdates = enabled
+    refresh()
   }
 
   func refresh() {
-    #if SPARKLE_ENABLED
-      guard let updater = updaterController?.updater else { return }
-      automaticChecksEnabled = updater.automaticallyChecksForUpdates
-      lastUpdateCheckDate = updater.lastUpdateCheckDate
-    #endif
+    guard let preferences else { return }
+    automaticChecksEnabled = preferences.automaticallyChecksForUpdates
+    automaticDownloadsEnabled = preferences.automaticallyDownloadsUpdates
+    lastUpdateCheckDate = preferences.lastUpdateCheckDate
+    canCheckForUpdates = preferences.canCheckForUpdates
+    if case .idle = status { status = .idle(lastChecked: lastUpdateCheckDate) }
   }
 
-  // MARK: - Display helpers (pure, unit-tested)
+  func checkNow() { checkForUpdates() }
 
-  var appVersionText: String {
-    Self.versionDisplayText(
-      shortVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-      build: Bundle.main.infoDictionary?["CFBundleVersion"] as? String
-    )
-  }
-
-  var lastCheckDisplayText: String {
-    Self.lastCheckDisplayText(for: lastUpdateCheckDate)
-  }
-
-  nonisolated static func versionDisplayText(shortVersion: String?, build: String?) -> String {
-    let version: String
-    if let shortVersion, !shortVersion.isEmpty {
-      version = shortVersion
-    } else {
-      version = "?"
+  func busyStateDidChange() {
+    busyObservationGeneration += 1
+    guard deferredRelaunch != nil else { return }
+    let generation = busyObservationGeneration
+    let busy = isBusy
+    let currentlyBusy = withObservationTracking { busy() } onChange: { [weak self] in
+      Task { @MainActor [weak self] in
+        guard let self, self.busyObservationGeneration == generation else { return }
+        self.busyStateDidChange()
+      }
     }
-    if let build, !build.isEmpty, build != version {
-      return "version \(version) (build \(build))"
-    }
-    return "version \(version)"
+    guard !currentlyBusy, let action = deferredRelaunch else { return }
+    deferredRelaunch = nil
+    busyObservationGeneration += 1
+    action()
   }
 
-  nonisolated static func lastCheckDisplayText(
-    for date: Date?,
-    now: Date = Date(),
-    calendar: Calendar = Calendar.current
-  ) -> String {
-    guard let date else { return "noch nie nach updates gesucht." }
-    if calendar.isDate(date, inSameDayAs: now) { return "zuletzt geprüft: heute." }
-    if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
-      calendar.isDate(date, inSameDayAs: yesterday)
-    {
-      return "zuletzt geprüft: gestern."
-    }
-    let days =
-      calendar.dateComponents(
-        [.day],
-        from: calendar.startOfDay(for: date),
-        to: calendar.startOfDay(for: now)
-      ).day ?? 0
-    // A future timestamp (clock skew) must never render as "vor -N tagen".
-    guard days > 0 else { return "zuletzt geprüft: heute." }
-    return "zuletzt geprüft: vor \(days) tagen."
+  @discardableResult
+  func installStagedUpdateNow() -> Bool {
+    guard !isBusy(), !invokingStagedInstallation, let install = stagedInstallation else { return false }
+    invokingStagedInstallation = true
+    defer { invokingStagedInstallation = false }
+    install()
+    return true
   }
 
-  /// Quiet popover hint label for a pending gentle reminder; nil when no update waits.
-  nonisolated static func updateHintText(forVersion version: String?) -> String? {
-    guard let version, !version.isEmpty else { return nil }
-    return "update auf \(version) verfügbar"
+  func stageInstallation(version: String, install: @escaping () -> Void) {
+    stagedInstallation = install
+    availableUpdateVersion = version
+    status = .staged(version: version)
   }
+
+  func postponeRelaunchIfBusy(version: String, install: @escaping () -> Void) -> Bool {
+    guard isBusy() else { return false }
+    deferredRelaunch = install
+    status = .staged(version: version)
+    busyStateDidChange()
+    return true
+  }
+
+  func shouldShowScheduledUpdate(immediateFocus: Bool) -> Bool {
+    immediateFocus && !isBusy()
+  }
+
+  func foundUpdate(version: String) {
+    availableUpdateVersion = version
+    status = .available(version: version)
+  }
+
+  func startedDownload() { status = .downloading(fraction: nil) }
+  func clearUpdateReminder() { availableUpdateVersion = nil }
+
+  func finishedUpdateCycle(error: Error?) {
+    refresh()
+    if let error {
+      let failure = error as NSError
+      let normal = (failure.domain == "SUSparkleErrorDomain" && [1001, 4007, 4008].contains(failure.code))
+        || (failure.domain == NSCocoaErrorDomain && failure.code == NSUserCancelledError)
+      if !normal {
+        stagedInstallation = nil
+        deferredRelaunch = nil
+        busyObservationGeneration += 1
+        status = .failed(Self.failure(for: failure))
+        logger.info("Update cycle failed: domain=\(failure.domain, privacy: .public) code=\(failure.code)")
+        return
+      }
+    }
+    if case .staged = status { return }
+    status = availableUpdateVersion.map { .available(version: $0) }
+      ?? .idle(lastChecked: lastUpdateCheckDate)
+  }
+
+  nonisolated static func failure(for error: NSError) -> Failure {
+    if error.domain == NSURLErrorDomain { return .network }
+    if error.domain == "SUSparkleErrorDomain" {
+      if [3001, 3002].contains(error.code) { return .invalidSignature }
+      if (4000..<5000).contains(error.code) { return .cannotInstall }
+      if error.code == 2001 { return .network }
+    }
+    return .other
+  }
+
 }
-
-#if SPARKLE_ENABLED
-  // MARK: - SPUUpdaterDelegate
-
-  extension UpdateService: SPUUpdaterDelegate {
-    nonisolated func updater(
-      _ updater: SPUUpdater,
-      didFinishUpdateCycleFor updateCheck: SPUUpdateCheck,
-      error: Error?
-    ) {
-      Task { @MainActor [weak self] in
-        self?.refresh()
-        if let error {
-          // "No update found" and user cancellation are normal cycle ends, not failures.
-          self?.logger.info(
-            "Update cycle finished: \(error.localizedDescription, privacy: .public)")
-        }
-      }
-    }
-  }
-
-  // MARK: - SPUStandardUserDriverDelegate (gentle reminders)
-
-  /// rede is an `LSUIElement` menu bar app: scheduled update alerts must not steal focus
-  /// while the user dictates. Sparkle's gentle-reminders flow lets us surface a quiet hint in the
-  /// popover instead; the standard Sparkle UI only appears for user-initiated checks (or once the
-  /// user clicks the hint).
-  extension UpdateService: SPUStandardUserDriverDelegate {
-    nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
-
-    nonisolated func standardUserDriverShouldHandleShowingScheduledUpdate(
-      _ update: SUAppcastItem,
-      andInImmediateFocus immediateFocus: Bool
-    ) -> Bool {
-      // Only let Sparkle pop its window when the app already has focus (practically never for a
-      // menu bar app); otherwise we take over and show the quiet popover hint.
-      immediateFocus
-    }
-
-    nonisolated func standardUserDriverWillHandleShowingUpdate(
-      _ handleShowingUpdate: Bool,
-      forUpdate update: SUAppcastItem,
-      state: SPUUserUpdateState
-    ) {
-      guard !state.userInitiated else { return }
-      let version = update.displayVersionString
-      Task { @MainActor [weak self] in
-        self?.availableUpdateVersion = version
-      }
-    }
-
-    nonisolated func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
-      Task { @MainActor [weak self] in
-        self?.availableUpdateVersion = nil
-      }
-    }
-
-    nonisolated func standardUserDriverWillFinishUpdateSession() {
-      Task { @MainActor [weak self] in
-        self?.availableUpdateVersion = nil
-      }
-    }
-  }
-#endif
